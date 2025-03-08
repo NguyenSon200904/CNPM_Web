@@ -1,8 +1,17 @@
 import { useState } from "react";
 import Sidebar from "../components/Sidebar";
+import Products from "../pages/Products"; // Import trang sản phẩm
+import Supplier from "../pages/Suppliers"; // Import file Supplier
+import ImportGoods from "../pages/ImportGoods";
+import ImportReceipts from "../pages/ImportReceipts";
+import ExportGoods from "../pages/ExportGoods";
+import ExportReceipts from "../pages/ExportReceipts";
+// import Inventory from "../pages/Inventory";
+// import Accounts from "../pages/Accounts";
+// import Statistics from "../pages/Statistics";
 
 const Main = () => {
-  const [selectedPage, setSelectedPage] = useState("SẢN PHẨM");
+  const [selectedPage, setSelectedPage] = useState(""); // Ban đầu không chọn gì
 
   return (
     <div className="fixed inset-0 flex overflow-hidden">
@@ -10,23 +19,27 @@ const Main = () => {
       <Sidebar setSelectedPage={setSelectedPage} />
 
       {/* Main content */}
-      <div className="flex-1 bg-gray-100 overflow-hidden">
-        <div className="flex flex-col h-full">
-          <h2 className="text-2xl font-bold p-4 bg-white shadow-sm">
-            {selectedPage}
-          </h2>
-          <div className="flex-1 p-4 overflow-hidden">
-            {selectedPage === "SẢN PHẨM" && <p>Danh sách sản phẩm</p>}
-            {selectedPage === "NHÀ CUNG CẤP" && <p>Danh sách nhà cung cấp</p>}
-            {selectedPage === "NHẬP HÀNG" && <p>Nhập hàng</p>}
-            {selectedPage === "PHIẾU NHẬP" && <p>Danh sách phiếu nhập</p>}
-            {selectedPage === "XUẤT HÀNG" && <p>Xuất hàng</p>}
-            {selectedPage === "PHIẾU XUẤT" && <p>Danh sách phiếu xuất</p>}
-            {selectedPage === "TỒN KHO" && <p>Thông tin tồn kho</p>}
-            {selectedPage === "TÀI KHOẢN" && <p>Quản lý tài khoản</p>}
-            {selectedPage === "THỐNG KÊ" && <p>Thống kê dữ liệu</p>}
+      <div className="flex-1 bg-gray-100 overflow-hidden p-4">
+        {selectedPage === "" && (
+          <div className="text-center mt-20">
+            <h1 className="text-3xl font-bold">
+              Chào mừng đến với hệ thống quản lý kho
+            </h1>
+            <p className="text-lg text-gray-600">
+              Chọn một mục từ thanh điều hướng để bắt đầu
+            </p>
           </div>
-        </div>
+        )}
+        {selectedPage === "SẢN PHẨM" && <Products />}
+        {selectedPage === "NHÀ CUNG CẤP" && <Supplier />}
+        {selectedPage === "NHẬP HÀNG" && <ImportGoods />}
+        {selectedPage === "PHIẾU NHẬP" && <ImportReceipts />}
+        {selectedPage === "XUẤT HÀNG" && <ExportGoods />}
+        {selectedPage === "PHIẾU XUẤT" && <ExportReceipts />}
+        {/* {selectedPage === "TỒN KHO" && <Inventory />}
+        {selectedPage === "TÀI KHOẢN" && <Accounts />}
+        {selectedPage === "THỐNG KÊ" && <Statistics />} */}
+        {/* Thêm các trang khác tương tự khi cần */}
       </div>
     </div>
   );
