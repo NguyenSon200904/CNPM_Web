@@ -10,6 +10,7 @@ import {
   LogOut,
   ArrowDownCircle,
   ArrowUpCircle,
+  ChartPie,
 } from "lucide-react";
 
 const Sidebar = ({ setSelectedPage }) => {
@@ -28,7 +29,7 @@ const Sidebar = ({ setSelectedPage }) => {
     { name: "PHIẾU XUẤT", icon: <FileText size={24} /> },
     { name: "TỒN KHO", icon: <BarChart size={24} /> },
     { name: "TÀI KHOẢN", icon: <Users size={24} /> },
-    { name: "THỐNG KÊ", icon: <BarChart size={24} /> },
+    { name: "THỐNG KÊ", icon: <ChartPie size={24} /> },
   ];
 
   return (

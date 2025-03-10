@@ -1,78 +1,180 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Button, Input, Select, Table } from "antd";
+import { FileExcelOutlined } from "@ant-design/icons";
+
+const { Option } = Select;
 
 const Product = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [filter, setFilter] = useState("Tất cả");
+  const [filterBy, setFilterBy] = useState("id");
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  const handleSearch = () => {
-    console.log("Tìm kiếm:", searchTerm, "- Tiêu chí:", filter);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const [data, setData] = useState([
+    {
+      id: "LP13",
+      name: "Laptop HP 15s",
+      quantity: 18,
+      price: 9990000,
+      cpu: "i3 1115G4",
+      ram: "4 GB",
+      storage: "256 GB",
+      type: "Laptop",
+    },
+    {
+      id: "LP14",
+      name: "Laptop Lenovo IdeaPad",
+      quantity: 3,
+      price: 22490000,
+      cpu: "i5 12500H",
+      ram: "16 GB",
+      storage: "512 GB",
+      type: "Laptop",
+    },
+    {
+      id: "LP15",
+      name: "Laptop Lenovo IdeaPad 5 Pro 16IAH7",
+      quantity: 3,
+      price: 22490000,
+      cpu: "Intel Core i5 12500H",
+      ram: "16 GB",
+      storage: "512 GB",
+      type: "Laptop",
+    },
+    {
+      id: "LP16",
+      name: "Laptop Lenovo IdeaPad 5 Pro 16IAH7",
+      quantity: 3,
+      price: 22490000,
+      cpu: "Intel Core i5 12500H",
+      ram: "16 GB",
+      storage: "512 GB",
+      type: "Laptop",
+    },
+    {
+      id: "LP17",
+      name: "Laptop Lenovo IdeaPad 5 Pro 16IAH7",
+      quantity: 3,
+      price: 22490000,
+      cpu: "Intel Core i5 12500H",
+      ram: "16 GB",
+      storage: "512 GB",
+      type: "Laptop",
+    },
+    {
+      id: "LP18",
+      name: "Laptop Lenovo IdeaPad 5 Pro 16IAH7",
+      quantity: 3,
+      price: 22490000,
+      cpu: "Intel Core i5 12500H",
+      ram: "16 GB",
+      storage: "512 GB",
+      type: "Laptop",
+    },
+  ]);
+
+  const filteredData = data.filter((item) =>
+    item[filterBy].toString().toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const columns = [
+    { title: "Mã máy", dataIndex: "id", key: "id", responsive: ["sm"] },
+    { title: "Tên máy", dataIndex: "name", key: "name" },
+    { title: "Số lượng", dataIndex: "quantity", key: "quantity" },
+    {
+      title: "Đơn giá",
+      dataIndex: "price",
+      key: "price",
+      render: (price) => `${price.toLocaleString()}đ`,
+    },
+    { title: "Bộ xử lý", dataIndex: "cpu", key: "cpu", responsive: ["md"] },
+    { title: "RAM", dataIndex: "ram", key: "ram", responsive: ["md"] },
+    {
+      title: "Bộ nhớ",
+      dataIndex: "storage",
+      key: "storage",
+      responsive: ["lg"],
+    },
+    { title: "Loại máy", dataIndex: "type", key: "type", responsive: ["lg"] },
+  ];
+
+  const _updateData = (newData) => {
+    setData(newData);
   };
 
   return (
     <div className="p-4">
-      <h2 className="text-2xl font-bold mb-4">Quản lý sản phẩm</h2>
+      {/* <h2 className="text-2xl font-bold mb-4">Quản lý sản phẩm</h2> */}
 
-      {/* Thanh tìm kiếm và bộ lọc */}
-      <div className="flex gap-2 mb-4">
-        <input
-          type="text"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Nhập thông tin tìm kiếm..."
-          className="border p-2 flex-1"
-        />
+      {/* Tìm kiếm & Bộ lọc */}
+      <div className="flex flex-wrap justify-between gap-2 mb-4">
+        <div className="flex gap-2">
+          <Input
+            placeholder="Nhập từ khóa..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-60 md:w-80 h-[50px]"
+          />
+          <Select
+            value={filterBy}
+            onChange={setFilterBy}
+            className="w-40  h-[50px]"
+          >
+            <Option value="id">Mã máy</Option>
+            <Option value="name">Tên máy</Option>
+            <Option value="quantity">Số lượng</Option>
+            <Option value="price">Đơn giá</Option>
+            <Option value="cpu">Bộ xử lý</Option>
+            <Option value="ram">RAM</Option>
+            <Option value="storage">Bộ nhớ</Option>
+            <Option value="type">Loại máy</Option>
+          </Select>
+        </div>
 
-        {/* Dropdown chọn tiêu chí lọc */}
-        <select
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="border p-2"
-        >
-          <option value="Tất cả">Tất cả</option>
-          <option value="Mã máy">Mã máy</option>
-          <option value="Tên máy">Tên máy</option>
-          <option value="Số lượng">Số lượng</option>
-          <option value="Đơn giá">Đơn giá</option>
-          <option value="RAM">RAM</option>
-          <option value="CPU">CPU</option>
-          <option value="Dung lượng">Dung lượng</option>
-          <option value="Card màn hình">Card màn hình</option>
-          <option value="Xuất xứ">Xuất xứ</option>
-        </select>
-
-        {/* Nút Tìm */}
-        <button
-          onClick={handleSearch}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
-        >
-          Tìm
-        </button>
+        {/* Nhóm chức năng */}
+        <div className="flex flex-wrap gap-2">
+          <Button type="primary" className="min-w-[100px]  h-[50px]">
+            Thêm
+          </Button>
+          <Button className="min-w-[100px] h-[50px]">Sửa</Button>
+          <Button danger className="min-w-[100px] h-[50px]">
+            Xóa
+          </Button>
+          {!isMobile && (
+            <>
+              <Button className="min-w-[100px] h-[50px]">Xem chi tiết</Button>
+              <Button
+                icon={<FileExcelOutlined />}
+                type="primary"
+                className="min-w-[120px] h-[50px]"
+              >
+                Xuất Excel
+              </Button>
+              <Button
+                icon={<FileExcelOutlined />}
+                type="primary"
+                className="min-w-[120px] h-[50px]"
+              >
+                Nhập Excel
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
-      {/* Các nút chức năng */}
-      <div className="flex gap-2 mb-4">
-        <button className="bg-green-500 text-white px-4 py-2 rounded">
-          Thêm
-        </button>
-        <button className="bg-yellow-500 text-white px-4 py-2 rounded">
-          Sửa
-        </button>
-        <button className="bg-red-500 text-white px-4 py-2 rounded">Xóa</button>
-        <button className="bg-gray-500 text-white px-4 py-2 rounded">
-          Xem chi tiết
-        </button>
-        <button className="bg-purple-500 text-white px-4 py-2 rounded">
-          Xuất Excel
-        </button>
-        <button className="bg-orange-500 text-white px-4 py-2 rounded">
-          Nhập Excel
-        </button>
-      </div>
-
-      {/* Khu vực hiển thị sản phẩm */}
-      <div className="border p-4 bg-white shadow">
-        Danh sách sản phẩm sẽ hiển thị ở đây...
-      </div>
+      {/* Bảng sản phẩm */}
+      <Table
+        dataSource={filteredData}
+        columns={columns}
+        pagination={{ pageSize: 5 }}
+        rowKey="id"
+        bordered
+      />
     </div>
   );
 };

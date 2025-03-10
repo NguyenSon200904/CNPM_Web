@@ -6,9 +6,10 @@ import ImportGoods from "../pages/ImportGoods";
 import ImportReceipts from "../pages/ImportReceipts";
 import ExportGoods from "../pages/ExportGoods";
 import ExportReceipts from "../pages/ExportReceipts";
-// import Inventory from "../pages/Inventory";
-// import Accounts from "../pages/Accounts";
-// import Statistics from "../pages/Statistics";
+import Inventory from "../pages/Inventory";
+import Accounts from "../pages/Accounts";
+import Statistics from "../pages/Statistics";
+import ChangeInfo from "../pages/ChangeInfo";
 
 const Main = () => {
   const [selectedPage, setSelectedPage] = useState(""); // Ban đầu không chọn gì
@@ -36,9 +37,10 @@ const Main = () => {
         {selectedPage === "PHIẾU NHẬP" && <ImportReceipts />}
         {selectedPage === "XUẤT HÀNG" && <ExportGoods />}
         {selectedPage === "PHIẾU XUẤT" && <ExportReceipts />}
-        {/* {selectedPage === "TỒN KHO" && <Inventory />}
+        {selectedPage === "TỒN KHO" && <Inventory />}
         {selectedPage === "TÀI KHOẢN" && <Accounts />}
-        {selectedPage === "THỐNG KÊ" && <Statistics />} */}
+        {selectedPage === "THỐNG KÊ" && <Statistics />}
+        {selectedPage === "ĐỔI THÔNG TIN" && <ChangeInfo />}
         {/* Thêm các trang khác tương tự khi cần */}
       </div>
     </div>
