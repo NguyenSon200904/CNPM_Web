@@ -1,6 +1,11 @@
 import { useState, useEffect } from "react";
 import { Button, Input, Select, Table } from "antd";
-import { FileExcelOutlined } from "@ant-design/icons";
+import {
+  PlusOutlined,
+  FileExcelOutlined,
+  DeleteOutlined,
+  EditOutlined,
+} from "@ant-design/icons";
 
 const { Option } = Select;
 
@@ -132,11 +137,26 @@ const Supplier = () => {
 
         {/* Nhóm chức năng */}
         <div className="flex flex-wrap gap-2">
-          <Button type="primary" className="min-w-[100px]  h-[50px]">
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            className="min-w-[100px]  h-[50px]"
+          >
             Thêm
           </Button>
-          <Button className="min-w-[100px] h-[50px]">Sửa</Button>
-          <Button danger className="min-w-[100px] h-[50px]">
+          <Button
+            type="primary"
+            icon={<EditOutlined />}
+            className="min-w-[100px]  h-[50px]"
+          >
+            Sửa
+          </Button>
+          <Button
+            type="primary"
+            danger
+            icon={<DeleteOutlined />}
+            className="min-w-[100px]  h-[50px]"
+          >
             Xóa
           </Button>
           {!isMobile && (
@@ -164,7 +184,7 @@ const Supplier = () => {
       <Table
         dataSource={filteredData}
         columns={columns}
-        pagination={{ pageSize: 5 }}
+        pagination={{ pageSize: 7 }}
         rowKey="id"
         bordered
       />

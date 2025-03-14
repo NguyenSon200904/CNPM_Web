@@ -13,47 +13,57 @@ const ChangeInfo = () => {
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
 
   return (
-    <div className="p-6">
-      <Card className="max-w-lg mx-auto p-6">
-        <Tabs activeKey={activeTab} onChange={setActiveTab}>
+    <div className="min-h-screen flex justify-center items-center p-6">
+      <Card className="w-[500px] h-[500px] p-8 shadow-lg rounded-lg">
+        <Tabs activeKey={activeTab} onChange={setActiveTab} centered>
           <TabPane tab="Thông tin" key="info">
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-5">
               <Input
                 placeholder="Họ và tên"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
+                className="h-[50px]"
               />
               <Input
                 placeholder="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                className="h-[50px]"
               />
               <Input.Password
                 placeholder="Nhập mật khẩu để lưu thay đổi"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                className="h-[50px]"
               />
-              <Button type="primary">Lưu thay đổi</Button>
+              <Button type="primary" className="h-[50px]">
+                Lưu thay đổi
+              </Button>
             </div>
           </TabPane>
           <TabPane tab="Mật khẩu" key="password">
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-5">
               <Input.Password
                 placeholder="Mật khẩu hiện tại"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
+                className="h-[50px]"
               />
               <Input.Password
                 placeholder="Mật khẩu mới"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
+                className="h-[50px]"
               />
               <Input.Password
                 placeholder="Nhập lại mật khẩu mới"
                 value={confirmNewPassword}
                 onChange={(e) => setConfirmNewPassword(e.target.value)}
+                className="h-[50px]"
               />
-              <Button type="primary">Đổi mật khẩu</Button>
+              <Button type="primary" className="h-[50px]">
+                Đổi mật khẩu
+              </Button>
             </div>
           </TabPane>
         </Tabs>

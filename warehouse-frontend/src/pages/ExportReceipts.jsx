@@ -1,121 +1,197 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { Table, Button, Input, DatePicker } from "antd";
+import {
+  FileExcelOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  EyeOutlined,
+} from "@ant-design/icons";
+
+const { RangePicker } = DatePicker;
 
 const ExportReceipts = () => {
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
+  const [dateRange, setDateRange] = useState([]);
   const [priceFrom, setPriceFrom] = useState(0);
   const [priceTo, setPriceTo] = useState(10000000);
-  const [receipts, setReceipts] = useState([
+  const [receipts] = useState([
     {
       id: "PX41",
       creator: "Admin",
       total: 1000000,
-      date: "08/03/2025 16:33",
+      date: "2025-03-08 16:33",
     },
     {
       id: "PX39",
       creator: "Admin",
       total: 9990000,
-      date: "08/03/2025 16:25",
+      date: "2025-03-08 16:25",
+    },
+    {
+      id: "PN36",
+      supplier: "Công ty TNHH MTV Thương mại Dịch vụ Điện tử Vào Bờ",
+      creator: "Admin",
+      total: 5000000,
+      date: "2025-03-08 16:25",
+    },
+    {
+      id: "PN35",
+      supplier: "Công ty TNHH MTV Thương mại Dịch vụ Điện tử Vào Bờ",
+      creator: "Admin",
+      total: 5000000,
+      date: "2025-03-08 16:25",
+    },
+    {
+      id: "PN34",
+      supplier: "Công ty TNHH MTV Thương mại Dịch vụ Điện tử Vào Bờ",
+      creator: "Admin",
+      total: 5000000,
+      date: "2025-03-08 16:25",
+    },
+    {
+      id: "PN33",
+      supplier: "Công ty TNHH MTV Thương mại Dịch vụ Điện tử Vào Bờ",
+      creator: "Admin",
+      total: 5000000,
+      date: "2025-03-08 16:25",
+    },
+    {
+      id: "PN32",
+      supplier: "Công ty TNHH MTV Thương mại Dịch vụ Điện tử Vào Bờ",
+      creator: "Admin",
+      total: 5000000,
+      date: "2025-03-08 16:25",
     },
   ]);
 
-  useEffect(() => {
-    const filtered = receipts.filter(
-      (r) =>
-        (!dateFrom || new Date(r.date) >= new Date(dateFrom)) &&
-        (!dateTo || new Date(r.date) <= new Date(dateTo)) &&
-        r.total >= priceFrom &&
-        r.total <= priceTo
+  // Lọc dữ liệu theo khoảng ngày & giá tiền
+  const filteredReceipts = receipts.filter((r) => {
+    const receiptDate = new Date(r.date);
+    const startDate = dateRange[0] ? new Date(dateRange[0]) : null;
+    const endDate = dateRange[1] ? new Date(dateRange[1]) : null;
+
+    return (
+      (!startDate || receiptDate >= startDate) &&
+      (!endDate || receiptDate <= endDate) &&
+      r.total >= priceFrom &&
+      r.total <= priceTo
     );
-    setReceipts(filtered);
-  }, [dateFrom, dateTo, priceFrom, priceTo]);
+  });
+
+  // Cấu hình cột bảng
+  const columns = [
+    {
+      title: "STT",
+      dataIndex: "index",
+      key: "index",
+      render: (_, __, index) => index + 1,
+      align: "center",
+    },
+    {
+      title: "Mã phiếu xuất",
+      dataIndex: "id",
+      key: "id",
+      align: "center",
+    },
+    {
+      title: "Người tạo",
+      dataIndex: "creator",
+      key: "creator",
+      align: "center",
+    },
+    {
+      title: "Thời gian tạo",
+      dataIndex: "date",
+      key: "date",
+      align: "center",
+    },
+    {
+      title: "Tổng tiền",
+      dataIndex: "total",
+      key: "total",
+      align: "right",
+      render: (value) => `${value.toLocaleString()}đ`,
+    },
+  ];
 
   return (
     <div className="p-4">
-      <h2 className="text-2xl font-bold mb-4">Danh sách phiếu xuất</h2>
-
       {/* Thanh công cụ */}
       <div className="flex gap-2 mb-4">
-        <button className="bg-red-500 text-white px-4 py-2 rounded">Xóa</button>
-        <button className="bg-yellow-500 text-white px-4 py-2 rounded">
+        <Button
+          type="primary"
+          danger
+          icon={<DeleteOutlined />}
+          className="min-w-[100px]  h-[50px]"
+        >
+          Xóa
+        </Button>
+        <Button
+          type="primary"
+          icon={<EditOutlined />}
+          className="min-w-[100px]  h-[50px]"
+        >
           Sửa
-        </button>
-        <button className="bg-blue-500 text-white px-4 py-2 rounded">
+        </Button>
+        <Button
+          type="primary"
+          icon={<EyeOutlined />}
+          className="min-w-[100px]  h-[50px]"
+        >
           Xem chi tiết
-        </button>
-        <button className="bg-green-500 text-white px-4 py-2 rounded">
+        </Button>
+        <Button
+          type="primary"
+          icon={<FileExcelOutlined />}
+          className="min-w-[100px]  h-[50px]"
+        >
           Xuất Excel
-        </button>
-        <button className="bg-gray-500 text-white px-4 py-2 rounded">
+        </Button>
+        <Button
+          type="primary"
+          icon={<FileExcelOutlined />}
+          className="min-w-[100px]  h-[50px]"
+        >
           Nhập Excel
-        </button>
+        </Button>
       </div>
 
       {/* Bộ lọc */}
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div className="border p-4 rounded">
-          <h3 className="font-bold mb-2">Lọc theo ngày</h3>
-          <div className="flex gap-2">
-            <input
-              type="date"
-              value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-              className="border p-2 w-full"
-            />
-            <input
-              type="date"
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-              className="border p-2 w-full"
-            />
-          </div>
+          <h3 className="font-bold mb-2 text-black">Lọc theo ngày</h3>
+          <RangePicker
+            onChange={(dates) => setDateRange(dates)}
+            className="w-full"
+          />
         </div>
         <div className="border p-4 rounded">
-          <h3 className="font-bold mb-2">Lọc theo giá</h3>
+          <h3 className="font-bold mb-2 text-black">Lọc theo giá</h3>
           <div className="flex gap-2">
-            <input
+            <Input
               type="number"
               value={priceFrom}
               onChange={(e) => setPriceFrom(Number(e.target.value))}
-              className="border p-2 w-full"
+              placeholder="Giá từ"
             />
-            <input
+            <Input
               type="number"
               value={priceTo}
               onChange={(e) => setPriceTo(Number(e.target.value))}
-              className="border p-2 w-full"
+              placeholder="Giá đến"
             />
           </div>
         </div>
       </div>
 
       {/* Danh sách phiếu xuất */}
-      <div className="bg-white p-4 shadow rounded h-[400px] overflow-auto">
-        <table className="w-full border">
-          <thead>
-            <tr className="bg-gray-200">
-              <th className="border p-2">STT</th>
-              <th className="border p-2">Mã phiếu xuất</th>
-              <th className="border p-2">Người tạo</th>
-              <th className="border p-2">Thời gian tạo</th>
-              <th className="border p-2">Tổng tiền</th>
-            </tr>
-          </thead>
-          <tbody>
-            {receipts.map((receipt, index) => (
-              <tr key={receipt.id} className="border">
-                <td className="border p-2 text-center">{index + 1}</td>
-                <td className="border p-2 text-center">{receipt.id}</td>
-                <td className="border p-2 text-center">{receipt.creator}</td>
-                <td className="border p-2 text-center">{receipt.date}</td>
-                <td className="border p-2 text-right">
-                  {receipt.total.toLocaleString()}đ
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="bg-white p-4 shadow rounded">
+        <Table
+          dataSource={filteredReceipts}
+          columns={columns}
+          rowKey="id"
+          pagination={{ pageSize: 5 }}
+          bordered
+        />
       </div>
     </div>
   );

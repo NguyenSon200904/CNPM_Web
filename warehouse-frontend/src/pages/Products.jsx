@@ -1,6 +1,12 @@
 import { useState, useEffect } from "react";
 import { Button, Input, Select, Table } from "antd";
-import { FileExcelOutlined } from "@ant-design/icons";
+import {
+  PlusOutlined,
+  FileExcelOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  EyeOutlined,
+} from "@ant-design/icons";
 
 const { Option } = Select;
 
@@ -76,6 +82,46 @@ const Product = () => {
       storage: "512 GB",
       type: "Laptop",
     },
+    {
+      id: "LP19",
+      name: "Laptop Lenovo IdeaPad 5 Pro 16IAH7",
+      quantity: 3,
+      price: 22490000,
+      cpu: "Intel Core i5 12500H",
+      ram: "16 GB",
+      storage: "512 GB",
+      type: "Laptop",
+    },
+    {
+      id: "LP20",
+      name: "Laptop Lenovo IdeaPad 5 Pro 16IAH7",
+      quantity: 3,
+      price: 22490000,
+      cpu: "Intel Core i5 12500H",
+      ram: "16 GB",
+      storage: "512 GB",
+      type: "Laptop",
+    },
+    {
+      id: "LP21",
+      name: "Laptop Lenovo IdeaPad 5 Pro 16IAH7",
+      quantity: 3,
+      price: 22490000,
+      cpu: "Intel Core i5 12500H",
+      ram: "16 GB",
+      storage: "512 GB",
+      type: "Laptop",
+    },
+    {
+      id: "LP22",
+      name: "Laptop Lenovo IdeaPad 5 Pro 16IAH7",
+      quantity: 3,
+      price: 22490000,
+      cpu: "Intel Core i5 12500H",
+      ram: "16 GB",
+      storage: "512 GB",
+      type: "Laptop",
+    },
   ]);
 
   const filteredData = data.filter((item) =>
@@ -138,27 +184,48 @@ const Product = () => {
 
         {/* Nhóm chức năng */}
         <div className="flex flex-wrap gap-2">
-          <Button type="primary" className="min-w-[100px]  h-[50px]">
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            className="min-w-[100px]  h-[50px]"
+          >
             Thêm
           </Button>
-          <Button className="min-w-[100px] h-[50px]">Sửa</Button>
-          <Button danger className="min-w-[100px] h-[50px]">
+          <Button
+            type="primary"
+            icon={<EditOutlined />}
+            className="min-w-[100px]  h-[50px]"
+          >
+            Sửa
+          </Button>
+          <Button
+            type="primary"
+            danger
+            icon={<DeleteOutlined />}
+            className="min-w-[100px]  h-[50px]"
+          >
             Xóa
           </Button>
           {!isMobile && (
             <>
-              <Button className="min-w-[100px] h-[50px]">Xem chi tiết</Button>
               <Button
-                icon={<FileExcelOutlined />}
                 type="primary"
-                className="min-w-[120px] h-[50px]"
+                icon={<EyeOutlined />}
+                className="min-w-[100px]  h-[50px]"
+              >
+                Xem chi tiết
+              </Button>
+              <Button
+                type="primary"
+                icon={<FileExcelOutlined />}
+                className="min-w-[100px]  h-[50px]"
               >
                 Xuất Excel
               </Button>
               <Button
-                icon={<FileExcelOutlined />}
                 type="primary"
-                className="min-w-[120px] h-[50px]"
+                icon={<FileExcelOutlined />}
+                className="min-w-[100px]  h-[50px]"
               >
                 Nhập Excel
               </Button>
@@ -171,7 +238,7 @@ const Product = () => {
       <Table
         dataSource={filteredData}
         columns={columns}
-        pagination={{ pageSize: 5 }}
+        pagination={{ pageSize: 7 }}
         rowKey="id"
         bordered
       />

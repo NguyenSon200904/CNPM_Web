@@ -1,0 +1,16 @@
+/* ../assets/Sidebar.css */
+.custom-menu-icon {
+  stroke: green; /* Làm trong suốt các gạch kẻ */
+}
+
+.custom-menu-icon:hover {
+  stroke: white !important; /* Khi hover, gạch kẻ có thể trở lại màu trắng (tùy chọn) */
+}
+
+.toggle-button {
+  background-color: white; /* Thêm background trắng */
+}
+
+.toggle-button:hover {
+  background-color: #e5e5e5; /* Hiệu ứng hover nhẹ (xám nhạt) */
+}

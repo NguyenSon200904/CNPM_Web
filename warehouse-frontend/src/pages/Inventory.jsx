@@ -30,6 +30,61 @@ const Inventory = () => {
       gpu: "NVIDIA RTX 3050",
       origin: "China",
     },
+    {
+      id: "LP16",
+      name: "Laptop Lenovo IdeaPad 5 Pro 16IAH7",
+      quantity: 3,
+      price: 22490000,
+      cpu: "Intel Core i5 12500H",
+      ram: "16 GB",
+      storage: "512 GB",
+      gpu: "NVIDIA RTX 3050",
+      origin: "China",
+    },
+    {
+      id: "LP17",
+      name: "Laptop Lenovo IdeaPad 5 Pro 16IAH7",
+      quantity: 3,
+      price: 22490000,
+      cpu: "Intel Core i5 12500H",
+      ram: "16 GB",
+      storage: "512 GB",
+      gpu: "NVIDIA RTX 3050",
+      origin: "China",
+    },
+    {
+      id: "LP18",
+      name: "Laptop Lenovo IdeaPad 5 Pro 16IAH7",
+      quantity: 3,
+      price: 22490000,
+      cpu: "Intel Core i5 12500H",
+      ram: "16 GB",
+      storage: "512 GB",
+      gpu: "NVIDIA RTX 3050",
+      origin: "China",
+    },
+    {
+      id: "LP19",
+      name: "Laptop Lenovo IdeaPad 5 Pro 16IAH7",
+      quantity: 3,
+      price: 22490000,
+      cpu: "Intel Core i5 12500H",
+      ram: "16 GB",
+      storage: "512 GB",
+      gpu: "NVIDIA RTX 3050",
+      origin: "China",
+    },
+    {
+      id: "LP20",
+      name: "Laptop Gaming Acer Nitro 5",
+      quantity: 3,
+      price: 22490000,
+      cpu: "Intel Core i5 12500H",
+      ram: "16 GB",
+      storage: "512 GB",
+      gpu: "NVIDIA RTX 3050",
+      origin: "China",
+    },
   ]);
 
   const _updateData = (newData) => {
@@ -59,7 +114,7 @@ const Inventory = () => {
 
   return (
     <div className="p-4">
-      <h2 className="text-2xl font-bold mb-4">Quản lý tồn kho</h2>
+      {/* <h2 className="text-2xl font-bold mb-4">Quản lý tồn kho</h2> */}
 
       {/* Tìm kiếm và xuất Excel */}
       <div className="flex gap-4 mb-4 items-center">
@@ -96,7 +151,7 @@ const Inventory = () => {
         dataSource={filteredData}
         columns={columns}
         rowKey="id"
-        pagination={{ pageSize: 10 }}
+        pagination={{ pageSize: 7 }}
       />
     </div>
   );
