@@ -1,32 +1,53 @@
 package com.example.warehouse.service;
 
+import com.example.warehouse.dto.ProductDTO;
 import com.example.warehouse.model.Product;
 import com.example.warehouse.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class ProductService {
-
     @Autowired
     private ProductRepository productRepository;
 
-    public List<Product> getAllProducts() {
-        return productRepository.findAll();
+    public List<ProductDTO> getAllProducts() {
+        return productRepository.findAll().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
-    public Product getProductById(Long id) {
-        return productRepository.findById(id).orElse(null);
+    public List<ProductDTO> getInventory() {
+        return productRepository.findAll().stream()
+                .filter(product -> product.getSoLuong() > 0)
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
-    public Product saveProduct(Product product) {
-        return productRepository.save(product);
+    public long getTotalProducts() {
+        return productRepository.count(); // Sử dụng phương thức count() của JpaRepository
     }
 
-    public void deleteProduct(Long id) {
-        productRepository.deleteById(id);
+    private ProductDTO convertToDTO(Product product) {
+        ProductDTO dto = new ProductDTO();
+        dto.setMaMay(product.getMaMay());
+        dto.setTenMay(product.getTenMay());
+        dto.setSoLuong(product.getSoLuong());
+        dto.setTenCpu(product.getTenCpu());
+        dto.setRam(product.getRam());
+        dto.setCardManHinh(product.getCardManHinh());
+        dto.setGia(product.getGia());
+        dto.setMainBoard(product.getMainBoard());
+        dto.setCongSuatNguon(product.getCongSuatNguon());
+        dto.setLoaiMay(product.getLoaiMay());
+        dto.setRom(product.getRom());
+        dto.setKichThuocMan(product.getKichThuocMan());
+        dto.setDungLuongPin(product.getDungLuongPin());
+        dto.setXuatXu(product.getXuatXu());
+        dto.setTrangThai(product.getTrangThai());
+        return dto;
     }
 }

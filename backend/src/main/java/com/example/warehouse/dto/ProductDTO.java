@@ -1,13 +1,9 @@
-package com.example.warehouse.model;
+package com.example.warehouse.dto;
 
-import jakarta.persistence.*;
 import lombok.Data;
 
-@Entity
-@Table(name = "MayTinh")
 @Data
-public class Product {
-    @Id
+public class ProductDTO {
     private String maMay;
     private String tenMay;
     private int soLuong;
