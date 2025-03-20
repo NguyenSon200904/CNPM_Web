@@ -7,11 +7,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface AccountRepository extends JpaRepository<Account, String> {
-    // Tìm tài khoản theo userName
-    Account findByUserName(String userName);
-
     // Tìm tài khoản theo userName, trả về Optional
-    Optional<Account> findByUserNameOptional(String userName);
+    Optional<Account> findByUserName(String userName); // Sửa từ findByUserNameOptional thành findByUserName, xóa phương
+                                                       // thức cũ findByUserName
 
     // Tìm tài khoản theo email
     Optional<Account> findByEmail(String email);

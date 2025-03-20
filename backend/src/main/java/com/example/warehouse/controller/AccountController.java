@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/accounts")
@@ -25,11 +26,11 @@ public class AccountController {
     // Lấy tài khoản theo userName
     @GetMapping("/{userName}")
     public ResponseEntity<Account> getAccountByUserName(@PathVariable String userName) {
-        Account account = accountService.findByUserName(userName);
-        if (account == null) {
+        Optional<Account> accountOptional = accountService.findByUserName(userName);
+        if (accountOptional.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(account);
+        return ResponseEntity.ok(accountOptional.get());
     }
 
     // Lấy danh sách tài khoản theo role
@@ -49,7 +50,8 @@ public class AccountController {
     // Tạo tài khoản mới
     @PostMapping
     public ResponseEntity<Account> createAccount(@RequestBody Account account) {
-        if (accountService.existsByUserName(account.getUserName()) || accountService.existsByEmail(account.getEmail())) {
+        if (accountService.existsByUserName(account.getUserName())
+                || accountService.existsByEmail(account.getEmail())) {
             return ResponseEntity.badRequest().build();
         }
         Account savedAccount = accountService.save(account);
