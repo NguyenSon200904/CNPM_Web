@@ -22,7 +22,7 @@ public class ExportReceipt {
     private LocalDateTime thoiGianTao;
 
     @ManyToOne
-    @JoinColumn(name = "nguoiTao", referencedColumnName = "userName", nullable = false)
+    @JoinColumn(name = "nguoiTao", referencedColumnName = "user_name", nullable = false)
     private Account account;
 
     @Column(name = "tongTien", nullable = false)

@@ -22,7 +22,7 @@ public class Receipt {
     private Supplier supplier;
 
     @ManyToOne
-    @JoinColumn(name = "nguoiTao", referencedColumnName = "userName")
+    @JoinColumn(name = "nguoiTao", referencedColumnName = "user_name")
     private Account account;
 
     @Column(name = "tongTien", nullable = false)
