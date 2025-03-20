@@ -34,6 +34,11 @@ public class ReceiptService {
         return receiptRepository.findByThoiGianTaoBetween(start, end);
     }
 
+    // Thêm phương thức findByNgayNhapBetween
+    public List<Receipt> findByNgayNhapBetween(LocalDateTime start, LocalDateTime end) {
+        return receiptRepository.findByThoiGianTaoBetween(start, end);
+    }
+
     // Lấy tất cả phiếu nhập
     public List<Receipt> findAll() {
         return receiptRepository.findAll();

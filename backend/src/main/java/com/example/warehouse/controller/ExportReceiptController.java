@@ -24,36 +24,36 @@ public class ExportReceiptController {
         return ResponseEntity.ok(exportReceipts);
     }
 
-    // Lấy phiếu xuất theo maPhieu
-    @GetMapping("/{maPhieu}")
-    public ResponseEntity<ExportReceipt> getExportReceiptByMaPhieu(@PathVariable String maPhieu) {
-        ExportReceipt exportReceipt = exportReceiptService.findByMaPhieu(maPhieu);
+    // Lấy phiếu xuất theo maPhieuXuat
+    @GetMapping("/{maPhieuXuat}")
+    public ResponseEntity<ExportReceipt> getExportReceiptByMaPhieuXuat(@PathVariable Long maPhieuXuat) {
+        ExportReceipt exportReceipt = exportReceiptService.findByMaPhieuXuat(maPhieuXuat);
         if (exportReceipt == null) {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(exportReceipt);
     }
 
-    // Lấy danh sách phiếu xuất theo nguoiTao
-    @GetMapping("/nguoi-tao/{nguoiTao}")
-    public ResponseEntity<List<ExportReceipt>> getExportReceiptsByNguoiTao(@PathVariable String nguoiTao) {
-        List<ExportReceipt> exportReceipts = exportReceiptService.findByNguoiTao(nguoiTao);
+    // Lấy danh sách phiếu xuất theo userName
+    @GetMapping("/nguoi-tao/{userName}")
+    public ResponseEntity<List<ExportReceipt>> getExportReceiptsByAccountUserName(@PathVariable String userName) {
+        List<ExportReceipt> exportReceipts = exportReceiptService.findByAccountUserName(userName);
         return ResponseEntity.ok(exportReceipts);
     }
 
     // Lấy danh sách phiếu xuất theo khoảng thời gian
     @GetMapping("/time-range")
-    public ResponseEntity<List<ExportReceipt>> getExportReceiptsByTimeRange(
+    public ResponseEntity<List<ExportReceipt>> getExportReceiptsByNgayXuatBetween(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
-        List<ExportReceipt> exportReceipts = exportReceiptService.findByThoiGianTaoBetween(start, end);
+        List<ExportReceipt> exportReceipts = exportReceiptService.findByNgayXuatBetween(start, end);
         return ResponseEntity.ok(exportReceipts);
     }
 
     // Tạo phiếu xuất mới
     @PostMapping
     public ResponseEntity<ExportReceipt> createExportReceipt(@RequestBody ExportReceipt exportReceipt) {
-        if (exportReceiptService.existsByMaPhieu(exportReceipt.getMaPhieu())) {
+        if (exportReceiptService.existsByMaPhieuXuat(exportReceipt.getMaPhieuXuat())) {
             return ResponseEntity.badRequest().build();
         }
         ExportReceipt savedExportReceipt = exportReceiptService.save(exportReceipt);
@@ -61,23 +61,24 @@ public class ExportReceiptController {
     }
 
     // Cập nhật phiếu xuất
-    @PutMapping("/{maPhieu}")
-    public ResponseEntity<ExportReceipt> updateExportReceipt(@PathVariable String maPhieu, @RequestBody ExportReceipt exportReceipt) {
-        if (!exportReceiptService.existsByMaPhieu(maPhieu)) {
+    @PutMapping("/{maPhieuXuat}")
+    public ResponseEntity<ExportReceipt> updateExportReceipt(@PathVariable Long maPhieuXuat,
+            @RequestBody ExportReceipt exportReceipt) {
+        if (!exportReceiptService.existsByMaPhieuXuat(maPhieuXuat)) {
             return ResponseEntity.notFound().build();
         }
-        exportReceipt.setMaPhieu(maPhieu);
+        exportReceipt.setMaPhieuXuat(maPhieuXuat);
         ExportReceipt updatedExportReceipt = exportReceiptService.save(exportReceipt);
         return ResponseEntity.ok(updatedExportReceipt);
     }
 
     // Xóa phiếu xuất
-    @DeleteMapping("/{maPhieu}")
-    public ResponseEntity<Void> deleteExportReceipt(@PathVariable String maPhieu) {
-        if (!exportReceiptService.existsByMaPhieu(maPhieu)) {
+    @DeleteMapping("/{maPhieuXuat}")
+    public ResponseEntity<Void> deleteExportReceipt(@PathVariable Long maPhieuXuat) {
+        if (!exportReceiptService.existsByMaPhieuXuat(maPhieuXuat)) {
             return ResponseEntity.notFound().build();
         }
-        exportReceiptService.deleteByMaPhieu(maPhieu);
+        exportReceiptService.deleteByMaPhieuXuat(maPhieuXuat);
         return ResponseEntity.noContent().build();
     }
 }

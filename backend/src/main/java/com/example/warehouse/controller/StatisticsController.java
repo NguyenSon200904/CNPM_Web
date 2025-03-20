@@ -48,10 +48,10 @@ public class StatisticsController {
 
     // Thống kê phiếu nhập theo khoảng thời gian
     @GetMapping("/receipts/time-range")
-    public ResponseEntity<Map<String, Object>> getReceiptStatsByTimeRange(
+    public ResponseEntity<Map<String, Object>> getReceiptStatsByNgayNhapBetween(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
-        List<Receipt> receipts = receiptService.findByThoiGianTaoBetween(start, end);
+        List<Receipt> receipts = receiptService.findByNgayNhapBetween(start, end);
 
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalReceipts", receipts.size());
@@ -62,10 +62,10 @@ public class StatisticsController {
 
     // Thống kê phiếu xuất theo khoảng thời gian
     @GetMapping("/export-receipts/time-range")
-    public ResponseEntity<Map<String, Object>> getExportReceiptStatsByTimeRange(
+    public ResponseEntity<Map<String, Object>> getExportReceiptStatsByNgayXuatBetween(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
-        List<ExportReceipt> exportReceipts = exportReceiptService.findByThoiGianTaoBetween(start, end);
+        List<ExportReceipt> exportReceipts = exportReceiptService.findByNgayXuatBetween(start, end);
 
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalExportReceipts", exportReceipts.size());

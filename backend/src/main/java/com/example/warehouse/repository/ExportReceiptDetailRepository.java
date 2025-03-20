@@ -14,5 +14,5 @@ public interface ExportReceiptDetailRepository extends JpaRepository<ExportRecei
     List<ExportReceiptDetail> findByIdMaSanPham(String maSanPham);
 
     // Kiểm tra xem một sản phẩm đã tồn tại trong phiếu xuất hay chưa
-    boolean existsByIdMaPhieuAndIdMaSanPham(String maPhieu, String maSanPham);
+    boolean existsByIdMaPhieuAndIdMaSanPham(Long maPhieu, String maSanPham);
 }

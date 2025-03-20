@@ -4,10 +4,6 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Data;
 
-/**
- * Entity representing an ExportReceiptDetail (ChiTietPhieuXuat) in the
- * warehouse system.
- */
 @Entity
 @Table(name = "chitietphieuxuat")
 @Data
@@ -16,8 +12,8 @@ public class ExportReceiptDetail {
     private ExportReceiptDetailId id;
 
     @ManyToOne
-    @MapsId("maPhieu")
-    @JoinColumn(name = "maPhieu", nullable = false)
+    @MapsId("maPhieuXuat") // Đổi từ maPhieu thành maPhieuXuat
+    @JoinColumn(name = "ma_phieu_xuat", nullable = false)
     @JsonBackReference
     private ExportReceipt exportReceipt;
 

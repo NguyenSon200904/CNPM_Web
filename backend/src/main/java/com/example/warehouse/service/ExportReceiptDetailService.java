@@ -45,7 +45,7 @@ public class ExportReceiptDetailService {
     }
 
     // Kiểm tra xem một sản phẩm đã tồn tại trong phiếu xuất hay chưa
-    public boolean existsByMaPhieuAndMaSanPham(String maPhieu, String maSanPham) {
+    public boolean existsByMaPhieuAndMaSanPham(Long maPhieu, String maSanPham) {
         return exportReceiptDetailRepository.existsByIdMaPhieuAndIdMaSanPham(maPhieu, maSanPham);
     }
 }

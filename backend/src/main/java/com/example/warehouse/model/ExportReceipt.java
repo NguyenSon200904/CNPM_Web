@@ -1,5 +1,6 @@
 package com.example.warehouse.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -15,26 +16,20 @@ import java.util.List;
 @Data
 public class ExportReceipt {
     @Id
-    @Column(name = "maPhieu", nullable = false, length = 50)
-    private String maPhieu;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "ma_phieu_xuat", nullable = false)
+    private Long maPhieuXuat; // Sửa từ maPhieu (String) thành maPhieuXuat (Long)
 
-    @Column(name = "thoiGianTao")
-    private LocalDateTime thoiGianTao;
+    @Column(name = "ngay_xuat")
+    private LocalDateTime ngayXuat; // Sửa từ thoiGianTao thành ngayXuat
 
     @ManyToOne
-    @JoinColumn(name = "nguoiTao", referencedColumnName = "user_name", nullable = false)
+    @JoinColumn(name = "nguoi_tao", referencedColumnName = "user_name", nullable = false)
+    @JsonBackReference
     private Account account;
 
-    @Column(name = "tongTien", nullable = false)
+    @Column(name = "tong_tien", nullable = false)
     private double tongTien;
-
-    public void setTongTien(double tongTien) {
-        this.tongTien = Math.round(tongTien * 100) / 100.0;
-    };
-
-    public double getTongTien() {
-        return Math.round(tongTien * 100) / 100.0;
-    };
 
     @OneToMany(mappedBy = "exportReceipt", cascade = CascadeType.ALL)
     @JsonManagedReference
