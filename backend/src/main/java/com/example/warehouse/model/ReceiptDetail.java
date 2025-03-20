@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 @Entity
-@Table(name = "ChiTietPhieuNhap")
+@Table(name = "chitietphieunhap")
 @Data
 public class ReceiptDetail {
     @EmbeddedId

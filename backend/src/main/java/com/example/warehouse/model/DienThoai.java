@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 @Entity
-@Table(name = "DienThoai")
+@Table(name = "dienthoai")
 @Data
 public class DienThoai extends Product {
     @Column(name = "tenDienThoai", nullable = false)

@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "PhieuNhap")
+@Table(name = "phieunhap")
 @Data
 public class Receipt {
     @Id
@@ -27,6 +27,14 @@ public class Receipt {
 
     @Column(name = "tongTien", nullable = false)
     private double tongTien;
+
+    public double getTongTien() {
+        return tongTien;
+    }
+
+    public void setTongTien(double tongTien) {
+        this.tongTien = tongTien;
+    }
 
     @OneToMany(mappedBy = "receipt", cascade = CascadeType.ALL)
     @JsonManagedReference

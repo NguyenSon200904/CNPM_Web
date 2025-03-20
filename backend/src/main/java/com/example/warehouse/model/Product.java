@@ -4,13 +4,19 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 @Entity
-@Table(name = "SanPham")
+@Table(name = "sanpham")
 @Inheritance(strategy = InheritanceType.JOINED)
 @Data
 public abstract class Product {
     @Id
     @Column(name = "maSanPham", nullable = false, length = 50)
     private String maSanPham;
+    public String getMaSanPham() {
+        return maSanPham;
+    };
+    public void setMaSanPham(String maSanPham) {
+        this.maSanPham = maSanPham;
+    };
 
     @Column(name = "tenSanPham")
     private String tenSanPham;

@@ -3,18 +3,20 @@ package com.example.warehouse.model;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.util.List;
 
 @Entity
-@Table(name = "Account")
+@Table(name = "account") // Đổi "Account" thành "account" (theo chuẩn viết thường trong database)
 @Data
+@EqualsAndHashCode(callSuper = false) // Tắt cảnh báo Lombok
 public class Account {
     @Id
-    @Column(name = "userName", nullable = false, length = 50)
+    @Column(name = "user_name", nullable = false, length = 50)
     private String userName;
 
-    @Column(name = "fullName", length = 50)
+    @Column(name = "full_name", length = 50)
     private String fullName;
 
     @Column(name = "password", length = 60)

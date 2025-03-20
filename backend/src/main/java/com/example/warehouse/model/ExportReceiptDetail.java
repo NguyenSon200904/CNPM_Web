@@ -5,10 +5,11 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 /**
- * Entity representing an ExportReceiptDetail (ChiTietPhieuXuat) in the warehouse system.
+ * Entity representing an ExportReceiptDetail (ChiTietPhieuXuat) in the
+ * warehouse system.
  */
 @Entity
-@Table(name = "ChiTietPhieuXuat")
+@Table(name = "chitietphieuxuat")
 @Data
 public class ExportReceiptDetail {
     @EmbeddedId
