@@ -4,23 +4,29 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 @Entity
-@Table(name = "MayTinh")
+@Table(name = "SanPham")
+@Inheritance(strategy = InheritanceType.JOINED)
 @Data
-public class Product {
+public abstract class Product {
     @Id
-    private String maMay;
-    private String tenMay;
+    @Column(name = "maSanPham", nullable = false, length = 50)
+    private String maSanPham;
+
+    @Column(name = "tenSanPham")
+    private String tenSanPham;
+
+    @Column(name = "soLuong", nullable = false)
     private int soLuong;
-    private String tenCpu;
-    private String ram;
-    private String cardManHinh;
+
+    @Column(name = "gia", nullable = false)
     private double gia;
-    private String mainBoard;
-    private Integer congSuatNguon;
-    private String loaiMay;
-    private String rom;
-    private Double kichThuocMan;
-    private String dungLuongPin;
+
+    @Column(name = "xuatXu", length = 50)
     private String xuatXu;
+
+    @Column(name = "trangThai")
     private Integer trangThai;
+
+    @Column(name = "loaiSanPham", length = 20)
+    private String loaiSanPham;
 }

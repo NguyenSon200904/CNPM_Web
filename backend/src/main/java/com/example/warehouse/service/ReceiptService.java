@@ -1,38 +1,56 @@
 package com.example.warehouse.service;
 
-import com.example.warehouse.dto.ReceiptDTO;
 import com.example.warehouse.model.Receipt;
 import com.example.warehouse.repository.ReceiptRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class ReceiptService {
+
     @Autowired
     private ReceiptRepository receiptRepository;
 
-    public List<ReceiptDTO> getAllReceipts() {
-        return receiptRepository.findAll().stream().map(this::convertToDTO).collect(Collectors.toList());
+    // Lấy phiếu nhập theo maPhieu
+    public Receipt findByMaPhieu(String maPhieu) {
+        return receiptRepository.findById(maPhieu).orElse(null);
     }
 
-    private ReceiptDTO convertToDTO(Receipt receipt) {
-        ReceiptDTO dto = new ReceiptDTO();
-        dto.setMaPhieu(receipt.getMaPhieu());
-        dto.setThoiGianTao(receipt.getThoiGianTao());
-        dto.setNguoiTao(receipt.getNguoiTao());
-        dto.setMaNhaCungCap(receipt.getMaNhaCungCap());
-        dto.setTongTien(receipt.getTongTien());
-        return dto;
+    // Lấy danh sách phiếu nhập theo nguoiTao
+    public List<Receipt> findByNguoiTao(String nguoiTao) {
+        return receiptRepository.findByNguoiTaoUserName(nguoiTao);
     }
-    public double getTotalImportValue() {
-        return receiptRepository.findAll().stream()
-                .mapToDouble(Receipt::getTongTien)
-                .sum();
+
+    // Lấy danh sách phiếu nhập theo maNhaCungCap
+    public List<Receipt> findByMaNhaCungCap(String maNhaCungCap) {
+        return receiptRepository.findByNhaCungCapMaNhaCungCap(maNhaCungCap);
     }
-    public long getTotalReceipts() {
-        return receiptRepository.count();
+
+    // Lấy danh sách phiếu nhập theo khoảng thời gian
+    public List<Receipt> findByThoiGianTaoBetween(LocalDateTime start, LocalDateTime end) {
+        return receiptRepository.findByThoiGianTaoBetween(start, end);
+    }
+
+    // Lấy tất cả phiếu nhập
+    public List<Receipt> findAll() {
+        return receiptRepository.findAll();
+    }
+
+    // Lưu hoặc cập nhật phiếu nhập
+    public Receipt save(Receipt receipt) {
+        return receiptRepository.save(receipt);
+    }
+
+    // Xóa phiếu nhập theo maPhieu
+    public void deleteByMaPhieu(String maPhieu) {
+        receiptRepository.deleteById(maPhieu);
+    }
+
+    // Kiểm tra xem phiếu nhập có tồn tại hay không
+    public boolean existsByMaPhieu(String maPhieu) {
+        return receiptRepository.existsByMaPhieu(maPhieu);
     }
 }

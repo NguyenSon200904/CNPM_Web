@@ -1,37 +1,51 @@
 package com.example.warehouse.service;
 
-import com.example.warehouse.dto.ExportReceiptDTO;
 import com.example.warehouse.model.ExportReceipt;
 import com.example.warehouse.repository.ExportReceiptRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class ExportReceiptService {
+
     @Autowired
     private ExportReceiptRepository exportReceiptRepository;
 
-    public List<ExportReceiptDTO> getAllExportReceipts() {
-        return exportReceiptRepository.findAll().stream().map(this::convertToDTO).collect(Collectors.toList());
+    // Lấy phiếu xuất theo maPhieu
+    public ExportReceipt findByMaPhieu(String maPhieu) {
+        return exportReceiptRepository.findById(maPhieu).orElse(null);
     }
 
-    private ExportReceiptDTO convertToDTO(ExportReceipt receipt) {
-        ExportReceiptDTO dto = new ExportReceiptDTO();
-        dto.setMaPhieu(receipt.getMaPhieu());
-        dto.setThoiGianTao(receipt.getThoiGianTao());
-        dto.setNguoiTao(receipt.getNguoiTao());
-        dto.setTongTien(receipt.getTongTien());
-        return dto;
+    // Lấy danh sách phiếu xuất theo nguoiTao
+    public List<ExportReceipt> findByNguoiTao(String nguoiTao) {
+        return exportReceiptRepository.findByNguoiTaoUserName(nguoiTao);
     }
-    public double getTotalExportValue() {
-        return exportReceiptRepository.findAll().stream()
-                .mapToDouble(ExportReceipt::getTongTien)
-                .sum();
+
+    // Lấy danh sách phiếu xuất theo khoảng thời gian
+    public List<ExportReceipt> findByThoiGianTaoBetween(LocalDateTime start, LocalDateTime end) {
+        return exportReceiptRepository.findByThoiGianTaoBetween(start, end);
     }
-    public long getTotalExportReceipts() {
-        return exportReceiptRepository.count();
+
+    // Lấy tất cả phiếu xuất
+    public List<ExportReceipt> findAll() {
+        return exportReceiptRepository.findAll();
+    }
+
+    // Lưu hoặc cập nhật phiếu xuất
+    public ExportReceipt save(ExportReceipt exportReceipt) {
+        return exportReceiptRepository.save(exportReceipt);
+    }
+
+    // Xóa phiếu xuất theo maPhieu
+    public void deleteByMaPhieu(String maPhieu) {
+        exportReceiptRepository.deleteById(maPhieu);
+    }
+
+    // Kiểm tra xem phiếu xuất có tồn tại hay không
+    public boolean existsByMaPhieu(String maPhieu) {
+        return exportReceiptRepository.existsByMaPhieu(maPhieu);
     }
 }

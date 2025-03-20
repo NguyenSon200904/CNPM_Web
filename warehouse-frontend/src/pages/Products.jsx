@@ -7,157 +7,136 @@ import {
   EditOutlined,
   EyeOutlined,
 } from "@ant-design/icons";
+import axios from "axios";
 
 const { Option } = Select;
 
 const Product = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterBy, setFilterBy] = useState("id");
+  const [loaiSanPham, setLoaiSanPham] = useState("MAY_TINH"); // Mặc định là Máy Tính
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(false);
 
+  // Lấy dữ liệu từ backend khi loaiSanPham thay đổi
   useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const response = await axios.get("http://localhost:8080/api/products", {
+          params: { loaiSanPham },
+        });
+        setData(response.data);
+      } catch (error) {
+        console.error("Lỗi khi lấy dữ liệu:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  }, [loaiSanPham]);
 
-  const [data, setData] = useState([
-    {
-      id: "LP13",
-      name: "Laptop HP 15s",
-      quantity: 18,
-      price: 9990000,
-      cpu: "i3 1115G4",
-      ram: "4 GB",
-      storage: "256 GB",
-      type: "Laptop",
-    },
-    {
-      id: "LP14",
-      name: "Laptop Lenovo IdeaPad",
-      quantity: 3,
-      price: 22490000,
-      cpu: "i5 12500H",
-      ram: "16 GB",
-      storage: "512 GB",
-      type: "Laptop",
-    },
-    {
-      id: "LP15",
-      name: "Laptop Lenovo IdeaPad 5 Pro 16IAH7",
-      quantity: 3,
-      price: 22490000,
-      cpu: "Intel Core i5 12500H",
-      ram: "16 GB",
-      storage: "512 GB",
-      type: "Laptop",
-    },
-    {
-      id: "LP16",
-      name: "Laptop Lenovo IdeaPad 5 Pro 16IAH7",
-      quantity: 3,
-      price: 22490000,
-      cpu: "Intel Core i5 12500H",
-      ram: "16 GB",
-      storage: "512 GB",
-      type: "Laptop",
-    },
-    {
-      id: "LP17",
-      name: "Laptop Lenovo IdeaPad 5 Pro 16IAH7",
-      quantity: 3,
-      price: 22490000,
-      cpu: "Intel Core i5 12500H",
-      ram: "16 GB",
-      storage: "512 GB",
-      type: "Laptop",
-    },
-    {
-      id: "LP18",
-      name: "Laptop Lenovo IdeaPad 5 Pro 16IAH7",
-      quantity: 3,
-      price: 22490000,
-      cpu: "Intel Core i5 12500H",
-      ram: "16 GB",
-      storage: "512 GB",
-      type: "Laptop",
-    },
-    {
-      id: "LP19",
-      name: "Laptop Lenovo IdeaPad 5 Pro 16IAH7",
-      quantity: 3,
-      price: 22490000,
-      cpu: "Intel Core i5 12500H",
-      ram: "16 GB",
-      storage: "512 GB",
-      type: "Laptop",
-    },
-    {
-      id: "LP20",
-      name: "Laptop Lenovo IdeaPad 5 Pro 16IAH7",
-      quantity: 3,
-      price: 22490000,
-      cpu: "Intel Core i5 12500H",
-      ram: "16 GB",
-      storage: "512 GB",
-      type: "Laptop",
-    },
-    {
-      id: "LP21",
-      name: "Laptop Lenovo IdeaPad 5 Pro 16IAH7",
-      quantity: 3,
-      price: 22490000,
-      cpu: "Intel Core i5 12500H",
-      ram: "16 GB",
-      storage: "512 GB",
-      type: "Laptop",
-    },
-    {
-      id: "LP22",
-      name: "Laptop Lenovo IdeaPad 5 Pro 16IAH7",
-      quantity: 3,
-      price: 22490000,
-      cpu: "Intel Core i5 12500H",
-      ram: "16 GB",
-      storage: "512 GB",
-      type: "Laptop",
-    },
-  ]);
-
+  // Lọc dữ liệu dựa trên từ khóa tìm kiếm
   const filteredData = data.filter((item) =>
-    item[filterBy].toString().toLowerCase().includes(searchTerm.toLowerCase())
+    item[filterBy]?.toString().toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Cấu hình cột bảng động dựa trên loaiSanPham
   const columns = [
-    { title: "Mã máy", dataIndex: "id", key: "id", responsive: ["sm"] },
-    { title: "Tên máy", dataIndex: "name", key: "name" },
-    { title: "Số lượng", dataIndex: "quantity", key: "quantity" },
+    {
+      title: "Mã sản phẩm",
+      dataIndex: "maSanPham",
+      key: "maSanPham",
+      responsive: ["sm"],
+    },
+    { title: "Tên sản phẩm", dataIndex: "tenSanPham", key: "tenSanPham" },
+    { title: "Số lượng", dataIndex: "soLuong", key: "soLuong" },
     {
       title: "Đơn giá",
-      dataIndex: "price",
-      key: "price",
-      render: (price) => `${price.toLocaleString()}đ`,
+      dataIndex: "gia",
+      key: "gia",
+      render: (gia) => `${gia.toLocaleString()}đ`,
     },
-    { title: "Bộ xử lý", dataIndex: "cpu", key: "cpu", responsive: ["md"] },
-    { title: "RAM", dataIndex: "ram", key: "ram", responsive: ["md"] },
+    ...(loaiSanPham === "MAY_TINH"
+      ? [
+          {
+            title: "CPU",
+            dataIndex: "tenCpu",
+            key: "tenCpu",
+            responsive: ["md"],
+          },
+          {
+            title: "Card màn hình",
+            dataIndex: "cardManHinh",
+            key: "cardManHinh",
+            responsive: ["md"],
+          },
+        ]
+      : [
+          {
+            title: "Hệ điều hành",
+            dataIndex: "heDieuHanh",
+            key: "heDieuHanh",
+            responsive: ["md"],
+          },
+          {
+            title: "Độ phân giải camera",
+            dataIndex: "doPhanGiaiCamera",
+            key: "doPhanGiaiCamera",
+            responsive: ["md"],
+          },
+        ]),
+    { title: "RAM", dataIndex: "ram", key: "ram", responsive: ["lg"] },
+    { title: "Bộ nhớ", dataIndex: "rom", key: "rom", responsive: ["lg"] },
     {
-      title: "Bộ nhớ",
-      dataIndex: "storage",
-      key: "storage",
+      title: "Loại sản phẩm",
+      dataIndex: "loaiSanPham",
+      key: "loaiSanPham",
       responsive: ["lg"],
     },
-    { title: "Loại máy", dataIndex: "type", key: "type", responsive: ["lg"] },
   ];
 
-  const _updateData = (newData) => {
-    setData(newData);
+  // Xử lý hành động (cơ bản, sẽ mở rộng sau)
+  const handleAdd = () => {
+    console.log("Thêm sản phẩm mới");
+    // Logic thêm sản phẩm (hiện tại chỉ log, cần form sau)
+  };
+
+  const handleEdit = () => {
+    console.log("Sửa sản phẩm");
+    // Logic sửa sản phẩm (cần chọn sản phẩm trước)
+  };
+
+  const handleDelete = () => {
+    console.log("Xóa sản phẩm");
+    // Logic xóa sản phẩm (cần chọn sản phẩm trước)
+  };
+
+  const handleViewDetail = () => {
+    console.log("Xem chi tiết sản phẩm");
+    // Logic xem chi tiết (cần chọn sản phẩm trước)
+  };
+
+  const handleExportExcel = () => {
+    console.log("Xuất Excel");
+    // Logic xuất Excel
+  };
+
+  const handleImportExcel = () => {
+    console.log("Nhập Excel");
+    // Logic nhập Excel
   };
 
   return (
     <div className="p-4">
-      {/* <h2 className="text-2xl font-bold mb-4">Quản lý sản phẩm</h2> */}
+      <h2 className="text-2xl font-bold mb-4">Quản lý sản phẩm</h2>
 
-      {/* Tìm kiếm & Bộ lọc */}
+      {/* Tìm kiếm, Bộ lọc và Chọn loại sản phẩm */}
       <div className="flex flex-wrap justify-between gap-2 mb-4">
         <div className="flex gap-2">
           <Input
@@ -169,16 +148,34 @@ const Product = () => {
           <Select
             value={filterBy}
             onChange={setFilterBy}
-            className="w-40  h-[50px]"
+            className="w-40 h-[50px]"
           >
-            <Option value="id">Mã máy</Option>
-            <Option value="name">Tên máy</Option>
-            <Option value="quantity">Số lượng</Option>
-            <Option value="price">Đơn giá</Option>
-            <Option value="cpu">Bộ xử lý</Option>
+            <Option value="maSanPham">Mã sản phẩm</Option>
+            <Option value="tenSanPham">Tên sản phẩm</Option>
+            <Option value="soLuong">Số lượng</Option>
+            <Option value="gia">Đơn giá</Option>
+            {loaiSanPham === "MAY_TINH" ? (
+              <>
+                <Option value="tenCpu">CPU</Option>
+                <Option value="cardManHinh">Card màn hình</Option>
+              </>
+            ) : (
+              <>
+                <Option value="heDieuHanh">Hệ điều hành</Option>
+                <Option value="doPhanGiaiCamera">Độ phân giải camera</Option>
+              </>
+            )}
             <Option value="ram">RAM</Option>
-            <Option value="storage">Bộ nhớ</Option>
-            <Option value="type">Loại máy</Option>
+            <Option value="rom">Bộ nhớ</Option>
+            <Option value="loaiSanPham">Loại sản phẩm</Option>
+          </Select>
+          <Select
+            value={loaiSanPham}
+            onChange={setLoaiSanPham}
+            className="w-40 h-[50px]"
+          >
+            <Option value="MAY_TINH">Máy Tính</Option>
+            <Option value="DIEN_THOAI">Điện Thoại</Option>
           </Select>
         </div>
 
@@ -187,14 +184,16 @@ const Product = () => {
           <Button
             type="primary"
             icon={<PlusOutlined />}
-            className="min-w-[100px]  h-[50px]"
+            className="min-w-[100px] h-[50px]"
+            onClick={handleAdd}
           >
             Thêm
           </Button>
           <Button
             type="primary"
             icon={<EditOutlined />}
-            className="min-w-[100px]  h-[50px]"
+            className="min-w-[100px] h-[50px]"
+            onClick={handleEdit}
           >
             Sửa
           </Button>
@@ -202,7 +201,8 @@ const Product = () => {
             type="primary"
             danger
             icon={<DeleteOutlined />}
-            className="min-w-[100px]  h-[50px]"
+            className="min-w-[100px] h-[50px]"
+            onClick={handleDelete}
           >
             Xóa
           </Button>
@@ -211,21 +211,24 @@ const Product = () => {
               <Button
                 type="primary"
                 icon={<EyeOutlined />}
-                className="min-w-[100px]  h-[50px]"
+                className="min-w-[100px] h-[50px]"
+                onClick={handleViewDetail}
               >
                 Xem chi tiết
               </Button>
               <Button
                 type="primary"
                 icon={<FileExcelOutlined />}
-                className="min-w-[100px]  h-[50px]"
+                className="min-w-[100px] h-[50px]"
+                onClick={handleExportExcel}
               >
                 Xuất Excel
               </Button>
               <Button
                 type="primary"
                 icon={<FileExcelOutlined />}
-                className="min-w-[100px]  h-[50px]"
+                className="min-w-[100px] h-[50px]"
+                onClick={handleImportExcel}
               >
                 Nhập Excel
               </Button>
@@ -239,8 +242,9 @@ const Product = () => {
         dataSource={filteredData}
         columns={columns}
         pagination={{ pageSize: 7 }}
-        rowKey="id"
+        rowKey="maSanPham"
         bordered
+        loading={loading}
       />
     </div>
   );

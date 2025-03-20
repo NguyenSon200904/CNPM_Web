@@ -1,53 +1,50 @@
 package com.example.warehouse.service;
 
-import com.example.warehouse.dto.ProductDTO;
 import com.example.warehouse.model.Product;
 import com.example.warehouse.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class ProductService {
+
     @Autowired
     private ProductRepository productRepository;
 
-    public List<ProductDTO> getAllProducts() {
-        return productRepository.findAll().stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    // Lấy sản phẩm theo maSanPham
+    public Product findByMaSanPham(String maSanPham) {
+        return productRepository.findById(maSanPham).orElse(null);
     }
 
-    public List<ProductDTO> getInventory() {
-        return productRepository.findAll().stream()
-                .filter(product -> product.getSoLuong() > 0)
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    // Lấy danh sách sản phẩm theo loaiSanPham
+    public List<Product> findByLoaiSanPham(String loaiSanPham) {
+        return productRepository.findByLoaiSanPham(loaiSanPham);
     }
 
-    public long getTotalProducts() {
-        return productRepository.count(); // Sử dụng phương thức count() của JpaRepository
+    // Lấy danh sách sản phẩm theo trangThai
+    public List<Product> findByTrangThai(Integer trangThai) {
+        return productRepository.findByTrangThai(trangThai);
     }
 
-    private ProductDTO convertToDTO(Product product) {
-        ProductDTO dto = new ProductDTO();
-        dto.setMaMay(product.getMaMay());
-        dto.setTenMay(product.getTenMay());
-        dto.setSoLuong(product.getSoLuong());
-        dto.setTenCpu(product.getTenCpu());
-        dto.setRam(product.getRam());
-        dto.setCardManHinh(product.getCardManHinh());
-        dto.setGia(product.getGia());
-        dto.setMainBoard(product.getMainBoard());
-        dto.setCongSuatNguon(product.getCongSuatNguon());
-        dto.setLoaiMay(product.getLoaiMay());
-        dto.setRom(product.getRom());
-        dto.setKichThuocMan(product.getKichThuocMan());
-        dto.setDungLuongPin(product.getDungLuongPin());
-        dto.setXuatXu(product.getXuatXu());
-        dto.setTrangThai(product.getTrangThai());
-        return dto;
+    // Lấy tất cả sản phẩm
+    public List<Product> findAll() {
+        return productRepository.findAll();
+    }
+
+    // Lưu hoặc cập nhật sản phẩm
+    public Product save(Product product) {
+        return productRepository.save(product);
+    }
+
+    // Xóa sản phẩm theo maSanPham
+    public void deleteByMaSanPham(String maSanPham) {
+        productRepository.deleteById(maSanPham);
+    }
+
+    // Kiểm tra xem sản phẩm có tồn tại hay không
+    public boolean existsByMaSanPham(String maSanPham) {
+        return productRepository.existsByMaSanPham(maSanPham);
     }
 }

@@ -1,26 +1,34 @@
 package com.example.warehouse.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
-
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "PhieuNhap")
 @Data
 public class Receipt {
     @Id
+    @Column(name = "maPhieu", nullable = false, length = 50)
     private String maPhieu;
+
+    @Column(name = "thoiGianTao")
     private LocalDateTime thoiGianTao;
-    private String nguoiTao;
-    private String maNhaCungCap;
-    private double tongTien;
 
     @ManyToOne
-    @JoinColumn(name = "nguoiTao", insertable = false, updatable = false)
+    @JoinColumn(name = "maNhaCungCap", referencedColumnName = "maNhaCungCap")
+    private Supplier supplier;
+
+    @ManyToOne
+    @JoinColumn(name = "nguoiTao", referencedColumnName = "userName")
     private Account account;
 
-    @ManyToOne
-    @JoinColumn(name = "maNhaCungCap", insertable = false, updatable = false)
-    private Supplier supplier;
+    @Column(name = "tongTien", nullable = false)
+    private double tongTien;
+
+    @OneToMany(mappedBy = "receipt", cascade = CascadeType.ALL)
+    @JsonManagedReference
+    private List<ReceiptDetail> details;
 }
