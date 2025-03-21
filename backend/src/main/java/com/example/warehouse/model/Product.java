@@ -5,34 +5,27 @@ import lombok.Data;
 
 @Entity
 @Table(name = "sanpham")
-@Inheritance(strategy = InheritanceType.JOINED)
 @Data
-public abstract class Product {
+public class Product {
     @Id
-    @Column(name = "maSanPham", nullable = false, length = 50)
+    @Column(name = "maSanPham", length = 50)
     private String maSanPham;
-    public String getMaSanPham() {
-        return maSanPham;
-    };
-    public void setMaSanPham(String maSanPham) {
-        this.maSanPham = maSanPham;
-    };
 
-    @Column(name = "tenSanPham")
-    private String tenSanPham;
-
-    @Column(name = "soLuong", nullable = false)
-    private int soLuong;
-
-    @Column(name = "gia", nullable = false)
+    @Column(name = "gia")
     private double gia;
-
-    @Column(name = "xuatXu", length = 50)
-    private String xuatXu;
-
-    @Column(name = "trangThai")
-    private Integer trangThai;
 
     @Column(name = "loaiSanPham", length = 20)
     private String loaiSanPham;
+
+    @Column(name = "soLuong")
+    private int soLuong;
+
+    @Column(name = "tenSanPham", length = 25)
+    private String tenSanPham;
+
+    @Column(name = "trangThai")
+    private int trangThai;
+
+    @Column(name = "xuatXu", length = 50)
+    private String xuatXu;
 }

@@ -1,6 +1,5 @@
 package com.example.warehouse.model;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -12,22 +11,21 @@ public class ReceiptDetail {
     private ReceiptDetailId id;
 
     @ManyToOne
-    @MapsId("maPhieu")
-    @JoinColumn(name = "maPhieu", nullable = false)
-    @JsonBackReference
+    @MapsId("maPhieuNhap")
+    @JoinColumn(name = "ma_phieu_nhap")
     private Receipt receipt;
 
     @ManyToOne
     @MapsId("maSanPham")
-    @JoinColumn(name = "maSanPham", nullable = false)
+    @JoinColumn(name = "ma_san_pham")
     private Product product;
 
-    @Column(name = "loaiSanPham", length = 20)
+    @Column(name = "loai_san_pham", length = 20)
     private String loaiSanPham;
 
-    @Column(name = "soLuong", nullable = false)
+    @Column(name = "so_luong", nullable = false)
     private int soLuong;
 
-    @Column(name = "donGia", nullable = false)
+    @Column(name = "don_gia", nullable = false)
     private double donGia;
 }

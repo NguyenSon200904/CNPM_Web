@@ -32,16 +32,12 @@ public class StatisticsController {
     // Thống kê tổng quan
     @GetMapping("/overview")
     public ResponseEntity<Map<String, Object>> getOverviewStats() {
-        List<Product> products = productService.findAll();
-        List<Receipt> receipts = receiptService.findAll();
-        List<ExportReceipt> exportReceipts = exportReceiptService.findAll();
-
         Map<String, Object> stats = new HashMap<>();
-        stats.put("totalProducts", products.size());
-        stats.put("totalReceipts", receipts.size());
-        stats.put("totalExportReceipts", exportReceipts.size());
-        stats.put("totalReceiptAmount", receipts.stream().mapToDouble(Receipt::getTongTien).sum());
-        stats.put("totalExportReceiptAmount", exportReceipts.stream().mapToDouble(ExportReceipt::getTongTien).sum());
+        stats.put("totalProducts", productService.countAll());
+        stats.put("totalReceipts", receiptService.findAll().size());
+        stats.put("totalExportReceipts", exportReceiptService.findAll().size());
+        stats.put("totalReceiptAmount", receiptService.getTotalReceiptAmount());
+        stats.put("totalExportReceiptAmount", exportReceiptService.getTotalExportReceiptAmount());
 
         return ResponseEntity.ok(stats);
     }
@@ -55,7 +51,7 @@ public class StatisticsController {
 
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalReceipts", receipts.size());
-        stats.put("totalAmount", receipts.stream().mapToDouble(Receipt::getTongTien).sum());
+        stats.put("totalAmount", receiptService.getTotalReceiptAmountByNgayNhapBetween(start, end));
 
         return ResponseEntity.ok(stats);
     }
@@ -69,7 +65,7 @@ public class StatisticsController {
 
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalExportReceipts", exportReceipts.size());
-        stats.put("totalAmount", exportReceipts.stream().mapToDouble(ExportReceipt::getTongTien).sum());
+        stats.put("totalAmount", exportReceiptService.getTotalExportReceiptAmountByNgayXuatBetween(start, end));
 
         return ResponseEntity.ok(stats);
     }

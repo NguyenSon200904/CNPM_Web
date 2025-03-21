@@ -16,81 +16,67 @@ public class ExportReceiptDetailController {
     @Autowired
     private ExportReceiptDetailService exportReceiptDetailService;
 
-    // Lấy tất cả chi tiết phiếu xuất
     @GetMapping
-    public ResponseEntity<List<ExportReceiptDetail>> getAllExportReceiptDetails() {
-        List<ExportReceiptDetail> exportReceiptDetails = exportReceiptDetailService.findAll();
-        return ResponseEntity.ok(exportReceiptDetails);
+    public ResponseEntity<List<ExportReceiptDetail>> getAllDetails() {
+        List<ExportReceiptDetail> details = exportReceiptDetailService.findAll();
+        return ResponseEntity.ok(details);
     }
 
-    // Lấy chi tiết phiếu xuất theo maPhieu và maSanPham
-    @GetMapping("/{maPhieu}/{maSanPham}")
-    public ResponseEntity<ExportReceiptDetail> getExportReceiptDetailById(@PathVariable Long maPhieu,
+    @GetMapping("/{maPhieuXuat}/{maSanPham}")
+    public ResponseEntity<ExportReceiptDetail> getDetailById(@PathVariable Long maPhieuXuat,
             @PathVariable String maSanPham) {
         ExportReceiptDetailId id = new ExportReceiptDetailId();
-        id.setMaPhieuXuat(maPhieu);
+        id.setMaPhieuXuat(maPhieuXuat);
         id.setMaSanPham(maSanPham);
-        ExportReceiptDetail exportReceiptDetail = exportReceiptDetailService.findById(id);
-        if (exportReceiptDetail == null) {
+        ExportReceiptDetail detail = exportReceiptDetailService.findById(id);
+        if (detail == null) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(exportReceiptDetail);
+        return ResponseEntity.ok(detail);
     }
 
-    // Lấy danh sách chi tiết phiếu xuất theo maPhieu
-    @GetMapping("/ma-phieu/{maPhieu}")
-    public ResponseEntity<List<ExportReceiptDetail>> getExportReceiptDetailsByMaPhieu(@PathVariable String maPhieu) {
-        List<ExportReceiptDetail> exportReceiptDetails = exportReceiptDetailService.findByMaPhieu(maPhieu);
-        return ResponseEntity.ok(exportReceiptDetails);
-    }
-
-    // Lấy danh sách chi tiết phiếu xuất theo maSanPham
-    @GetMapping("/ma-san-pham/{maSanPham}")
-    public ResponseEntity<List<ExportReceiptDetail>> getExportReceiptDetailsByMaSanPham(
-            @PathVariable String maSanPham) {
-        List<ExportReceiptDetail> exportReceiptDetails = exportReceiptDetailService.findByMaSanPham(maSanPham);
-        return ResponseEntity.ok(exportReceiptDetails);
-    }
-
-    // Tạo chi tiết phiếu xuất mới
     @PostMapping
-    public ResponseEntity<ExportReceiptDetail> createExportReceiptDetail(
-            @RequestBody ExportReceiptDetail exportReceiptDetail) {
-        ExportReceiptDetailId id = exportReceiptDetail.getId();
-        if (exportReceiptDetailService.existsByMaPhieuAndMaSanPham(id.getMaPhieuXuat(), id.getMaSanPham())) {
+    public ResponseEntity<ExportReceiptDetail> createDetail(@RequestBody ExportReceiptDetail detail) {
+        if (exportReceiptDetailService.existsByIdMaPhieuXuatAndIdMaSanPham(
+                detail.getId().getMaPhieuXuat(),
+                detail.getId().getMaSanPham())) {
             return ResponseEntity.badRequest().build();
         }
-        ExportReceiptDetail savedExportReceiptDetail = exportReceiptDetailService.save(exportReceiptDetail);
-        return ResponseEntity.status(201).body(savedExportReceiptDetail);
+        ExportReceiptDetail savedDetail = exportReceiptDetailService.save(detail);
+        return ResponseEntity.status(201).body(savedDetail);
     }
 
-    // Cập nhật chi tiết phiếu xuất
-    @PutMapping("/{maPhieu}/{maSanPham}")
-    public ResponseEntity<ExportReceiptDetail> updateExportReceiptDetail(
-            @PathVariable Long maPhieu, @PathVariable String maSanPham,
-            @RequestBody ExportReceiptDetail exportReceiptDetail) {
+    @PutMapping("/{maPhieuXuat}/{maSanPham}")
+    public ResponseEntity<ExportReceiptDetail> updateDetail(@PathVariable Long maPhieuXuat,
+            @PathVariable String maSanPham,
+            @RequestBody ExportReceiptDetail detail) {
         ExportReceiptDetailId id = new ExportReceiptDetailId();
-        id.setMaPhieuXuat(maPhieu);
+        id.setMaPhieuXuat(maPhieuXuat);
         id.setMaSanPham(maSanPham);
-        if (!exportReceiptDetailService.existsByMaPhieuAndMaSanPham(maPhieu, maSanPham)) {
+        if (!exportReceiptDetailService.existsById(id)) {
             return ResponseEntity.notFound().build();
         }
-        exportReceiptDetail.setId(id);
-        ExportReceiptDetail updatedExportReceiptDetail = exportReceiptDetailService.save(exportReceiptDetail);
-        return ResponseEntity.ok(updatedExportReceiptDetail);
+        detail.setId(id);
+        ExportReceiptDetail updatedDetail = exportReceiptDetailService.save(detail);
+        return ResponseEntity.ok(updatedDetail);
     }
 
-    // Xóa chi tiết phiếu xuất
-    @DeleteMapping("/{maPhieu}/{maSanPham}")
-    public ResponseEntity<Void> deleteExportReceiptDetail(@PathVariable Long maPhieu,
+    @DeleteMapping("/{maPhieuXuat}/{maSanPham}")
+    public ResponseEntity<Void> deleteDetail(@PathVariable Long maPhieuXuat,
             @PathVariable String maSanPham) {
         ExportReceiptDetailId id = new ExportReceiptDetailId();
-        id.setMaPhieuXuat(maPhieu);
+        id.setMaPhieuXuat(maPhieuXuat);
         id.setMaSanPham(maSanPham);
-        if (!exportReceiptDetailService.existsByMaPhieuAndMaSanPham(maPhieu, maSanPham)) {
+        if (!exportReceiptDetailService.existsById(id)) {
             return ResponseEntity.notFound().build();
         }
         exportReceiptDetailService.deleteById(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/by-ma-phieu-xuat/{maPhieuXuat}")
+    public ResponseEntity<List<ExportReceiptDetail>> getDetailsByMaPhieuXuat(@PathVariable Long maPhieuXuat) {
+        List<ExportReceiptDetail> details = exportReceiptDetailService.findByIdMaPhieuXuat(maPhieuXuat);
+        return ResponseEntity.ok(details);
     }
 }

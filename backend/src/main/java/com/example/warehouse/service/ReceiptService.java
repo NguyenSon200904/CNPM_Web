@@ -14,48 +14,37 @@ public class ReceiptService {
     @Autowired
     private ReceiptRepository receiptRepository;
 
-    // Lấy phiếu nhập theo maPhieu
-    public Receipt findByMaPhieu(String maPhieu) {
-        return receiptRepository.findById(maPhieu).orElse(null);
+    public Receipt findById(Long id) {
+        return receiptRepository.findById(id).orElse(null);
     }
 
-    // Lấy danh sách phiếu nhập theo nguoiTao
-    public List<Receipt> findByNguoiTao(String nguoiTao) {
-        return receiptRepository.findByNguoiTaoUserName(nguoiTao);
-    }
-
-    // Lấy danh sách phiếu nhập theo maNhaCungCap
-    public List<Receipt> findByMaNhaCungCap(String maNhaCungCap) {
-        return receiptRepository.findByNhaCungCapMaNhaCungCap(maNhaCungCap);
-    }
-
-    // Lấy danh sách phiếu nhập theo khoảng thời gian
-    public List<Receipt> findByThoiGianTaoBetween(LocalDateTime start, LocalDateTime end) {
-        return receiptRepository.findByThoiGianTaoBetween(start, end);
-    }
-
-    // Thêm phương thức findByNgayNhapBetween
-    public List<Receipt> findByNgayNhapBetween(LocalDateTime start, LocalDateTime end) {
-        return receiptRepository.findByThoiGianTaoBetween(start, end);
-    }
-
-    // Lấy tất cả phiếu nhập
     public List<Receipt> findAll() {
         return receiptRepository.findAll();
     }
 
-    // Lưu hoặc cập nhật phiếu nhập
     public Receipt save(Receipt receipt) {
         return receiptRepository.save(receipt);
     }
 
-    // Xóa phiếu nhập theo maPhieu
-    public void deleteByMaPhieu(String maPhieu) {
-        receiptRepository.deleteById(maPhieu);
+    public void deleteById(Long id) {
+        receiptRepository.deleteById(id);
     }
 
-    // Kiểm tra xem phiếu nhập có tồn tại hay không
-    public boolean existsByMaPhieu(String maPhieu) {
-        return receiptRepository.existsByMaPhieu(maPhieu);
+    public List<Receipt> findByNguoiTaoUserName(String userName) {
+        return receiptRepository.findByNguoiTaoUserName(userName);
+    }
+
+    public List<Receipt> findByNgayNhapBetween(LocalDateTime start, LocalDateTime end) {
+        return receiptRepository.findByNgayNhapBetween(start, end);
+    }
+
+    public Double getTotalReceiptAmount() {
+        Double total = receiptRepository.getTotalReceiptAmount();
+        return total != null ? total : 0.0;
+    }
+
+    public Double getTotalReceiptAmountByNgayNhapBetween(LocalDateTime start, LocalDateTime end) {
+        Double total = receiptRepository.getTotalReceiptAmountByNgayNhapBetween(start, end);
+        return total != null ? total : 0.0;
     }
 }

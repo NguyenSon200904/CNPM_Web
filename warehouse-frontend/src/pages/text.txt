@@ -97,3 +97,17 @@ const Sidebar = ({ setSelectedPage }) => {
 };
 
 export default Sidebar;
+
+
+
+
+
+TRUNCATE TABLE account;
+TRUNCATE TABLE sanpham;
+TRUNCATE TABLE dienthoai;
+TRUNCATE TABLE maytinh;
+TRUNCATE TABLE phieunhap;
+TRUNCATE TABLE phieuxuat;
+TRUNCATE TABLE chitietphieunhap;
+TRUNCATE TABLE chitietphieuxuat;
+TRUNCATE TABLE nhacungcap;

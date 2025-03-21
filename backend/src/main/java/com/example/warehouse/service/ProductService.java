@@ -13,38 +13,48 @@ public class ProductService {
     @Autowired
     private ProductRepository productRepository;
 
-    // Lấy sản phẩm theo maSanPham
+    public Product findById(String id) {
+        return productRepository.findById(id).orElse(null);
+    }
+
+    // Thêm phương thức findByMaSanPham (tương tự findById)
     public Product findByMaSanPham(String maSanPham) {
         return productRepository.findById(maSanPham).orElse(null);
     }
 
-    // Lấy danh sách sản phẩm theo loaiSanPham
-    public List<Product> findByLoaiSanPham(String loaiSanPham) {
-        return productRepository.findByLoaiSanPham(loaiSanPham);
-    }
-
-    // Lấy danh sách sản phẩm theo trangThai
-    public List<Product> findByTrangThai(Integer trangThai) {
-        return productRepository.findByTrangThai(trangThai);
-    }
-
-    // Lấy tất cả sản phẩm
     public List<Product> findAll() {
         return productRepository.findAll();
     }
 
-    // Lưu hoặc cập nhật sản phẩm
+    // Thêm phương thức findByLoaiSanPham
+    public List<Product> findByLoaiSanPham(String loaiSanPham) {
+        return productRepository.findByLoaiSanPham(loaiSanPham);
+    }
+
+    // Thêm phương thức findByTrangThai
+    public List<Product> findByTrangThai(int trangThai) {
+        return productRepository.findByTrangThai(trangThai);
+    }
+
     public Product save(Product product) {
         return productRepository.save(product);
     }
 
-    // Xóa sản phẩm theo maSanPham
+    public void deleteById(String id) {
+        productRepository.deleteById(id);
+    }
+
+    // Thêm phương thức deleteByMaSanPham (tương tự deleteById)
     public void deleteByMaSanPham(String maSanPham) {
         productRepository.deleteById(maSanPham);
     }
 
-    // Kiểm tra xem sản phẩm có tồn tại hay không
+    // Thêm phương thức existsByMaSanPham
     public boolean existsByMaSanPham(String maSanPham) {
-        return productRepository.existsByMaSanPham(maSanPham);
+        return productRepository.existsById(maSanPham);
+    }
+
+    public long countAll() {
+        return productRepository.countAll();
     }
 }

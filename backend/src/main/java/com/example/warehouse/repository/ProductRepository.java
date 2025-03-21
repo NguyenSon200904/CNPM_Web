@@ -2,16 +2,19 @@ package com.example.warehouse.repository;
 
 import com.example.warehouse.model.Product;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
 public interface ProductRepository extends JpaRepository<Product, String> {
-    // Lấy danh sách sản phẩm theo loaiSanPham
-    List<Product> findByLoaiSanPham(String loaiSanPham);
 
-    // Lấy danh sách sản phẩm theo trangThai
-    List<Product> findByTrangThai(Integer trangThai);
+    @Query("SELECT p FROM Product p WHERE p.loaiSanPham = :loaiSanPham")
+    List<Product> findByLoaiSanPham(@Param("loaiSanPham") String loaiSanPham);
 
-    // Kiểm tra xem sản phẩm có tồn tại hay không
-    boolean existsByMaSanPham(String maSanPham);
+    @Query("SELECT p FROM Product p WHERE p.trangThai = :trangThai")
+    List<Product> findByTrangThai(@Param("trangThai") int trangThai);
+
+    @Query("SELECT COUNT(p) FROM Product p")
+    long countAll();
 }

@@ -35,7 +35,7 @@ public class AccountController {
 
     // Lấy danh sách tài khoản theo role
     @GetMapping("/role/{role}")
-    public ResponseEntity<List<Account>> getAccountsByRole(@PathVariable String role) {
+    public ResponseEntity<List<Account>> getAccountsByRole(@PathVariable int role) {
         List<Account> accounts = accountService.findByRole(role);
         return ResponseEntity.ok(accounts);
     }

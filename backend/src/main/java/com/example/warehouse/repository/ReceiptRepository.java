@@ -2,20 +2,23 @@ package com.example.warehouse.repository;
 
 import com.example.warehouse.model.Receipt;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-public interface ReceiptRepository extends JpaRepository<Receipt, String> {
-    // Lấy danh sách phiếu nhập theo nguoiTao
-    List<Receipt> findByNguoiTaoUserName(String nguoiTao);
+public interface ReceiptRepository extends JpaRepository<Receipt, Long> {
 
-    // Lấy danh sách phiếu nhập theo maNhaCungCap
-    List<Receipt> findByNhaCungCapMaNhaCungCap(String maNhaCungCap);
+    @Query("SELECT r FROM Receipt r WHERE r.nguoiTao.userName = :userName")
+    List<Receipt> findByNguoiTaoUserName(@Param("userName") String userName);
 
-    // Lấy danh sách phiếu nhập theo khoảng thời gian
-    List<Receipt> findByThoiGianTaoBetween(LocalDateTime start, LocalDateTime end);
+    @Query("SELECT r FROM Receipt r WHERE r.ngayNhap BETWEEN :start AND :end")
+    List<Receipt> findByNgayNhapBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
-    // Kiểm tra xem một phiếu nhập có tồn tại hay không
-    boolean existsByMaPhieu(String maPhieu);
+    @Query("SELECT SUM(r.tongTien) FROM Receipt r")
+    Double getTotalReceiptAmount();
+
+    @Query("SELECT SUM(r.tongTien) FROM Receipt r WHERE r.ngayNhap BETWEEN :start AND :end")
+    Double getTotalReceiptAmountByNgayNhapBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 }

@@ -16,18 +16,17 @@ public class ReceiptDetailController {
     @Autowired
     private ReceiptDetailService receiptDetailService;
 
-    // Lấy tất cả chi tiết phiếu nhập
     @GetMapping
     public ResponseEntity<List<ReceiptDetail>> getAllReceiptDetails() {
         List<ReceiptDetail> receiptDetails = receiptDetailService.findAll();
         return ResponseEntity.ok(receiptDetails);
     }
 
-    // Lấy chi tiết phiếu nhập theo maPhieu và maSanPham
-    @GetMapping("/{maPhieu}/{maSanPham}")
-    public ResponseEntity<ReceiptDetail> getReceiptDetailById(@PathVariable String maPhieu, @PathVariable String maSanPham) {
+    @GetMapping("/{maPhieuNhap}/{maSanPham}")
+    public ResponseEntity<ReceiptDetail> getReceiptDetailById(@PathVariable Long maPhieuNhap,
+            @PathVariable String maSanPham) {
         ReceiptDetailId id = new ReceiptDetailId();
-        id.setMaPhieu(maPhieu);
+        id.setMaPhieuNhap(maPhieuNhap);
         id.setMaSanPham(maSanPham);
         ReceiptDetail receiptDetail = receiptDetailService.findById(id);
         if (receiptDetail == null) {
@@ -36,39 +35,36 @@ public class ReceiptDetailController {
         return ResponseEntity.ok(receiptDetail);
     }
 
-    // Lấy danh sách chi tiết phiếu nhập theo maPhieu
-    @GetMapping("/ma-phieu/{maPhieu}")
-    public ResponseEntity<List<ReceiptDetail>> getReceiptDetailsByMaPhieu(@PathVariable String maPhieu) {
-        List<ReceiptDetail> receiptDetails = receiptDetailService.findByMaPhieu(maPhieu);
+    @GetMapping("/ma-phieu/{maPhieuNhap}")
+    public ResponseEntity<List<ReceiptDetail>> getReceiptDetailsByMaPhieuNhap(@PathVariable Long maPhieuNhap) {
+        List<ReceiptDetail> receiptDetails = receiptDetailService.findByIdMaPhieuNhap(maPhieuNhap);
         return ResponseEntity.ok(receiptDetails);
     }
 
-    // Lấy danh sách chi tiết phiếu nhập theo maSanPham
     @GetMapping("/ma-san-pham/{maSanPham}")
     public ResponseEntity<List<ReceiptDetail>> getReceiptDetailsByMaSanPham(@PathVariable String maSanPham) {
-        List<ReceiptDetail> receiptDetails = receiptDetailService.findByMaSanPham(maSanPham);
+        List<ReceiptDetail> receiptDetails = receiptDetailService.findByIdMaSanPham(maSanPham);
         return ResponseEntity.ok(receiptDetails);
     }
 
-    // Tạo chi tiết phiếu nhập mới
     @PostMapping
     public ResponseEntity<ReceiptDetail> createReceiptDetail(@RequestBody ReceiptDetail receiptDetail) {
         ReceiptDetailId id = receiptDetail.getId();
-        if (receiptDetailService.existsByMaPhieuAndMaSanPham(id.getMaPhieu(), id.getMaSanPham())) {
+        if (id == null
+                || receiptDetailService.existsByIdMaPhieuNhapAndIdMaSanPham(id.getMaPhieuNhap(), id.getMaSanPham())) {
             return ResponseEntity.badRequest().build();
         }
         ReceiptDetail savedReceiptDetail = receiptDetailService.save(receiptDetail);
         return ResponseEntity.status(201).body(savedReceiptDetail);
     }
 
-    // Cập nhật chi tiết phiếu nhập
-    @PutMapping("/{maPhieu}/{maSanPham}")
+    @PutMapping("/{maPhieuNhap}/{maSanPham}")
     public ResponseEntity<ReceiptDetail> updateReceiptDetail(
-            @PathVariable String maPhieu, @PathVariable String maSanPham, @RequestBody ReceiptDetail receiptDetail) {
+            @PathVariable Long maPhieuNhap, @PathVariable String maSanPham, @RequestBody ReceiptDetail receiptDetail) {
         ReceiptDetailId id = new ReceiptDetailId();
-        id.setMaPhieu(maPhieu);
+        id.setMaPhieuNhap(maPhieuNhap);
         id.setMaSanPham(maSanPham);
-        if (!receiptDetailService.existsByMaPhieuAndMaSanPham(maPhieu, maSanPham)) {
+        if (!receiptDetailService.existsByIdMaPhieuNhapAndIdMaSanPham(maPhieuNhap, maSanPham)) {
             return ResponseEntity.notFound().build();
         }
         receiptDetail.setId(id);
@@ -76,13 +72,12 @@ public class ReceiptDetailController {
         return ResponseEntity.ok(updatedReceiptDetail);
     }
 
-    // Xóa chi tiết phiếu nhập
-    @DeleteMapping("/{maPhieu}/{maSanPham}")
-    public ResponseEntity<Void> deleteReceiptDetail(@PathVariable String maPhieu, @PathVariable String maSanPham) {
+    @DeleteMapping("/{maPhieuNhap}/{maSanPham}")
+    public ResponseEntity<Void> deleteReceiptDetail(@PathVariable Long maPhieuNhap, @PathVariable String maSanPham) {
         ReceiptDetailId id = new ReceiptDetailId();
-        id.setMaPhieu(maPhieu);
+        id.setMaPhieuNhap(maPhieuNhap);
         id.setMaSanPham(maSanPham);
-        if (!receiptDetailService.existsByMaPhieuAndMaSanPham(maPhieu, maSanPham)) {
+        if (!receiptDetailService.existsByIdMaPhieuNhapAndIdMaSanPham(maPhieuNhap, maSanPham)) {
             return ResponseEntity.notFound().build();
         }
         receiptDetailService.deleteById(id);

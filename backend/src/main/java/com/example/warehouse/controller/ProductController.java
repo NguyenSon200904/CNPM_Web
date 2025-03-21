@@ -42,6 +42,9 @@ public class ProductController {
     // Lấy danh sách sản phẩm theo trangThai
     @GetMapping("/status/{trangThai}")
     public ResponseEntity<List<Product>> getProductsByTrangThai(@PathVariable Integer trangThai) {
+        if (trangThai == null) {
+            return ResponseEntity.badRequest().build();
+        }
         List<Product> products = productService.findByTrangThai(trangThai);
         return ResponseEntity.ok(products);
     }

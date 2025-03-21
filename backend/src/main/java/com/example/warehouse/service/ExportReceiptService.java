@@ -14,38 +14,33 @@ public class ExportReceiptService {
     @Autowired
     private ExportReceiptRepository exportReceiptRepository;
 
-    // Lấy phiếu xuất theo maPhieuXuat
-    public ExportReceipt findByMaPhieuXuat(Long maPhieuXuat) {
-        return exportReceiptRepository.findById(maPhieuXuat).orElse(null);
+    public ExportReceipt findById(Long id) {
+        return exportReceiptRepository.findById(id).orElse(null);
     }
 
-    // Lấy danh sách phiếu xuất theo nguoiTao
-    public List<ExportReceipt> findByAccountUserName(String userName) {
-        return exportReceiptRepository.findByAccountUserName(userName);
-    }
-
-    // Lấy danh sách phiếu xuất theo khoảng thời gian
-    public List<ExportReceipt> findByNgayXuatBetween(LocalDateTime start, LocalDateTime end) {
-        return exportReceiptRepository.findByNgayXuatBetween(start, end);
-    }
-
-    // Lấy tất cả phiếu xuất
     public List<ExportReceipt> findAll() {
         return exportReceiptRepository.findAll();
     }
 
-    // Lưu hoặc cập nhật phiếu xuất
     public ExportReceipt save(ExportReceipt exportReceipt) {
         return exportReceiptRepository.save(exportReceipt);
     }
 
-    // Xóa phiếu xuất theo maPhieuXuat
-    public void deleteByMaPhieuXuat(Long maPhieuXuat) {
-        exportReceiptRepository.deleteById(maPhieuXuat);
+    public void deleteById(Long id) {
+        exportReceiptRepository.deleteById(id);
     }
 
-    // Kiểm tra xem phiếu xuất có tồn tại hay không
-    public boolean existsByMaPhieuXuat(Long maPhieuXuat) {
-        return exportReceiptRepository.existsByMaPhieuXuat(maPhieuXuat);
+    public List<ExportReceipt> findByNgayXuatBetween(LocalDateTime start, LocalDateTime end) {
+        return exportReceiptRepository.findByNgayXuatBetween(start, end);
+    }
+
+    public Double getTotalExportReceiptAmount() {
+        Double total = exportReceiptRepository.getTotalExportReceiptAmount();
+        return total != null ? total : 0.0;
+    }
+
+    public Double getTotalExportReceiptAmountByNgayXuatBetween(LocalDateTime start, LocalDateTime end) {
+        Double total = exportReceiptRepository.getTotalExportReceiptAmountByNgayXuatBetween(start, end);
+        return total != null ? total : 0.0;
     }
 }

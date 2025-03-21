@@ -15,7 +15,7 @@ public interface AccountRepository extends JpaRepository<Account, String> {
     Optional<Account> findByEmail(String email);
 
     // Tìm danh sách tài khoản theo role
-    List<Account> findByRole(String role);
+    List<Account> findByRole(int role);
 
     // Tìm danh sách tài khoản theo status
     List<Account> findByStatus(Integer status);

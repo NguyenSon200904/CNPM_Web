@@ -9,9 +9,9 @@ import java.io.Serializable;
 @Embeddable
 @Data
 public class ReceiptDetailId implements Serializable {
-    @Column(name = "maPhieu", nullable = false, length = 50)
-    private String maPhieu;
+    @Column(name = "ma_phieu_nhap", nullable = false)
+    private Long maPhieuNhap;
 
-    @Column(name = "maSanPham", nullable = false, length = 50)
+    @Column(name = "maSanPham", nullable = false, length = 25)
     private String maSanPham;
 }

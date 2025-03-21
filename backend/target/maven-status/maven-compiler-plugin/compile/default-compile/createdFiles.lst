@@ -1,8 +1,6 @@
 com\example\warehouse\dto\ReceiptDetailDTO.class
 com\example\warehouse\dto\ExportReceiptDetailDTO.class
-com\example\warehouse\model\MayTinh.class
 com\example\warehouse\dto\ProductDTO.class
-com\example\warehouse\model\DienThoai.class
 com\example\warehouse\repository\SupplierRepository.class
 com\example\warehouse\dto\SupplierDTO.class
 com\example\warehouse\config\CorsConfig.class
@@ -30,6 +28,8 @@ com\example\warehouse\model\ExportReceiptDetailId.class
 com\example\warehouse\service\ReceiptService.class
 com\example\warehouse\dto\AccountDTO.class
 com\example\warehouse\dto\LoginRequest.class
+com\example\warehouse\model\Computer.class
+com\example\warehouse\service\ExportReceiptDetailServiceImpl.class
 com\example\warehouse\controller\ExportReceiptDetailController.class
 com\example\warehouse\model\ReceiptDetailId.class
 com\example\warehouse\controller\AuthController.class
@@ -43,6 +43,7 @@ com\example\warehouse\model\ExportReceiptDetail.class
 com\example\warehouse\controller\SupplierController.class
 com\example\warehouse\repository\ExportReceiptRepository.class
 com\example\warehouse\BackendApplication.class
+com\example\warehouse\model\Phone.class
 com\example\warehouse\service\ProductService.class
 com\example\warehouse\service\ExportReceiptService.class
 com\example\warehouse\service\SupplierService.class
