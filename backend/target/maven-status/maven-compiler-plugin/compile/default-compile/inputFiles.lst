@@ -2,6 +2,7 @@ C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\mod
 C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\repository\ExportReceiptDetailRepository.java
 C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\controller\ExportReceiptController.java
 C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\dto\ExportReceiptDetailDTO.java
+C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\entity\MayTinh.java
 C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\repository\AccountRepository.java
 C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\repository\ReceiptDetailRepository.java
 C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\config\CorsConfig.java
@@ -11,6 +12,7 @@ C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\ser
 C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\controller\AccountController.java
 C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\config\WebConfig.java
 C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\model\ExportReceiptDetailId.java
+C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\repository\DienThoaiRepository.java
 C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\model\ReceiptDetailId.java
 C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\model\Account.java
 C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\controller\HelloController.java
@@ -22,6 +24,7 @@ C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\con
 C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\dto\DienThoaiDTO.java
 C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\model\Supplier.java
 C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\dto\ReceiptDTO.java
+C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\entity\SanPham.java
 C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\dto\ExportReceiptDTO.java
 C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\dto\SupplierDTO.java
 C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\service\ExportReceiptService.java
@@ -33,6 +36,7 @@ C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\mod
 C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\config\SecurityConfig.java
 C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\model\Computer.java
 C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\controller\StatisticsController.java
+C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\entity\DienThoai.java
 C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\dto\ProductDTO.java
 C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\service\ExportReceiptDetailService.java
 C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\dto\MayTinhDTO.java
@@ -42,9 +46,12 @@ C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\dto
 C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\repository\ReceiptRepository.java
 C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\service\ProductService.java
 C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\controller\SupplierController.java
+C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\entity\NhaCungCap.java
 C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\model\ReceiptDetail.java
 C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\repository\SupplierRepository.java
+C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\repository\MayTinhRepository.java
 C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\dto\AccountDTO.java
+C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\repository\SanPhamRepository.java
 C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\service\ExportReceiptDetailServiceImpl.java
 C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\service\SupplierService.java
 C:\Users\HongCu\Desktop\web_cnpm\backend\src\main\java\com\example\warehouse\repository\ExportReceiptRepository.java

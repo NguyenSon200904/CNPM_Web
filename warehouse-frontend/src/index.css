@@ -3,7 +3,8 @@
 @tailwind utilities;
 
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  /* Ưu tiên Arial để hỗ trợ tiếng Việt */
+  font-family: "Arial", system-ui, Avenir, Helvetica, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
@@ -70,4 +71,3 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
-

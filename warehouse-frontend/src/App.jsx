@@ -1,5 +1,6 @@
 import "./App.css";
 import { Routes, Route } from "react-router-dom";
+import { ConfigProvider } from "antd"; // Thêm ConfigProvider từ Ant Design
 import Main from "./pages/Main.jsx";
 import Login from "./pages/Login.jsx";
 import Products from "./pages/Products";
@@ -15,90 +16,98 @@ import ChangeInfo from "./pages/ChangeInfo";
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Main />} />
-      <Route path="/login" element={<Login />} />
-      <Route
-        path="/san-pham"
-        element={
-          <Main>
-            <Products />
-          </Main>
-        }
-      />
-      <Route
-        path="/nha-cung-cap"
-        element={
-          <Main>
-            <Suppliers />
-          </Main>
-        }
-      />
-      <Route
-        path="/nhap-hang"
-        element={
-          <Main>
-            <ImportGoods />
-          </Main>
-        }
-      />
-      <Route
-        path="/phieu-nhap"
-        element={
-          <Main>
-            <ImportReceipts />
-          </Main>
-        }
-      />
-      <Route
-        path="/xuat-hang"
-        element={
-          <Main>
-            <ExportGoods />
-          </Main>
-        }
-      />
-      <Route
-        path="/phieu-xuat"
-        element={
-          <Main>
-            <ExportReceipts />
-          </Main>
-        }
-      />
-      <Route
-        path="/ton-kho"
-        element={
-          <Main>
-            <Inventory />
-          </Main>
-        }
-      />
-      <Route
-        path="/tai-khoan"
-        element={
-          <Main>
-            <Accounts />
-          </Main>
-        }
-      />
-      <Route
-        path="/thong-ke"
-        element={
-          <Main>
-            <Statistics />
-          </Main>
-        }
-      />
-      <Route
-        path="/doi-thong-tin"
-        element={
-          <Main>
-            <ChangeInfo />
-          </Main>
-        }
-      />
-    </Routes>
+    <ConfigProvider
+      theme={{
+        token: {
+          fontFamily: "'Arial', sans-serif", // Ép Ant Design sử dụng font Arial
+        },
+      }}
+    >
+      <Routes>
+        <Route path="/" element={<Main />} />
+        <Route path="/login" element={<Login />} />
+        <Route
+          path="/san-pham"
+          element={
+            <Main>
+              <Products />
+            </Main>
+          }
+        />
+        <Route
+          path="/nha-cung-cap"
+          element={
+            <Main>
+              <Suppliers />
+            </Main>
+          }
+        />
+        <Route
+          path="/nhap-hang"
+          element={
+            <Main>
+              <ImportGoods />
+            </Main>
+          }
+        />
+        <Route
+          path="/phieu-nhap"
+          element={
+            <Main>
+              <ImportReceipts />
+            </Main>
+          }
+        />
+        <Route
+          path="/xuat-hang"
+          element={
+            <Main>
+              <ExportGoods />
+            </Main>
+          }
+        />
+        <Route
+          path="/phieu-xuat"
+          element={
+            <Main>
+              <ExportReceipts />
+            </Main>
+          }
+        />
+        <Route
+          path="/ton-kho"
+          element={
+            <Main>
+              <Inventory />
+            </Main>
+          }
+        />
+        <Route
+          path="/tai-khoan"
+          element={
+            <Main>
+              <Accounts />
+            </Main>
+          }
+        />
+        <Route
+          path="/thong-ke"
+          element={
+            <Main>
+              <Statistics />
+            </Main>
+          }
+        />
+        <Route
+          path="/doi-thong-tin"
+          element={
+            <Main>
+              <ChangeInfo />
+            </Main>
+          }
+        />
+      </Routes>
+    </ConfigProvider>
   );
 }
 

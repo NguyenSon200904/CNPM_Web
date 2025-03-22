@@ -1,72 +1,51 @@
 package com.example.warehouse.controller;
 
-import com.example.warehouse.model.Supplier;
+import com.example.warehouse.entity.NhaCungCap;
 import com.example.warehouse.service.SupplierService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/suppliers")
+@RequestMapping("/api")
+@CrossOrigin(origins = "http://localhost:5173")
 public class SupplierController {
 
     @Autowired
     private SupplierService supplierService;
 
-    // Lấy tất cả nhà cung cấp
-    @GetMapping
-    public ResponseEntity<List<Supplier>> getAllSuppliers() {
-        List<Supplier> suppliers = supplierService.findAll();
-        return ResponseEntity.ok(suppliers);
+    // GET: Lấy danh sách nhà cung cấp
+    @GetMapping("/suppliers")
+    public List<NhaCungCap> getSuppliers() {
+        return supplierService.findAll();
     }
 
-    // Lấy nhà cung cấp theo maNhaCungCap
-    @GetMapping("/{maNhaCungCap}")
-    public ResponseEntity<Supplier> getSupplierByMaNhaCungCap(@PathVariable String maNhaCungCap) {
-        Supplier supplier = supplierService.findByMaNhaCungCap(maNhaCungCap);
-        if (supplier == null) {
-            return ResponseEntity.notFound().build();
+    // POST: Thêm nhà cung cấp mới
+    @PostMapping("/suppliers")
+    public NhaCungCap addSupplier(@RequestBody NhaCungCap nhaCungCap) {
+        if (supplierService.existsByMaNhaCungCap(nhaCungCap.getMaNhaCungCap())) {
+            throw new RuntimeException("Mã nhà cung cấp đã tồn tại!");
         }
-        return ResponseEntity.ok(supplier);
+        return supplierService.save(nhaCungCap);
     }
 
-    // Tìm nhà cung cấp theo tenNhaCungCap
-    @GetMapping("/search")
-    public ResponseEntity<List<Supplier>> searchSuppliersByTenNhaCungCap(@RequestParam String tenNhaCungCap) {
-        List<Supplier> suppliers = supplierService.findByTenNhaCungCapContaining(tenNhaCungCap);
-        return ResponseEntity.ok(suppliers);
-    }
-
-    // Tạo nhà cung cấp mới
-    @PostMapping
-    public ResponseEntity<Supplier> createSupplier(@RequestBody Supplier supplier) {
-        if (supplierService.existsByMaNhaCungCap(supplier.getMaNhaCungCap())) {
-            return ResponseEntity.badRequest().build();
-        }
-        Supplier savedSupplier = supplierService.save(supplier);
-        return ResponseEntity.status(201).body(savedSupplier);
-    }
-
-    // Cập nhật nhà cung cấp
-    @PutMapping("/{maNhaCungCap}")
-    public ResponseEntity<Supplier> updateSupplier(@PathVariable String maNhaCungCap, @RequestBody Supplier supplier) {
+    // PUT: Sửa nhà cung cấp
+    @PutMapping("/suppliers/{maNhaCungCap}")
+    public NhaCungCap updateSupplier(@PathVariable String maNhaCungCap, @RequestBody NhaCungCap nhaCungCap) {
         if (!supplierService.existsByMaNhaCungCap(maNhaCungCap)) {
-            return ResponseEntity.notFound().build();
+            throw new RuntimeException("Nhà cung cấp không tồn tại!");
         }
-        supplier.setMaNhaCungCap(maNhaCungCap);
-        Supplier updatedSupplier = supplierService.save(supplier);
-        return ResponseEntity.ok(updatedSupplier);
+        nhaCungCap.setMaNhaCungCap(maNhaCungCap); // Đảm bảo mã không bị thay đổi
+        return supplierService.save(nhaCungCap);
     }
 
-    // Xóa nhà cung cấp
-    @DeleteMapping("/{maNhaCungCap}")
-    public ResponseEntity<Void> deleteSupplier(@PathVariable String maNhaCungCap) {
+    // DELETE: Xóa nhà cung cấp
+    @DeleteMapping("/suppliers/{maNhaCungCap}")
+    public void deleteSupplier(@PathVariable String maNhaCungCap) {
         if (!supplierService.existsByMaNhaCungCap(maNhaCungCap)) {
-            return ResponseEntity.notFound().build();
+            throw new RuntimeException("Nhà cung cấp không tồn tại!");
         }
         supplierService.deleteByMaNhaCungCap(maNhaCungCap);
-        return ResponseEntity.noContent().build();
     }
 }

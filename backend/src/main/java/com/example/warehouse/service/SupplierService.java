@@ -1,6 +1,6 @@
 package com.example.warehouse.service;
 
-import com.example.warehouse.model.Supplier;
+import com.example.warehouse.entity.NhaCungCap;
 import com.example.warehouse.repository.SupplierRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,23 +14,23 @@ public class SupplierService {
     private SupplierRepository supplierRepository;
 
     // Lấy nhà cung cấp theo maNhaCungCap
-    public Supplier findByMaNhaCungCap(String maNhaCungCap) {
+    public NhaCungCap findByMaNhaCungCap(String maNhaCungCap) {
         return supplierRepository.findById(maNhaCungCap).orElse(null);
     }
 
     // Tìm danh sách nhà cung cấp theo tenNhaCungCap (tìm kiếm gần đúng)
-    public List<Supplier> findByTenNhaCungCapContaining(String tenNhaCungCap) {
+    public List<NhaCungCap> findByTenNhaCungCapContaining(String tenNhaCungCap) {
         return supplierRepository.findByTenNhaCungCapContainingIgnoreCase(tenNhaCungCap);
     }
 
     // Lấy tất cả nhà cung cấp
-    public List<Supplier> findAll() {
+    public List<NhaCungCap> findAll() {
         return supplierRepository.findAll();
     }
 
     // Lưu hoặc cập nhật nhà cung cấp
-    public Supplier save(Supplier supplier) {
-        return supplierRepository.save(supplier);
+    public NhaCungCap save(NhaCungCap nhaCungCap) {
+        return supplierRepository.save(nhaCungCap);
     }
 
     // Xóa nhà cung cấp theo maNhaCungCap
