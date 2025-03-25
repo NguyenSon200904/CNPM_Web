@@ -1,31 +1,52 @@
 package com.example.warehouse.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+
+import java.util.List;
 
 @Entity
 @Table(name = "sanpham")
-@Data
+@Getter
+@Setter
+@ToString
 public class Product {
     @Id
-    @Column(name = "maSanPham", length = 50)
+    @Column(name = "ma_san_pham")
+    @JsonProperty("maSanPham")
     private String maSanPham;
 
-    @Column(name = "gia")
-    private double gia;
-
-    @Column(name = "loaiSanPham", length = 20)
-    private String loaiSanPham;
-
-    @Column(name = "soLuong")
-    private int soLuong;
-
-    @Column(name = "tenSanPham", length = 25)
+    @Column(name = "ten_san_pham", nullable = false)
+    @JsonProperty("tenSanPham")
     private String tenSanPham;
 
-    @Column(name = "trangThai")
-    private int trangThai;
+    @Column(name = "loai_san_pham", length = 20)
+    @JsonProperty("loaiSanPham")
+    private String loaiSanPham;
 
-    @Column(name = "xuatXu", length = 50)
+    @Column(name = "gia", nullable = false)
+    @JsonProperty("gia")
+    private double gia;
+
+    @Column(name = "so_luong", nullable = false)
+    @JsonProperty("soLuong")
+    private int soLuong;
+
+    @Column(name = "xuat_xu", length = 50)
+    @JsonProperty("xuatXu")
     private String xuatXu;
+
+    @Column(name = "trang_thai", length = 20)
+    @JsonProperty("trangThai")
+    private String trangThai;
+
+    @OneToMany(mappedBy = "sanPham")
+    @JsonManagedReference(value = "product-receiptDetails")
+    @ToString.Exclude
+    @JsonProperty("receiptDetails")
+    private List<ReceiptDetail> receiptDetails;
 }

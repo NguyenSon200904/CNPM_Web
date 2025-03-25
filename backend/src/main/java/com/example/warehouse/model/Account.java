@@ -1,5 +1,9 @@
 package com.example.warehouse.model;
 
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -25,4 +29,8 @@ public class Account {
 
     @Column(name = "status")
     private int status;
+
+    @OneToMany(mappedBy = "nguoiTao")
+    @JsonIgnore
+    private List<Receipt> receipts;
 }

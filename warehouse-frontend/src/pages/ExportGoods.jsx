@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button, Input, Select, Table, message, Modal } from "antd";
 import {
   FileExcelOutlined,
@@ -7,85 +7,141 @@ import {
   PlusOutlined,
   ExportOutlined,
 } from "@ant-design/icons";
+import axios from "axios";
+import * as XLSX from "xlsx";
+import { useNavigate } from "react-router-dom";
+import moment from "moment";
+
+const { Option } = Select;
 
 const ExportGoods = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterBy, setFilterBy] = useState("id");
+  const [productType, setProductType] = useState("all");
   const [quantities, setQuantities] = useState({});
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [receiptCode, setReceiptCode] = useState("");
   const [creator, setCreator] = useState("admin");
+  const [products, setProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+
+  const fileInputRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const user = localStorage.getItem("username") || "admin";
     setCreator(user);
+
+    const fetchProducts = async () => {
+      setLoadingProducts(true);
+      try {
+        const response = await axios.get("http://localhost:8080/api/products");
+        const formattedProducts = response.data.map((product) => ({
+          maSanPham: product.maSanPham,
+          tenSanPham: product.tenSanPham,
+          soLuong: product.soLuong,
+          gia: product.gia,
+          loaiSanPham: product.loaiSanPham,
+        }));
+        if (formattedProducts.length === 0) {
+          message.warning(
+            "Không có sản phẩm nào trong kho! Vui lòng kiểm tra database."
+          );
+        }
+        setProducts(formattedProducts);
+      } catch (error) {
+        message.error(
+          "Không thể tải danh sách sản phẩm: " +
+            (error.response?.data || error.message)
+        );
+      } finally {
+        setLoadingProducts(false);
+      }
+    };
+    fetchProducts();
   }, []);
 
-  const productData = [
-    {
-      id: "P001",
-      name: "Laptop Dell",
-      quantity: 50,
-      price: 15000000,
-    },
-    {
-      id: "P002",
-      name: "Laptop HP",
-      quantity: 30,
-      price: 12000000,
-    },
-    {
-      id: "P003",
-      name: "Laptop Asus",
-      quantity: 20,
-      price: 14000000,
-    },
-    {
-      id: "P004",
-      name: "Laptop Lenovo",
-      quantity: 40,
-      price: 13000000,
-    },
-    {
-      id: "P005",
-      name: "Laptop Acer Nitro 5 Tiger aaaaaaaaaaa",
-      quantity: 10,
-      price: 11000000,
-    },
-    {
-      id: "P006",
-      name: "Laptop MSI",
-      quantity: 5,
-      price: 20000000,
-    },
-  ];
+  const filteredData = products.filter((product) => {
+    const value = product[filterBy]?.toString().toLowerCase();
+    const matchesSearch = value?.includes(searchTerm.toLowerCase());
+    const matchesType =
+      productType === "all" ||
+      (productType === "computer" && product.loaiSanPham === "Máy tính") ||
+      (productType === "phone" && product.loaiSanPham === "Điện thoại");
+    return matchesSearch && matchesType;
+  });
 
   const handleQuantityChange = (id, value) => {
-    setQuantities((prev) => ({ ...prev, [id]: Number(value) }));
+    const quantity = Number(value);
+    if (quantity < 1) {
+      message.error("Số lượng phải lớn hơn 0");
+      return;
+    }
+    setQuantities((prev) => ({ ...prev, [id]: quantity }));
   };
 
   const handleAddProduct = (record) => {
-    const quantity = quantities[record.id] || 1;
+    const quantity = quantities[record.maSanPham] || 1;
+    const productInStock = products.find(
+      (p) => p.maSanPham === record.maSanPham
+    );
+    if (quantity > productInStock.soLuong) {
+      message.error(
+        `Số lượng xuất (${quantity}) vượt quá số lượng tồn kho (${productInStock.soLuong}) cho sản phẩm ${record.tenSanPham}!`
+      );
+      return;
+    }
+
     setSelectedProducts((prev) => {
-      const existingProduct = prev.find((item) => item.id === record.id);
+      const existingProduct = prev.find(
+        (item) => item.maSanPham === record.maSanPham
+      );
       if (existingProduct) {
+        const newQuantity = existingProduct.quantity + quantity;
+        if (newQuantity > productInStock.soLuong) {
+          message.error(
+            `Tổng số lượng xuất (${newQuantity}) vượt quá số lượng tồn kho (${productInStock.soLuong}) cho sản phẩm ${record.tenSanPham}!`
+          );
+          return prev;
+        }
         return prev.map((item) =>
-          item.id === record.id
-            ? { ...item, quantity: item.quantity + quantity }
+          item.maSanPham === record.maSanPham
+            ? { ...item, quantity: newQuantity }
             : item
         );
       }
-      return [...prev, { ...record, quantity }];
+      message.success(`Đã thêm ${record.tenSanPham} vào phiếu xuất`);
+      return [
+        ...prev,
+        {
+          ...record,
+          quantity,
+          id: record.maSanPham,
+          name: record.tenSanPham,
+          price: record.gia,
+        },
+      ];
     });
-    setQuantities((prev) => ({ ...prev, [record.id]: 1 }));
+    setQuantities((prev) => ({ ...prev, [record.maSanPham]: 1 }));
   };
 
   const handleEditQuantity = (id, newQuantity) => {
+    const quantity = Number(newQuantity);
+    if (quantity < 1) {
+      message.error("Số lượng phải lớn hơn 0");
+      return;
+    }
+    const productInStock = products.find((p) => p.maSanPham === id);
+    if (quantity > productInStock.soLuong) {
+      message.error(
+        `Số lượng xuất (${quantity}) vượt quá số lượng tồn kho (${productInStock.soLuong}) cho sản phẩm ${productInStock.tenSanPham}!`
+      );
+      return;
+    }
     setSelectedProducts((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, quantity: newQuantity } : item
-      )
+      prev.map((item) => (item.maSanPham === id ? { ...item, quantity } : item))
     );
+    message.success("Cập nhật số lượng thành công");
   };
 
   const handleDeleteProduct = (id) => {
@@ -96,10 +152,175 @@ const ExportGoods = () => {
       okType: "danger",
       cancelText: "Hủy",
       onOk: () => {
-        setSelectedProducts((prev) => prev.filter((item) => item.id !== id));
+        setSelectedProducts((prev) =>
+          prev.filter((item) => item.maSanPham !== id)
+        );
         message.success("Xóa sản phẩm thành công");
       },
     });
+  };
+
+  const handleExportGoods = async () => {
+    if (selectedProducts.length === 0) {
+      message.warning("Vui lòng chọn ít nhất một sản phẩm để xuất!");
+      return;
+    }
+
+    const totalAmount = selectedProducts.reduce(
+      (sum, item) => sum + item.quantity * item.price,
+      0
+    );
+
+    const receiptData = {
+      ngayXuat: moment().format("YYYY-MM-DDTHH:mm:ss"),
+      tongTien: totalAmount,
+      nguoiTao: { userName: creator },
+      chiTietPhieuXuats: selectedProducts.map((product) => ({
+        id: {
+          maPhieuXuat: null,
+          maSanPham: product.maSanPham,
+        },
+        soLuong: product.quantity,
+        donGia: product.price,
+      })),
+    };
+
+    try {
+      await axios.post(
+        "http://localhost:8080/api/export-receipts",
+        receiptData
+      );
+      message.success("Xuất hàng thành công!");
+      setReceiptCode("");
+      setSelectedProducts([]);
+      setQuantities({});
+      navigate("/phieu-xuat");
+    } catch (error) {
+      message.error(
+        "Xuất hàng thất bại: " +
+          (error.response?.data?.message || error.message)
+      );
+    }
+  };
+
+  const handleExportExcel = (event) => {
+    const file = event.target.files[0];
+    if (!file) {
+      message.error("Vui lòng chọn file Excel!");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+        if (jsonData.length === 0) {
+          message.error("File Excel trống!");
+          return;
+        }
+
+        const errors = [];
+        const newSelectedProducts = [...selectedProducts];
+
+        jsonData.forEach((row, index) => {
+          const maSanPham = row.maSanPham?.toString();
+          const tenSanPham = row.tenSanPham?.toString();
+          const soLuong = Number(row.soLuong);
+          const gia = Number(row.gia);
+
+          if (!maSanPham || !tenSanPham || isNaN(soLuong) || isNaN(gia)) {
+            errors.push(
+              `Dòng ${
+                index + 2
+              }: Dữ liệu không hợp lệ (thiếu hoặc sai định dạng).`
+            );
+            return;
+          }
+
+          if (soLuong < 1) {
+            errors.push(
+              `Dòng ${
+                index + 2
+              }: Số lượng phải lớn hơn 0 (maSanPham: ${maSanPham}).`
+            );
+            return;
+          }
+
+          const product = products.find((p) => p.maSanPham === maSanPham);
+          if (!product) {
+            errors.push(
+              `Dòng ${
+                index + 2
+              }: Sản phẩm không tồn tại (maSanPham: ${maSanPham}).`
+            );
+            return;
+          }
+
+          if (soLuong > product.soLuong) {
+            errors.push(
+              `Dòng ${
+                index + 2
+              }: Số lượng xuất (${soLuong}) vượt quá số lượng tồn kho (${
+                product.soLuong
+              }) cho sản phẩm ${product.tenSanPham}.`
+            );
+            return;
+          }
+
+          const existingProduct = newSelectedProducts.find(
+            (item) => item.maSanPham === maSanPham
+          );
+          if (existingProduct) {
+            const newQuantity = existingProduct.quantity + soLuong;
+            if (newQuantity > product.soLuong) {
+              errors.push(
+                `Dòng ${
+                  index + 2
+                }: Tổng số lượng xuất (${newQuantity}) vượt quá số lượng tồn kho (${
+                  product.soLuong
+                }) cho sản phẩm ${product.tenSanPham}.`
+              );
+              return;
+            }
+            existingProduct.quantity = newQuantity;
+          } else {
+            newSelectedProducts.push({
+              ...product,
+              quantity: soLuong,
+              id: maSanPham,
+              name: tenSanPham,
+              price: gia,
+            });
+          }
+        });
+
+        setSelectedProducts(newSelectedProducts);
+
+        if (errors.length > 0) {
+          message.warning(
+            `Đã nhập thành công ${
+              newSelectedProducts.length - selectedProducts.length
+            } sản phẩm. Có ${errors.length} lỗi:\n${errors.join("\n")}`
+          );
+        } else {
+          message.success(
+            `Đã nhập thành công ${
+              newSelectedProducts.length - selectedProducts.length
+            } sản phẩm từ Excel!`
+          );
+        }
+      } catch (error) {
+        message.error("Lỗi khi đọc file Excel: " + error.message);
+      }
+    };
+
+    reader.readAsArrayBuffer(file);
+    event.target.value = null;
   };
 
   const totalAmount = selectedProducts.reduce(
@@ -108,10 +329,15 @@ const ExportGoods = () => {
   );
 
   const columns = [
-    { title: "Mã máy", dataIndex: "id", key: "id" },
-    { title: "Tên máy", dataIndex: "name", key: "name" },
-    { title: "Số lượng", dataIndex: "quantity", key: "quantity" },
-    { title: "Đơn giá", dataIndex: "price", key: "price" },
+    { title: "Mã sản phẩm", dataIndex: "maSanPham", key: "maSanPham" },
+    { title: "Tên sản phẩm", dataIndex: "tenSanPham", key: "tenSanPham" },
+    { title: "Số lượng", dataIndex: "soLuong", key: "soLuong" },
+    {
+      title: "Đơn giá",
+      dataIndex: "gia",
+      key: "gia",
+      render: (gia) => gia.toLocaleString() + " VND",
+    },
     {
       title: "Thêm",
       key: "add",
@@ -120,8 +346,10 @@ const ExportGoods = () => {
           <Input
             type="number"
             min={1}
-            value={quantities[record.id] || 1}
-            onChange={(e) => handleQuantityChange(record.id, e.target.value)}
+            value={quantities[record.maSanPham] || 1}
+            onChange={(e) =>
+              handleQuantityChange(record.maSanPham, e.target.value)
+            }
             className="w-24 rounded-lg"
           />
           <Button
@@ -144,10 +372,15 @@ const ExportGoods = () => {
       key: "index",
       render: (_, __, index) => index + 1,
     },
-    { title: "Mã sản phẩm", dataIndex: "id", key: "id" },
+    { title: "Mã sản phẩm", dataIndex: "maSanPham", key: "maSanPham" },
     { title: "Tên sản phẩm", dataIndex: "name", key: "name" },
     { title: "Số lượng", dataIndex: "quantity", key: "quantity" },
-    { title: "Đơn giá", dataIndex: "price", key: "price" },
+    {
+      title: "Đơn giá",
+      dataIndex: "price",
+      key: "price",
+      render: (price) => price.toLocaleString() + " VND",
+    },
     {
       title: "Thao tác",
       key: "actions",
@@ -157,7 +390,7 @@ const ExportGoods = () => {
             icon={<EditOutlined />}
             onClick={() =>
               handleEditQuantity(
-                record.id,
+                record.maSanPham,
                 prompt("Nhập số lượng mới:", record.quantity)
               )
             }
@@ -165,7 +398,7 @@ const ExportGoods = () => {
           <Button
             icon={<DeleteOutlined />}
             danger
-            onClick={() => handleDeleteProduct(record.id)}
+            onClick={() => handleDeleteProduct(record.maSanPham)}
           />
         </div>
       ),
@@ -174,6 +407,7 @@ const ExportGoods = () => {
 
   return (
     <div className="p-4 h-full flex flex-col">
+      <h2 className="text-2xl font-bold mb-4">Xuất hàng</h2>
       <div className="grid grid-cols-2 gap-4 flex-grow min-h-[500px]">
         <div className="bg-white p-4 shadow rounded flex flex-col flex-grow overflow-y-auto">
           <h3 className="font-bold mb-2 text-black">Chọn sản phẩm</h3>
@@ -189,18 +423,28 @@ const ExportGoods = () => {
               onChange={setFilterBy}
               className="w-40 h-[50px] rounded-lg"
             >
-              <Select.Option value="id">Mã máy</Select.Option>
-              <Select.Option value="name">Tên máy</Select.Option>
-              <Select.Option value="quantity">Số lượng</Select.Option>
-              <Select.Option value="price">Đơn giá</Select.Option>
+              <Option value="maSanPham">Mã sản phẩm</Option>
+              <Option value="tenSanPham">Tên sản phẩm</Option>
+              <Option value="soLuong">Số lượng</Option>
+              <Option value="gia">Đơn giá</Option>
+            </Select>
+            <Select
+              value={productType}
+              onChange={setProductType}
+              className="w-40 h-[50px] rounded-lg"
+            >
+              <Option value="all">Tất cả</Option>
+              <Option value="computer">Máy tính</Option>
+              <Option value="phone">Điện thoại</Option>
             </Select>
           </div>
           <Table
-            dataSource={productData}
+            dataSource={filteredData}
             columns={columns}
-            rowKey="id"
+            rowKey="maSanPham"
             pagination={{ pageSize: 5 }}
             className="mt-2"
+            loading={loadingProducts}
           />
         </div>
 
@@ -208,7 +452,7 @@ const ExportGoods = () => {
           <h3 className="font-bold mb-2 text-black">Thông tin xuất hàng</h3>
           <div className="flex flex-col gap-2 flex-grow overflow-hidden">
             <Input
-              placeholder="Mã phiếu nhập"
+              placeholder="Mã phiếu xuất"
               value={receiptCode}
               onChange={(e) => setReceiptCode(e.target.value)}
               className="border h-[50px] p-2 rounded-lg"
@@ -222,7 +466,18 @@ const ExportGoods = () => {
             <div className="flex-grow overflow-hidden">
               {selectedProducts.length === 0 ? (
                 <div className="flex items-center justify-center h-full">
-                  <Button type="primary" icon={<FileExcelOutlined />}>
+                  <input
+                    type="file"
+                    accept=".xlsx, .xls"
+                    onChange={handleExportExcel}
+                    style={{ display: "none" }}
+                    ref={fileInputRef}
+                  />
+                  <Button
+                    type="primary"
+                    icon={<FileExcelOutlined />}
+                    onClick={() => fileInputRef.current.click()}
+                  >
                     Nhập Excel
                   </Button>
                 </div>
@@ -230,7 +485,7 @@ const ExportGoods = () => {
                 <Table
                   dataSource={selectedProducts}
                   columns={selectedColumns}
-                  rowKey="id"
+                  rowKey="maSanPham"
                   pagination={false}
                   scroll={{ y: 240 }}
                 />
@@ -238,8 +493,15 @@ const ExportGoods = () => {
             </div>
           </div>
           <div className="border-t mt-4 pt-2 flex justify-between items-center font-bold bg-white p-4 shadow-md sticky bottom-0 w-full">
-            <p>Tổng tiền: {totalAmount.toLocaleString()} VND</p>
-            <Button type="primary" icon={<ExportOutlined />}>
+            <p className="text-lg text-red-500">
+              Tổng tiền: {totalAmount.toLocaleString()} VND
+            </p>
+            <Button
+              type="primary"
+              icon={<ExportOutlined />}
+              className="bg-blue-500 hover:bg-blue-600"
+              onClick={handleExportGoods}
+            >
               Xuất hàng
             </Button>
           </div>
