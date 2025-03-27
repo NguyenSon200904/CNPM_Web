@@ -49,4 +49,10 @@ public class Product {
     @ToString.Exclude
     @JsonProperty("receiptDetails")
     private List<ReceiptDetail> receiptDetails;
+
+    @OneToMany(mappedBy = "sanPham")
+    @JsonManagedReference(value = "product-exportReceiptDetails")
+    @ToString.Exclude
+    @JsonProperty("exportReceiptDetails")
+    private List<ExportReceiptDetail> exportReceiptDetails;
 }

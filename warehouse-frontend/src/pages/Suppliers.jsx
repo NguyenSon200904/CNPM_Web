@@ -6,7 +6,7 @@ import {
   DeleteOutlined,
   EditOutlined,
 } from "@ant-design/icons";
-import axios from "axios";
+import api from "../api";
 import * as XLSX from "xlsx";
 
 const { Option } = Select;
@@ -28,7 +28,7 @@ const Supplier = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const response = await axios.get("http://localhost:8080/api/suppliers");
+        const response = await api.get("http://localhost:8080/api/suppliers");
         if (Array.isArray(response.data)) {
           const formattedData = response.data.map((item) => ({
             key: item.maNhaCungCap,
@@ -89,12 +89,12 @@ const Supplier = () => {
         diaChi: values.address,
       };
 
-      await axios.post("http://localhost:8080/api/suppliers", newSupplier);
+      await api.post("http://localhost:8080/api/suppliers", newSupplier);
       message.success("Thêm nhà cung cấp thành công!");
       setIsAddModalOpen(false);
       form.resetFields();
 
-      const response = await axios.get("http://localhost:8080/api/suppliers");
+      const response = await api.get("http://localhost:8080/api/suppliers");
       setData(
         response.data.map((item) => ({
           key: item.maNhaCungCap,
@@ -131,7 +131,7 @@ const Supplier = () => {
         diaChi: values.address,
       };
 
-      await axios.put(
+      await api.put(
         `http://localhost:8080/api/suppliers/${selectedSupplier.id}`,
         updatedSupplier
       );
@@ -139,7 +139,7 @@ const Supplier = () => {
       setIsEditModalOpen(false);
       form.resetFields();
 
-      const response = await axios.get("http://localhost:8080/api/suppliers");
+      const response = await api.get("http://localhost:8080/api/suppliers");
       setData(
         response.data.map((item) => ({
           key: item.maNhaCungCap,
@@ -165,12 +165,12 @@ const Supplier = () => {
     try {
       await Promise.all(
         selectedRowKeys.map((key) =>
-          axios.delete(`http://localhost:8080/api/suppliers/${key}`)
+          api.delete(`http://localhost:8080/api/suppliers/${key}`)
         )
       );
       message.success("Xóa nhà cung cấp thành công!");
 
-      const response = await axios.get("http://localhost:8080/api/suppliers");
+      const response = await api.get("http://localhost:8080/api/suppliers");
       setData(
         response.data.map((item) => ({
           key: item.maNhaCungCap,
@@ -221,7 +221,7 @@ const Supplier = () => {
               soDienThoai: item["Số điện thoại"],
               diaChi: item["Địa chỉ"],
             };
-            await axios.post(
+            await api.post(
               "http://localhost:8080/api/suppliers",
               newSupplier
             );
@@ -229,7 +229,7 @@ const Supplier = () => {
         );
         message.success("Nhập Excel thành công!");
 
-        const response = await axios.get("http://localhost:8080/api/suppliers");
+        const response = await api.get("http://localhost:8080/api/suppliers");
         setData(
           response.data.map((item) => ({
             key: item.maNhaCungCap,

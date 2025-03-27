@@ -25,16 +25,36 @@ public class ReceiptController {
 
     // GET: Lấy danh sách phiếu nhập
     @GetMapping("/receipts")
-    public List<Receipt> getAllReceipts() {
-        logger.info("Lấy danh sách phiếu nhập");
-        return receiptService.findAll();
+    public ResponseEntity<List<Receipt>> getAllReceipts() {
+        try {
+            logger.info("Lấy danh sách phiếu nhập");
+            List<Receipt> receipts = receiptService.findAll();
+            if (receipts.isEmpty()) {
+                logger.info("Không có phiếu nhập nào được tìm thấy");
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            }
+            return new ResponseEntity<>(receipts, HttpStatus.OK);
+        } catch (Exception e) {
+            logger.error("Lỗi khi lấy danh sách phiếu nhập: {}", e.getMessage(), e);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     // GET: Lấy phiếu nhập theo ID
     @GetMapping("/receipts/{id}")
-    public Receipt getReceiptById(@PathVariable Long id) {
-        logger.info("Lấy phiếu nhập với ID: {}", id);
-        return receiptService.findById(id);
+    public ResponseEntity<Receipt> getReceiptById(@PathVariable Long id) {
+        try {
+            logger.info("Lấy phiếu nhập với ID: {}", id);
+            Receipt receipt = receiptService.findById(id);
+            if (receipt == null) {
+                logger.warn("Không tìm thấy phiếu nhập với ID: {}", id);
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+            return new ResponseEntity<>(receipt, HttpStatus.OK);
+        } catch (Exception e) {
+            logger.error("Lỗi khi lấy phiếu nhập với ID {}: {}", id, e.getMessage(), e);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     // POST: Tạo phiếu nhập mới
@@ -60,8 +80,14 @@ public class ReceiptController {
 
     // DELETE: Xóa phiếu nhập
     @DeleteMapping("/receipts/{id}")
-    public void deleteReceipt(@PathVariable Long id) {
-        logger.info("Xóa phiếu nhập với ID: {}", id);
-        receiptService.deleteById(id);
+    public ResponseEntity<Void> deleteReceipt(@PathVariable Long id) {
+        try {
+            logger.info("Xóa phiếu nhập với ID: {}", id);
+            receiptService.deleteById(id);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        } catch (Exception e) {
+            logger.error("Lỗi khi xóa phiếu nhập với ID {}: {}", id, e.getMessage(), e);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }

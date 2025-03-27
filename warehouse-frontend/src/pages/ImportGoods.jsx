@@ -7,7 +7,7 @@ import {
   PlusOutlined,
   ImportOutlined,
 } from "@ant-design/icons";
-import axios from "axios";
+import api from "../api";
 import * as XLSX from "xlsx";
 import { useNavigate } from "react-router-dom";
 import moment from "moment";
@@ -38,10 +38,10 @@ const ImportGoods = () => {
     const fetchProducts = async () => {
       setLoadingProducts(true);
       try {
-        const responseMayTinh = await axios.get(
+        const responseMayTinh = await api.get(
           "http://localhost:8080/api/products?loaiSanPham=MAY_TINH"
         );
-        const responseDienThoai = await axios.get(
+        const responseDienThoai = await api.get(
           "http://localhost:8080/api/products?loaiSanPham=DIEN_THOAI"
         );
         const allProducts = [
@@ -68,7 +68,7 @@ const ImportGoods = () => {
     const fetchSuppliers = async () => {
       setLoadingSuppliers(true);
       try {
-        const response = await axios.get("http://localhost:8080/api/suppliers");
+        const response = await api.get("http://localhost:8080/api/suppliers");
         if (response.data.length === 0) {
           message.warning(
             "Không có nhà cung cấp nào! Vui lòng kiểm tra database."
@@ -241,7 +241,7 @@ const ImportGoods = () => {
     }
 
     try {
-      const response = await axios.post(
+      const response = await api.post(
         "http://localhost:8080/api/receipts",
         receiptData
       );

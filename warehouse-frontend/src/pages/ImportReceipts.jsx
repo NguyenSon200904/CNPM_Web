@@ -6,7 +6,7 @@ import {
   EditOutlined,
   EyeOutlined,
 } from "@ant-design/icons";
-import axios from "axios";
+import api from "../api";
 import * as XLSX from "xlsx";
 import moment from "moment";
 import { useNavigate } from "react-router-dom";
@@ -30,7 +30,7 @@ const ImportReceipts = () => {
   const fetchReceipts = async () => {
     setLoading(true);
     try {
-      const response = await axios.get("http://localhost:8080/api/receipts");
+      const response = await api.get("http://localhost:8080/api/receipts");
       const formattedReceipts = response.data.map((receipt) => ({
         id: receipt.maPhieuNhap,
         supplier: receipt.nhaCungCap?.tenNhaCungCap || "Không có thông tin",
@@ -79,7 +79,7 @@ const ImportReceipts = () => {
         try {
           await Promise.all(
             selectedRowKeys.map((id) =>
-              axios.delete(`http://localhost:8080/api/receipts/${id}`)
+              api.delete(`http://localhost:8080/api/receipts/${id}`)
             )
           );
           message.success("Xóa phiếu nhập thành công!");
@@ -248,7 +248,7 @@ const ImportReceipts = () => {
           };
 
           try {
-            await axios.post("http://localhost:8080/api/receipts", receiptData);
+            await api.post("http://localhost:8080/api/receipts", receiptData);
             newReceipts.push(receiptData);
           } catch (error) {
             errors.push(

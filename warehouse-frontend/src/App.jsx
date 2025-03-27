@@ -1,6 +1,6 @@
 import "./App.css";
 import { Routes, Route } from "react-router-dom";
-import { ConfigProvider } from "antd"; // Thêm ConfigProvider từ Ant Design
+import { ConfigProvider } from "antd";
 import Main from "./pages/Main.jsx";
 import Login from "./pages/Login.jsx";
 import Products from "./pages/Products";
@@ -13,97 +13,125 @@ import Inventory from "./pages/Inventory";
 import Accounts from "./pages/Accounts";
 import Statistics from "./pages/Statistics";
 import ChangeInfo from "./pages/ChangeInfo";
+import ProtectedRoute from "./components/ProtectedRoute"; // Import ProtectedRoute
 
 function App() {
   return (
     <ConfigProvider
       theme={{
         token: {
-          fontFamily: "'Arial', sans-serif", // Ép Ant Design sử dụng font Arial
+          fontFamily: "'Arial', sans-serif",
         },
       }}
     >
       <Routes>
-        <Route path="/" element={<Main />} />
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Main />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/login" element={<Login />} />
         <Route
           path="/san-pham"
           element={
-            <Main>
-              <Products />
-            </Main>
+            <ProtectedRoute>
+              <Main>
+                <Products />
+              </Main>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/nha-cung-cap"
           element={
-            <Main>
-              <Suppliers />
-            </Main>
+            <ProtectedRoute>
+              <Main>
+                <Suppliers />
+              </Main>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/nhap-hang"
           element={
-            <Main>
-              <ImportGoods />
-            </Main>
+            <ProtectedRoute>
+              <Main>
+                <ImportGoods />
+              </Main>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/phieu-nhap"
           element={
-            <Main>
-              <ImportReceipts />
-            </Main>
+            <ProtectedRoute>
+              <Main>
+                <ImportReceipts />
+              </Main>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/xuat-hang"
           element={
-            <Main>
-              <ExportGoods />
-            </Main>
+            <ProtectedRoute>
+              <Main>
+                <ExportGoods />
+              </Main>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/phieu-xuat"
           element={
-            <Main>
-              <ExportReceipts />
-            </Main>
+            <ProtectedRoute>
+              <Main>
+                <ExportReceipts />
+              </Main>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/ton-kho"
           element={
-            <Main>
-              <Inventory />
-            </Main>
+            <ProtectedRoute>
+              <Main>
+                <Inventory />
+              </Main>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/tai-khoan"
           element={
-            <Main>
-              <Accounts />
-            </Main>
+            <ProtectedRoute>
+              <Main>
+                <Accounts />
+              </Main>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/thong-ke"
           element={
-            <Main>
-              <Statistics />
-            </Main>
+            <ProtectedRoute>
+              <Main>
+                <Statistics />
+              </Main>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/doi-thong-tin"
           element={
-            <Main>
-              <ChangeInfo />
-            </Main>
+            <ProtectedRoute>
+              <Main>
+                <ChangeInfo />
+              </Main>
+            </ProtectedRoute>
           }
         />
       </Routes>

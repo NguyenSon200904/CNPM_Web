@@ -7,7 +7,7 @@ import {
   PlusOutlined,
   ExportOutlined,
 } from "@ant-design/icons";
-import axios from "axios";
+import api from "../api";
 import * as XLSX from "xlsx";
 import { useNavigate } from "react-router-dom";
 import moment from "moment";
@@ -16,14 +16,14 @@ const { Option } = Select;
 
 const ExportGoods = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterBy, setFilterBy] = useState("id");
+  const [filterBy, setFilterBy] = useState("maSanPham");
   const [productType, setProductType] = useState("all");
   const [quantities, setQuantities] = useState({});
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [receiptCode, setReceiptCode] = useState("");
   const [creator, setCreator] = useState("admin");
-  const [products, setProducts] = useState([]);
-  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [inventory, setInventory] = useState([]); // Đổi từ products thành inventory
+  const [loadingInventory, setLoadingInventory] = useState(false); // Đổi từ loadingProducts thành loadingInventory
 
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
@@ -32,42 +32,42 @@ const ExportGoods = () => {
     const user = localStorage.getItem("username") || "admin";
     setCreator(user);
 
-    const fetchProducts = async () => {
-      setLoadingProducts(true);
+    const fetchInventory = async () => {
+      setLoadingInventory(true);
       try {
-        const response = await axios.get("http://localhost:8080/api/products");
-        const formattedProducts = response.data.map((product) => ({
-          maSanPham: product.maSanPham,
-          tenSanPham: product.tenSanPham,
-          soLuong: product.soLuong,
-          gia: product.gia,
-          loaiSanPham: product.loaiSanPham,
+        const response = await api.get("http://localhost:8080/api/inventory");
+        const formattedInventory = response.data.map((item) => ({
+          maSanPham: item.maSanPham,
+          tenSanPham: item.tenSanPham,
+          soLuong: item.soLuongTonKho, // Số lượng tồn kho thực tế
+          gia: item.gia,
+          loaiSanPham: item.loaiSanPham,
         }));
-        if (formattedProducts.length === 0) {
+        if (formattedInventory.length === 0) {
           message.warning(
-            "Không có sản phẩm nào trong kho! Vui lòng kiểm tra database."
+            "Không có hàng hóa nào trong kho! Vui lòng nhập hàng trước."
           );
         }
-        setProducts(formattedProducts);
+        setInventory(formattedInventory);
       } catch (error) {
         message.error(
-          "Không thể tải danh sách sản phẩm: " +
+          "Không thể tải danh sách hàng hóa trong kho: " +
             (error.response?.data || error.message)
         );
       } finally {
-        setLoadingProducts(false);
+        setLoadingInventory(false);
       }
     };
-    fetchProducts();
+    fetchInventory();
   }, []);
 
-  const filteredData = products.filter((product) => {
-    const value = product[filterBy]?.toString().toLowerCase();
+  const filteredData = inventory.filter((item) => {
+    const value = item[filterBy]?.toString().toLowerCase();
     const matchesSearch = value?.includes(searchTerm.toLowerCase());
     const matchesType =
       productType === "all" ||
-      (productType === "computer" && product.loaiSanPham === "Máy tính") ||
-      (productType === "phone" && product.loaiSanPham === "Điện thoại");
+      (productType === "computer" && item.loaiSanPham === "Máy tính") ||
+      (productType === "phone" && item.loaiSanPham === "Điện thoại");
     return matchesSearch && matchesType;
   });
 
@@ -82,12 +82,12 @@ const ExportGoods = () => {
 
   const handleAddProduct = (record) => {
     const quantity = quantities[record.maSanPham] || 1;
-    const productInStock = products.find(
+    const itemInInventory = inventory.find(
       (p) => p.maSanPham === record.maSanPham
     );
-    if (quantity > productInStock.soLuong) {
+    if (quantity > itemInInventory.soLuong) {
       message.error(
-        `Số lượng xuất (${quantity}) vượt quá số lượng tồn kho (${productInStock.soLuong}) cho sản phẩm ${record.tenSanPham}!`
+        `Số lượng xuất (${quantity}) vượt quá số lượng tồn kho (${itemInInventory.soLuong}) cho sản phẩm ${record.tenSanPham}!`
       );
       return;
     }
@@ -98,9 +98,9 @@ const ExportGoods = () => {
       );
       if (existingProduct) {
         const newQuantity = existingProduct.quantity + quantity;
-        if (newQuantity > productInStock.soLuong) {
+        if (newQuantity > itemInInventory.soLuong) {
           message.error(
-            `Tổng số lượng xuất (${newQuantity}) vượt quá số lượng tồn kho (${productInStock.soLuong}) cho sản phẩm ${record.tenSanPham}!`
+            `Tổng số lượng xuất (${newQuantity}) vượt quá số lượng tồn kho (${itemInInventory.soLuong}) cho sản phẩm ${record.tenSanPham}!`
           );
           return prev;
         }
@@ -131,10 +131,10 @@ const ExportGoods = () => {
       message.error("Số lượng phải lớn hơn 0");
       return;
     }
-    const productInStock = products.find((p) => p.maSanPham === id);
-    if (quantity > productInStock.soLuong) {
+    const itemInInventory = inventory.find((p) => p.maSanPham === id);
+    if (quantity > itemInInventory.soLuong) {
       message.error(
-        `Số lượng xuất (${quantity}) vượt quá số lượng tồn kho (${productInStock.soLuong}) cho sản phẩm ${productInStock.tenSanPham}!`
+        `Số lượng xuất (${quantity}) vượt quá số lượng tồn kho (${itemInInventory.soLuong}) cho sản phẩm ${itemInInventory.tenSanPham}!`
       );
       return;
     }
@@ -186,10 +186,7 @@ const ExportGoods = () => {
     };
 
     try {
-      await axios.post(
-        "http://localhost:8080/api/export-receipts",
-        receiptData
-      );
+      await api.post("http://localhost:8080/api/export-receipts", receiptData);
       message.success("Xuất hàng thành công!");
       setReceiptCode("");
       setSelectedProducts([]);
@@ -251,23 +248,25 @@ const ExportGoods = () => {
             return;
           }
 
-          const product = products.find((p) => p.maSanPham === maSanPham);
-          if (!product) {
+          const itemInInventory = inventory.find(
+            (p) => p.maSanPham === maSanPham
+          );
+          if (!itemInInventory) {
             errors.push(
               `Dòng ${
                 index + 2
-              }: Sản phẩm không tồn tại (maSanPham: ${maSanPham}).`
+              }: Sản phẩm không tồn tại trong kho (maSanPham: ${maSanPham}).`
             );
             return;
           }
 
-          if (soLuong > product.soLuong) {
+          if (soLuong > itemInInventory.soLuong) {
             errors.push(
               `Dòng ${
                 index + 2
               }: Số lượng xuất (${soLuong}) vượt quá số lượng tồn kho (${
-                product.soLuong
-              }) cho sản phẩm ${product.tenSanPham}.`
+                itemInInventory.soLuong
+              }) cho sản phẩm ${itemInInventory.tenSanPham}.`
             );
             return;
           }
@@ -277,20 +276,20 @@ const ExportGoods = () => {
           );
           if (existingProduct) {
             const newQuantity = existingProduct.quantity + soLuong;
-            if (newQuantity > product.soLuong) {
+            if (newQuantity > itemInInventory.soLuong) {
               errors.push(
                 `Dòng ${
                   index + 2
                 }: Tổng số lượng xuất (${newQuantity}) vượt quá số lượng tồn kho (${
-                  product.soLuong
-                }) cho sản phẩm ${product.tenSanPham}.`
+                  itemInInventory.soLuong
+                }) cho sản phẩm ${itemInInventory.tenSanPham}.`
               );
               return;
             }
             existingProduct.quantity = newQuantity;
           } else {
             newSelectedProducts.push({
-              ...product,
+              ...itemInInventory,
               quantity: soLuong,
               id: maSanPham,
               name: tenSanPham,
@@ -331,7 +330,7 @@ const ExportGoods = () => {
   const columns = [
     { title: "Mã sản phẩm", dataIndex: "maSanPham", key: "maSanPham" },
     { title: "Tên sản phẩm", dataIndex: "tenSanPham", key: "tenSanPham" },
-    { title: "Số lượng", dataIndex: "soLuong", key: "soLuong" },
+    { title: "Số lượng tồn kho", dataIndex: "soLuong", key: "soLuong" },
     {
       title: "Đơn giá",
       dataIndex: "gia",
@@ -410,7 +409,7 @@ const ExportGoods = () => {
       <h2 className="text-2xl font-bold mb-4">Xuất hàng</h2>
       <div className="grid grid-cols-2 gap-4 flex-grow min-h-[500px]">
         <div className="bg-white p-4 shadow rounded flex flex-col flex-grow overflow-y-auto">
-          <h3 className="font-bold mb-2 text-black">Chọn sản phẩm</h3>
+          <h3 className="font-bold mb-2 text-black">Chọn sản phẩm từ kho</h3>
           <div className="flex gap-2 w-full">
             <Input
               placeholder="Nhập từ khóa..."
@@ -425,7 +424,7 @@ const ExportGoods = () => {
             >
               <Option value="maSanPham">Mã sản phẩm</Option>
               <Option value="tenSanPham">Tên sản phẩm</Option>
-              <Option value="soLuong">Số lượng</Option>
+              <Option value="soLuong">Số lượng tồn kho</Option>
               <Option value="gia">Đơn giá</Option>
             </Select>
             <Select
@@ -444,7 +443,7 @@ const ExportGoods = () => {
             rowKey="maSanPham"
             pagination={{ pageSize: 5 }}
             className="mt-2"
-            loading={loadingProducts}
+            loading={loadingInventory}
           />
         </div>
 

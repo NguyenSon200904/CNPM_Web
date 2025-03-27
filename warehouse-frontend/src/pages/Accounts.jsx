@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Input, Select, Table, Modal, Form, message } from "antd";
 import ActionButtons from "../components/ActionButtons";
+import api from "../api";
 
 const { Option } = Select;
 
@@ -25,8 +26,8 @@ const Accounts = () => {
   const fetchAccounts = async () => {
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:8080/api/accounts");
-      const accounts = await response.json();
+      const response = await api.get("http://localhost:8080/api/accounts");
+      const accounts = response.data;
       const formattedData = accounts.map((account, index) => ({
         id: index + 1,
         username: account.userName,
@@ -40,7 +41,10 @@ const Accounts = () => {
       setData(formattedData);
     } catch (error) {
       console.error("Error fetching accounts:", error);
-      message.error("Lỗi khi tải danh sách tài khoản!");
+      message.error(
+        "Lỗi khi tải danh sách tài khoản: " +
+          (error.response?.data?.error || error.message)
+      );
     } finally {
       setLoading(false);
     }
@@ -77,7 +81,7 @@ const Accounts = () => {
       setSelectedRowKeys(newSelectedRowKeys);
       setSelectedRows(newSelectedRows);
     },
-    type: "radio",
+    type: "checkbox", // Thay đổi từ "radio" sang "checkbox"
   };
 
   const handleAdd = () => {
@@ -97,26 +101,25 @@ const Accounts = () => {
         status: values.status === "Active" ? 1 : 0,
       };
 
-      const response = await fetch("http://localhost:8080/api/accounts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newAccount),
-      });
-
-      if (response.ok) {
-        message.success("Thêm tài khoản thành công!");
-        setIsAddModalVisible(false);
-        fetchAccounts();
-      } else {
-        message.error("Thêm tài khoản thất bại!");
-      }
+      await api.post("http://localhost:8080/api/accounts", newAccount);
+      message.success("Thêm tài khoản thành công!");
+      setIsAddModalVisible(false);
+      fetchAccounts();
     } catch (error) {
       console.error("Error adding account:", error);
-      message.error("Đã có lỗi xảy ra khi thêm tài khoản!");
+      message.error(
+        "Đã có lỗi xảy ra khi thêm tài khoản: " +
+          (error.response?.data?.error || error.message)
+      );
     }
   };
 
-  const handleEdit = (record) => {
+  const handleEdit = () => {
+    if (selectedRows.length !== 1) {
+      message.warning("Vui lòng chọn đúng 1 tài khoản để sửa!");
+      return;
+    }
+    const record = selectedRows[0];
     form.setFieldsValue({
       username: record.username,
       fullname: record.fullname,
@@ -138,48 +141,58 @@ const Accounts = () => {
         status: values.status === "Active" ? 1 : 0,
       };
 
-      const response = await fetch(
+      await api.put(
         `http://localhost:8080/api/accounts/${values.username}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(updatedAccount),
-        }
+        updatedAccount
       );
-
-      if (response.ok) {
-        message.success("Sửa tài khoản thành công!");
-        setIsEditModalVisible(false);
-        fetchAccounts();
-        setSelectedRowKeys([]);
-        setSelectedRows([]);
-      } else {
-        message.error("Sửa tài khoản thất bại!");
-      }
+      message.success("Sửa tài khoản thành công!");
+      setIsEditModalVisible(false);
+      fetchAccounts();
+      setSelectedRowKeys([]);
+      setSelectedRows([]);
     } catch (error) {
       console.error("Error updating account:", error);
-      message.error("Đã có lỗi xảy ra khi sửa tài khoản!");
+      message.error(
+        "Đã có lỗi xảy ra khi sửa tài khoản: " +
+          (error.response?.data?.error || error.message)
+      );
     }
   };
 
-  const handleDelete = async (record) => {
-    try {
-      const response = await fetch(
-        `http://localhost:8080/api/accounts/${record.username}`,
-        { method: "DELETE" }
-      );
-      if (response.ok) {
-        message.success("Xóa tài khoản thành công!");
-        fetchAccounts();
-        setSelectedRowKeys([]);
-        setSelectedRows([]);
-      } else {
-        message.error("Xóa tài khoản thất bại!");
-      }
-    } catch (error) {
-      console.error("Error deleting account:", error);
-      message.error("Đã có lỗi xảy ra khi xóa tài khoản!");
+  const handleDelete = async () => {
+    if (selectedRows.length === 0) {
+      message.warning("Vui lòng chọn ít nhất 1 tài khoản để xóa!");
+      return;
     }
+
+    Modal.confirm({
+      title: "Xác nhận xóa",
+      content: `Bạn có chắc chắn muốn xóa ${selectedRows.length} tài khoản đã chọn không?`,
+      okText: "Xóa",
+      okType: "danger",
+      cancelText: "Hủy",
+      onOk: async () => {
+        try {
+          await Promise.all(
+            selectedRows.map((record) =>
+              api.delete(
+                `http://localhost:8080/api/accounts/${record.username}`
+              )
+            )
+          );
+          message.success(`Xóa ${selectedRows.length} tài khoản thành công!`);
+          fetchAccounts();
+          setSelectedRowKeys([]);
+          setSelectedRows([]);
+        } catch (error) {
+          console.error("Error deleting accounts:", error);
+          message.error(
+            "Đã có lỗi xảy ra khi xóa tài khoản: " +
+              (error.response?.data?.error || error.message)
+          );
+        }
+      },
+    });
   };
 
   const handleReset = () => {
@@ -203,17 +216,16 @@ const Accounts = () => {
 
     try {
       for (const account of newAccounts) {
-        await fetch("http://localhost:8080/api/accounts", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(account),
-        });
+        await api.post("http://localhost:8080/api/accounts", account);
       }
       message.success("Nhập dữ liệu từ Excel thành công!");
       fetchAccounts();
     } catch (error) {
       console.error("Error importing accounts:", error);
-      message.error("Đã có lỗi xảy ra khi nhập dữ liệu từ Excel!");
+      message.error(
+        "Đã có lỗi xảy ra khi nhập dữ liệu từ Excel: " +
+          (error.response?.data?.error || error.message)
+      );
     }
   };
 

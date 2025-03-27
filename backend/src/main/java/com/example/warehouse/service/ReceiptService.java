@@ -40,9 +40,25 @@ public class ReceiptService {
         return receiptRepository.findById(id).orElse(null);
     }
 
+    @Transactional
     public List<Receipt> findAll() {
         List<Receipt> receipts = receiptRepository.findAll();
         receipts.forEach(receipt -> {
+            // Ép Hibernate tải các mối quan hệ liên quan trong cùng phiên
+            if (receipt.getNhaCungCap() != null) {
+                receipt.getNhaCungCap().getMaNhaCungCap(); // Force loading NhaCungCap
+            }
+            if (receipt.getNguoiTao() != null) {
+                receipt.getNguoiTao().getUserName(); // Force loading NguoiTao
+            }
+            if (receipt.getChiTietPhieuNhaps() != null) {
+                receipt.getChiTietPhieuNhaps().size(); // Force loading ChiTietPhieuNhaps
+                receipt.getChiTietPhieuNhaps().forEach(detail -> {
+                    if (detail.getSanPham() != null) {
+                        detail.getSanPham().getMaSanPham(); // Force loading SanPham trong ChiTietPhieuNhap
+                    }
+                });
+            }
             logger.info("Receipt: " + receipt.getMaPhieuNhap() +
                     ", NhaCungCap: "
                     + (receipt.getNhaCungCap() != null ? receipt.getNhaCungCap().getMaNhaCungCap() : "null") +

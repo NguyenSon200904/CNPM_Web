@@ -37,7 +37,7 @@ public class StatisticsController {
         stats.put("totalReceipts", receiptService.findAll().size());
         stats.put("totalExportReceipts", exportReceiptService.findAll().size());
         stats.put("totalReceiptAmount", receiptService.getTotalReceiptAmount());
-        stats.put("totalExportReceiptAmount", exportReceiptService.getTotalExportReceiptAmount());
+        stats.put("totalExportReceiptAmount", exportReceiptService.getTotalExportAmount());
 
         return ResponseEntity.ok(stats);
     }
@@ -65,7 +65,7 @@ public class StatisticsController {
 
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalExportReceipts", exportReceipts.size());
-        stats.put("totalAmount", exportReceiptService.getTotalExportReceiptAmountByNgayXuatBetween(start, end));
+        stats.put("totalAmount", exportReceiptService.getTotalExportAmountByNgayXuatBetween(start, end));
 
         return ResponseEntity.ok(stats);
     }

@@ -1,7 +1,8 @@
 com\example\warehouse\dto\ReceiptDetailDTO.class
 com\example\warehouse\dto\ExportReceiptDetailDTO.class
 com\example\warehouse\dto\ProductDTO.class
-com\example\warehouse\config\CorsConfig$1.class
+com\example\warehouse\PasswordEncoderRunner.class
+com\example\warehouse\service\InventoryService.class
 com\example\warehouse\entity\MayTinh.class
 com\example\warehouse\repository\SupplierRepository.class
 com\example\warehouse\dto\SupplierDTO.class
@@ -11,14 +12,18 @@ com\example\warehouse\model\ExportReceipt.class
 com\example\warehouse\repository\ReceiptRepository.class
 com\example\warehouse\repository\AccountRepository.class
 com\example\warehouse\service\ReceiptDetailService.class
+com\example\warehouse\controller\ChangeInfoController.class
 com\example\warehouse\model\Account.class
 com\example\warehouse\repository\MayTinhRepository.class
 com\example\warehouse\controller\ExportReceiptController.class
 com\example\warehouse\repository\DienThoaiRepository.class
+com\example\warehouse\util\JwtUtil.class
+com\example\warehouse\dto\LoginResponse.class
 com\example\warehouse\model\ReceiptDetail.class
 com\example\warehouse\controller\StatisticsController.class
 com\example\warehouse\controller\HelloController.class
 com\example\warehouse\dto\ExportReceiptDTO.class
+com\example\warehouse\controller\InventoryController.class
 com\example\warehouse\controller\ReceiptDetailController.class
 com\example\warehouse\controller\LoginRequest.class
 com\example\warehouse\entity\NhaCungCap.class
@@ -37,6 +42,7 @@ com\example\warehouse\dto\AccountDTO.class
 com\example\warehouse\dto\LoginRequest.class
 com\example\warehouse\model\Computer.class
 com\example\warehouse\entity\DienThoai.class
+com\example\warehouse\dto\InventoryDTO.class
 com\example\warehouse\service\ExportReceiptDetailServiceImpl.class
 com\example\warehouse\controller\ExportReceiptDetailController.class
 com\example\warehouse\model\ReceiptDetailId.class
@@ -52,6 +58,7 @@ com\example\warehouse\model\ExportReceiptDetail.class
 com\example\warehouse\controller\SupplierController.class
 com\example\warehouse\repository\ExportReceiptRepository.class
 com\example\warehouse\BackendApplication.class
+com\example\warehouse\config\JwtRequestFilter.class
 com\example\warehouse\model\Phone.class
 com\example\warehouse\service\ProductService.class
 com\example\warehouse\service\ExportReceiptService.class

@@ -16,7 +16,7 @@ import {
   EditOutlined,
   EyeOutlined,
 } from "@ant-design/icons";
-import axios from "axios";
+import api from "../api";
 import * as XLSX from "xlsx";
 
 const { Option } = Select;
@@ -39,7 +39,7 @@ const Product = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const response = await axios.get("http://localhost:8080/api/products", {
+        const response = await api.get("http://localhost:8080/api/products", {
           params: { loaiSanPham },
         });
         if (Array.isArray(response.data)) {
@@ -154,12 +154,12 @@ const Product = () => {
         loaiSanPham: loaiSanPham === "MAY_TINH" ? "Computer" : "Phone",
       };
 
-      await axios.post("http://localhost:8080/api/products", newProduct);
+      await api.post("http://localhost:8080/api/products", newProduct);
       message.success("Thêm sản phẩm thành công!");
       setIsAddModalOpen(false);
       form.resetFields();
 
-      const response = await axios.get("http://localhost:8080/api/products", {
+      const response = await api.get("http://localhost:8080/api/products", {
         params: { loaiSanPham },
       });
       setData(
@@ -206,7 +206,7 @@ const Product = () => {
         loaiSanPham: loaiSanPham === "MAY_TINH" ? "Computer" : "Phone",
       };
 
-      await axios.put(
+      await api.put(
         `http://localhost:8080/api/products/${selectedProduct.maSanPham}`,
         updatedProduct
       );
@@ -214,7 +214,7 @@ const Product = () => {
       setIsEditModalOpen(false);
       form.resetFields();
 
-      const response = await axios.get("http://localhost:8080/api/products", {
+      const response = await api.get("http://localhost:8080/api/products", {
         params: { loaiSanPham },
       });
       setData(
@@ -251,12 +251,12 @@ const Product = () => {
     try {
       await Promise.all(
         selectedRowKeys.map((key) =>
-          axios.delete(`http://localhost:8080/api/products/${key}`)
+          api.delete(`http://localhost:8080/api/products/${key}`)
         )
       );
       message.success("Xóa sản phẩm thành công!");
 
-      const response = await axios.get("http://localhost:8080/api/products", {
+      const response = await api.get("http://localhost:8080/api/products", {
         params: { loaiSanPham },
       });
       setData(
@@ -346,12 +346,12 @@ const Product = () => {
                     rom: item["Bộ nhớ"],
                   }),
             };
-            await axios.post("http://localhost:8080/api/products", newProduct);
+            await api.post("http://localhost:8080/api/products", newProduct);
           })
         );
         message.success("Nhập Excel thành công!");
 
-        const response = await axios.get("http://localhost:8080/api/products", {
+        const response = await api.get("http://localhost:8080/api/products", {
           params: { loaiSanPham },
         });
         setData(

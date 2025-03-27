@@ -1,31 +1,85 @@
 package com.example.warehouse.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
-import lombok.Data;
 
 @Entity
 @Table(name = "chitietphieuxuat")
-@Data
 public class ExportReceiptDetail {
+
     @EmbeddedId
+    @JsonProperty("id")
     private ExportReceiptDetailId id;
 
     @ManyToOne
-    @MapsId("maPhieuXuat")
-    @JoinColumn(name = "ma_phieu_xuat")
+    @JoinColumn(name = "ma_phieu_xuat", insertable = false, updatable = false)
+    @JsonBackReference(value = "exportReceipt-exportReceiptDetails")
+    @JsonProperty("exportReceipt")
     private ExportReceipt exportReceipt;
 
     @ManyToOne
-    @MapsId("maSanPham")
-    @JoinColumn(name = "ma_san_pham")
-    private Product product;
-
-    @Column(name = "loai_san_pham", length = 20)
-    private String loaiSanPham;
+    @JoinColumn(name = "ma_san_pham", insertable = false, updatable = false)
+    @JsonBackReference(value = "product-exportReceiptDetails")
+    @JsonProperty("sanPham")
+    private Product sanPham;
 
     @Column(name = "so_luong", nullable = false)
+    @JsonProperty("soLuong")
     private int soLuong;
 
     @Column(name = "don_gia", nullable = false)
+    @JsonProperty("donGia")
     private double donGia;
+
+    // Getters and setters
+    public ExportReceiptDetailId getId() {
+        return id;
+    }
+
+    public void setId(ExportReceiptDetailId id) {
+        this.id = id;
+    }
+
+    public ExportReceipt getExportReceipt() {
+        return exportReceipt;
+    }
+
+    public void setExportReceipt(ExportReceipt exportReceipt) {
+        this.exportReceipt = exportReceipt;
+    }
+
+    public Product getSanPham() {
+        return sanPham;
+    }
+
+    public void setSanPham(Product sanPham) {
+        this.sanPham = sanPham;
+    }
+
+    public int getSoLuong() {
+        return soLuong;
+    }
+
+    public void setSoLuong(int soLuong) {
+        this.soLuong = soLuong;
+    }
+
+    public double getDonGia() {
+        return donGia;
+    }
+
+    public void setDonGia(double donGia) {
+        this.donGia = donGia;
+    }
+
+    @Override
+    public String toString() {
+        return "ExportReceiptDetail{" +
+                "id=" + id +
+                ", soLuong=" + soLuong +
+                ", donGia=" + donGia +
+                ", sanPham=" + (sanPham != null ? sanPham.getMaSanPham() : "null") +
+                '}';
+    }
 }
