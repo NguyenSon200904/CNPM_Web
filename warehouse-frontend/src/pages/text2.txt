@@ -1,105 +1,105 @@
-import { useState, useEffect } from "react";
-import { NavLink } from "react-router-dom";
-import LogoutModal from "../pages/LogoutModal";
-import {
-  Menu,
-  Package,
-  Truck,
-  Users,
-  FileInput,
-  FileOutput,
-  FileText,
-  BarChart,
-  ChartPie,
-  Settings,
-  LogOut,
-} from "lucide-react";
+const handleImportExcel = (event) => {
+    const file = event.target.files[0];
+    if (!file) {
+      message.error("Vui lòng chọn file Excel!");
+      return;
+    }
 
-const Sidebar = ({ setSelectedPage }) => {
-  const [isOpen, setIsOpen] = useState(true);
-  const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-  const toggleSidebar = () => {
-    setIsOpen(!isOpen);
+        if (jsonData.length === 0) {
+          message.error("File Excel trống!");
+          return;
+        }
+
+        const errors = [];
+        const newSelectedProducts = [...selectedProducts];
+
+        jsonData.forEach((row, index) => {
+          const maSanPham = row.maSanPham?.toString();
+          const tenSanPham = row.tenSanPham?.toString();
+          const soLuong = Number(row.soLuong);
+          const gia = Number(row.gia);
+          const loaiSanPham = row.loaiSanPham?.toString();
+
+          if (
+            !maSanPham ||
+            !tenSanPham ||
+            isNaN(soLuong) ||
+            isNaN(gia) ||
+            !loaiSanPham
+          ) {
+            errors.push(
+              `Dòng ${
+                index + 2
+              }: Dữ liệu không hợp lệ (thiếu hoặc sai định dạng).`
+            );
+            return;
+          }
+
+          if (soLuong < 1) {
+            errors.push(
+              `Dòng ${
+                index + 2
+              }: Số lượng phải lớn hơn 0 (maSanPham: ${maSanPham}).`
+            );
+            return;
+          }
+
+          const product = products.find((p) => p.maSanPham === maSanPham);
+          if (!product) {
+            errors.push(
+              `Dòng ${
+                index + 2
+              }: Sản phẩm không tồn tại (maSanPham: ${maSanPham}).`
+            );
+            return;
+          }
+
+          const existingProduct = newSelectedProducts.find(
+            (item) => item.maSanPham === maSanPham
+          );
+          if (existingProduct) {
+            existingProduct.quantity += soLuong;
+          } else {
+            newSelectedProducts.push({
+              ...product,
+              quantity: soLuong,
+              id: maSanPham,
+              name: tenSanPham,
+              price: gia,
+              loaiSanPham: loaiSanPham,
+            });
+          }
+        });
+
+        setSelectedProducts(newSelectedProducts);
+
+        if (errors.length > 0) {
+          message.warning(
+            `Đã nhập thành công ${
+              newSelectedProducts.length - selectedProducts.length
+            } sản phẩm. Có ${errors.length} lỗi:\n${errors.join("\n")}`
+          );
+        } else {
+          message.success(
+            `Đã nhập thành công ${
+              newSelectedProducts.length - selectedProducts.length
+            } sản phẩm từ Excel!`
+          );
+        }
+      } catch (error) {
+        message.error("Lỗi khi đọc file Excel: " + error.message);
+      }
+    };
+
+    reader.readAsArrayBuffer(file);
+    event.target.value = null;
   };
-
-  const menuItems = [
-    { path: "/san-pham", name: "SẢN PHẨM", icon: <Package size={24} /> },
-    { path: "/nha-cung-cap", name: "NHÀ CUNG CẤP", icon: <Truck size={24} /> },
-    { path: "/nhap-hang", name: "NHẬP HÀNG", icon: <FileInput size={24} /> },
-    { path: "/phieu-nhap", name: "PHIẾU NHẬP", icon: <FileText size={24} /> },
-    { path: "/xuat-hang", name: "XUẤT HÀNG", icon: <FileOutput size={24} /> },
-    { path: "/phieu-xuat", name: "PHIẾU XUẤT", icon: <FileText size={24} /> },
-    { path: "/ton-kho", name: "TỒN KHO", icon: <BarChart size={24} /> },
-    { path: "/tai-khoan", name: "TÀI KHOẢN", icon: <Users size={24} /> },
-    { path: "/thong-ke", name: "THỐNG KÊ", icon: <ChartPie size={24} /> },
-    {
-      path: "/doi-thong-tin",
-      name: "ĐỔI THÔNG TIN",
-      icon: <Settings size={24} />,
-    },
-  ];
-
-  useEffect(() => {
-    document.title = "Quản lý kho";
-  }, []);
-
-  return (
-    <div
-      className={`p-4 flex flex-col h-screen bg-gray-800 text-white ${
-        isOpen ? "w-1/5" : "w-16"
-      }`}
-    >
-      <div
-        className="flex items-center gap-3 cursor-pointer"
-        onClick={toggleSidebar}
-      >
-        <Menu size={24} />
-        {isOpen && <h1 className="text-xl font-bold">Quản lý kho</h1>}
-      </div>
-
-      <ul className="mt-5">
-        {menuItems.map((item) => (
-          <NavLink
-            to={item.path}
-            key={item.name}
-            className={({ isActive }) =>
-              `block p-3 flex items-center gap-3 rounded-md font-bold cursor-pointer ${
-                isActive ? "bg-green-700" : "hover:bg-green-800"
-              }`
-            }
-            onClick={() => {
-              setSelectedPage(item.name);
-              document.title = item.name;
-            }}
-          >
-            {item.icon}
-            {isOpen && <span>{item.name}</span>}
-          </NavLink>
-        ))}
-      </ul>
-
-      <div>
-        <li
-          className="p-3 flex items-center gap-3 rounded-md hover:bg-red-700 cursor-pointer font-bold"
-          onClick={() => setIsLogoutModalVisible(true)}
-        >
-          <LogOut size={24} />
-          {isOpen && <span>ĐĂNG XUẤT</span>}
-        </li>
-      </div>
-
-      <LogoutModal
-        isVisible={isLogoutModalVisible}
-        onConfirm={() => {
-          setIsLogoutModalVisible(false);
-          setSelectedPage("ĐĂNG XUẤT");
-          document.title = "ĐĂNG XUẤT";
-        }}
-        onCancel={() => setIsLogoutModalVisible(false)}
-      />
-    </div>
-  );
-};
-
-export default Sidebar;

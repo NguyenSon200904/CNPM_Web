@@ -24,7 +24,7 @@ const { Option } = Select;
 const Product = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterBy, setFilterBy] = useState("maSanPham");
-  const [loaiSanPham, setLoaiSanPham] = useState("MAY_TINH");
+  const [loaiSanPham, setLoaiSanPham] = useState("TẤT_CẢ"); // Mặc định là "TẤT_CẢ"
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -39,8 +39,13 @@ const Product = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
+        // Luôn gửi tham số loaiSanPham, kể cả khi là "TẤT_CẢ"
+        const params = { loaiSanPham };
         const response = await api.get("http://localhost:8080/api/products", {
-          params: { loaiSanPham },
+          params,
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
         });
         if (Array.isArray(response.data)) {
           const formattedData = response.data.map((item, index) => ({
@@ -50,18 +55,11 @@ const Product = () => {
             soLuong: item.soLuong,
             gia: item.gia,
             loaiSanPham: item.loaiSanPham,
-            ...(loaiSanPham === "MAY_TINH"
-              ? {
-                  tenCpu: item.tenCpu || "N/A",
-                  ram: item.ram || "N/A",
-                  rom: item.rom || "N/A",
-                }
-              : {
-                  heDieuHanh: item.heDieuHanh || "N/A",
-                  doPhanGiaiCamera: item.doPhanGiaiCamera || "N/A",
-                  ram: item.ram || "N/A",
-                  rom: item.rom || "N/A",
-                }),
+            tenCpu: item.tenCpu || "N/A",
+            heDieuHanh: item.heDieuHanh || "N/A",
+            doPhanGiaiCamera: item.doPhanGiaiCamera || "N/A",
+            ram: item.ram || "N/A",
+            rom: item.rom || "N/A",
           }));
           setData(formattedData);
         } else {
@@ -69,8 +67,13 @@ const Product = () => {
         }
       } catch (error) {
         console.error("Lỗi khi lấy dữ liệu sản phẩm:", error);
-        message.error("Không thể tải danh sách sản phẩm!");
-        setData([]);
+        if (error.response && error.response.status === 401) {
+          localStorage.removeItem("accessToken");
+          window.location.href = "/login";
+        } else {
+          message.error("Không thể tải danh sách sản phẩm!");
+          setData([]);
+        }
       } finally {
         setLoading(false);
       }
@@ -93,7 +96,8 @@ const Product = () => {
     },
   };
 
-  const columns = [
+  // Định nghĩa các cột cơ bản (không bao gồm cột "Loại sản phẩm")
+  const baseColumns = [
     {
       title: "Mã sản phẩm",
       dataIndex: "maSanPham",
@@ -108,37 +112,38 @@ const Product = () => {
       key: "gia",
       render: (gia) => `${gia?.toLocaleString() || 0}đ`,
     },
-    ...(loaiSanPham === "MAY_TINH"
-      ? [
-          {
-            title: "CPU",
-            dataIndex: "tenCpu",
-            key: "tenCpu",
-            responsive: ["md"],
-          },
-        ]
-      : [
-          {
-            title: "Hệ điều hành",
-            dataIndex: "heDieuHanh",
-            key: "heDieuHanh",
-            responsive: ["md"],
-          },
-          {
-            title: "Độ phân giải camera",
-            dataIndex: "doPhanGiaiCamera",
-            key: "doPhanGiaiCamera",
-            responsive: ["md"],
-          },
-        ]),
-    { title: "RAM", dataIndex: "ram", key: "ram", responsive: ["lg"] },
     { title: "Bộ nhớ", dataIndex: "rom", key: "rom", responsive: ["lg"] },
-    {
-      title: "Loại sản phẩm",
-      dataIndex: "loaiSanPham",
-      key: "loaiSanPham",
-      responsive: ["lg"],
-    },
+  ];
+
+  // Định nghĩa cột "Loại sản phẩm" (luôn ở cuối)
+  const loaiSanPhamColumn = {
+    title: "Loại sản phẩm",
+    dataIndex: "loaiSanPham",
+    key: "loaiSanPham",
+    responsive: ["lg"],
+  };
+
+  // Định nghĩa cột bổ sung dựa trên loaiSanPham
+  const additionalColumns = {
+    MAY_TINH: [
+      { title: "RAM", dataIndex: "ram", key: "ram", responsive: ["lg"] },
+    ],
+    DIEN_THOAI: [
+      {
+        title: "Hệ điều hành",
+        dataIndex: "heDieuHanh",
+        key: "heDieuHanh",
+        responsive: ["md"],
+        render: (text) => text || "N/A",
+      },
+    ],
+  };
+
+  // Tạo danh sách cột động, đảm bảo "Loại sản phẩm" luôn ở cuối
+  const columns = [
+    ...baseColumns,
+    ...(loaiSanPham !== "TẤT_CẢ" ? additionalColumns[loaiSanPham] || [] : []),
+    loaiSanPhamColumn, // Đặt cột "Loại sản phẩm" ở cuối
   ];
 
   const handleAdd = () => {
@@ -151,7 +156,7 @@ const Product = () => {
       const values = await form.validateFields();
       const newProduct = {
         ...values,
-        loaiSanPham: loaiSanPham === "MAY_TINH" ? "Computer" : "Phone",
+        loaiSanPham: values.loaiSanPham || "Computer", // Mặc định là Computer nếu không chọn
       };
 
       await api.post("http://localhost:8080/api/products", newProduct);
@@ -159,8 +164,9 @@ const Product = () => {
       setIsAddModalOpen(false);
       form.resetFields();
 
+      const params = { loaiSanPham };
       const response = await api.get("http://localhost:8080/api/products", {
-        params: { loaiSanPham },
+        params,
       });
       setData(
         response.data.map((item, index) => ({
@@ -170,14 +176,11 @@ const Product = () => {
           soLuong: item.soLuong,
           gia: item.gia,
           loaiSanPham: item.loaiSanPham,
-          ...(loaiSanPham === "MAY_TINH"
-            ? { tenCpu: item.tenCpu, ram: item.ram, rom: item.rom }
-            : {
-                heDieuHanh: item.heDieuHanh,
-                doPhanGiaiCamera: item.doPhanGiaiCamera,
-                ram: item.ram,
-                rom: item.rom,
-              }),
+          tenCpu: item.tenCpu || "N/A",
+          heDieuHanh: item.heDieuHanh || "N/A",
+          doPhanGiaiCamera: item.doPhanGiaiCamera || "N/A",
+          ram: item.ram || "N/A",
+          rom: item.rom || "N/A",
         }))
       );
     } catch (error) {
@@ -203,7 +206,7 @@ const Product = () => {
       const updatedProduct = {
         ...values,
         maSanPham: selectedProduct.maSanPham,
-        loaiSanPham: loaiSanPham === "MAY_TINH" ? "Computer" : "Phone",
+        loaiSanPham: selectedProduct.loaiSanPham, // Giữ nguyên loại sản phẩm
       };
 
       await api.put(
@@ -214,8 +217,9 @@ const Product = () => {
       setIsEditModalOpen(false);
       form.resetFields();
 
+      const params = { loaiSanPham };
       const response = await api.get("http://localhost:8080/api/products", {
-        params: { loaiSanPham },
+        params,
       });
       setData(
         response.data.map((item, index) => ({
@@ -225,14 +229,11 @@ const Product = () => {
           soLuong: item.soLuong,
           gia: item.gia,
           loaiSanPham: item.loaiSanPham,
-          ...(loaiSanPham === "MAY_TINH"
-            ? { tenCpu: item.tenCpu, ram: item.ram, rom: item.rom }
-            : {
-                heDieuHanh: item.heDieuHanh,
-                doPhanGiaiCamera: item.doPhanGiaiCamera,
-                ram: item.ram,
-                rom: item.rom,
-              }),
+          tenCpu: item.tenCpu || "N/A",
+          heDieuHanh: item.heDieuHanh || "N/A",
+          doPhanGiaiCamera: item.doPhanGiaiCamera || "N/A",
+          ram: item.ram || "N/A",
+          rom: item.rom || "N/A",
         }))
       );
       setSelectedRowKeys([]);
@@ -256,8 +257,9 @@ const Product = () => {
       );
       message.success("Xóa sản phẩm thành công!");
 
+      const params = { loaiSanPham };
       const response = await api.get("http://localhost:8080/api/products", {
-        params: { loaiSanPham },
+        params,
       });
       setData(
         response.data.map((item, index) => ({
@@ -267,14 +269,11 @@ const Product = () => {
           soLuong: item.soLuong,
           gia: item.gia,
           loaiSanPham: item.loaiSanPham,
-          ...(loaiSanPham === "MAY_TINH"
-            ? { tenCpu: item.tenCpu, ram: item.ram, rom: item.rom }
-            : {
-                heDieuHanh: item.heDieuHanh,
-                doPhanGiaiCamera: item.doPhanGiaiCamera,
-                ram: item.ram,
-                rom: item.rom,
-              }),
+          tenCpu: item.tenCpu || "N/A",
+          heDieuHanh: item.heDieuHanh || "N/A",
+          doPhanGiaiCamera: item.doPhanGiaiCamera || "N/A",
+          ram: item.ram || "N/A",
+          rom: item.rom || "N/A",
         }))
       );
       setSelectedRowKeys([]);
@@ -295,21 +294,28 @@ const Product = () => {
   };
 
   const handleExportExcel = () => {
-    const exportData = filteredData.map((item) => ({
-      "Mã sản phẩm": item.maSanPham,
-      "Tên sản phẩm": item.tenSanPham,
-      "Số lượng": item.soLuong,
-      "Đơn giá": item.gia,
-      ...(loaiSanPham === "MAY_TINH"
-        ? { CPU: item.tenCpu, RAM: item.ram, "Bộ nhớ": item.rom }
-        : {
-            "Hệ điều hành": item.heDieuHanh,
-            "Độ phân giải camera": item.doPhanGiaiCamera,
-            RAM: item.ram,
-            "Bộ nhớ": item.rom,
-          }),
-      "Loại sản phẩm": item.loaiSanPham,
-    }));
+    const exportData = filteredData.map((item) => {
+      const baseData = {
+        "Mã sản phẩm": item.maSanPham,
+        "Tên sản phẩm": item.tenSanPham,
+        "Số lượng": item.soLuong,
+        "Đơn giá": item.gia,
+        "Bộ nhớ": item.rom,
+      };
+
+      if (loaiSanPham === "MAY_TINH" || loaiSanPham === "TẤT_CẢ") {
+        baseData["RAM"] = item.loaiSanPham === "Computer" ? item.ram : "N/A";
+      }
+      if (loaiSanPham === "DIEN_THOAI" || loaiSanPham === "TẤT_CẢ") {
+        baseData["Hệ điều hành"] =
+          item.loaiSanPham === "Phone" ? item.heDieuHanh : "N/A";
+      }
+
+      // Đặt cột "Loại sản phẩm" ở cuối
+      baseData["Loại sản phẩm"] = item.loaiSanPham;
+
+      return baseData;
+    });
 
     const worksheet = XLSX.utils.json_to_sheet(exportData);
     const workbook = XLSX.utils.book_new();
@@ -320,65 +326,101 @@ const Product = () => {
 
   const handleImportExcel = (event) => {
     const file = event.target.files[0];
+    if (!file) {
+      message.error("Vui lòng chọn file Excel!");
+      return;
+    }
+
     const reader = new FileReader();
-
-    reader.onload = async (e) => {
-      const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: "array" });
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
+    reader.onload = (e) => {
       try {
-        await Promise.all(
-          jsonData.map(async (item) => {
-            const newProduct = {
-              maSanPham: item["Mã sản phẩm"],
-              tenSanPham: item["Tên sản phẩm"],
-              soLuong: item["Số lượng"],
-              gia: item["Đơn giá"],
-              loaiSanPham: loaiSanPham === "MAY_TINH" ? "Computer" : "Phone",
-              ...(loaiSanPham === "MAY_TINH"
-                ? { tenCpu: item["CPU"], ram: item["RAM"], rom: item["Bộ nhớ"] }
-                : {
-                    heDieuHanh: item["Hệ điều hành"],
-                    doPhanGiaiCamera: item["Độ phân giải camera"],
-                    ram: item["RAM"],
-                    rom: item["Bộ nhớ"],
-                  }),
-            };
-            await api.post("http://localhost:8080/api/products", newProduct);
-          })
-        );
-        message.success("Nhập Excel thành công!");
+        const dataArray = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(dataArray, { type: "array" });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-        const response = await api.get("http://localhost:8080/api/products", {
-          params: { loaiSanPham },
+        if (jsonData.length === 0) {
+          message.error("File Excel trống!");
+          return;
+        }
+
+        const errors = [];
+        const newSelectedRowKeys = [...selectedRowKeys];
+
+        jsonData.forEach((row, index) => {
+          const maSanPham = row["Mã sản phẩm"]?.toString();
+          const tenSanPham = row["Tên sản phẩm"]?.toString();
+          const soLuong = Number(row["Số lượng"]);
+          const gia = Number(row["Đơn giá"]);
+          const loaiSanPham = row["Loại sản phẩm"]?.toString();
+
+          // Kiểm tra các trường bắt buộc
+          if (
+            !maSanPham ||
+            !tenSanPham ||
+            isNaN(soLuong) ||
+            isNaN(gia) ||
+            !loaiSanPham
+          ) {
+            errors.push(
+              `Dòng ${
+                index + 2
+              }: Dữ liệu không hợp lệ (thiếu hoặc sai định dạng).`
+            );
+            return;
+          }
+
+          // Kiểm tra số lượng
+          if (soLuong < 1) {
+            errors.push(
+              `Dòng ${
+                index + 2
+              }: Số lượng phải lớn hơn 0 (maSanPham: ${maSanPham}).`
+            );
+            return;
+          }
+
+          // Kiểm tra sản phẩm có tồn tại trong danh sách data không
+          const product = data.find((p) => p.maSanPham === maSanPham);
+          if (!product) {
+            errors.push(
+              `Dòng ${
+                index + 2
+              }: Sản phẩm không tồn tại (maSanPham: ${maSanPham}).`
+            );
+            return;
+          }
+
+          // Nếu sản phẩm đã được chọn, không cần thêm lại vào selectedRowKeys
+          if (!newSelectedRowKeys.includes(maSanPham)) {
+            newSelectedRowKeys.push(maSanPham);
+          }
         });
-        setData(
-          response.data.map((item, index) => ({
-            key: item.maSanPham || index,
-            maSanPham: item.maSanPham,
-            tenSanPham: item.tenSanPham,
-            soLuong: item.soLuong,
-            gia: item.gia,
-            loaiSanPham: item.loaiSanPham,
-            ...(loaiSanPham === "MAY_TINH"
-              ? { tenCpu: item.tenCpu, ram: item.ram, rom: item.rom }
-              : {
-                  heDieuHanh: item.heDieuHanh,
-                  doPhanGiaiCamera: item.doPhanGiaiCamera,
-                  ram: item.ram,
-                  rom: item.rom,
-                }),
-          }))
-        );
+
+        // Cập nhật danh sách sản phẩm được chọn
+        setSelectedRowKeys(newSelectedRowKeys);
+
+        if (errors.length > 0) {
+          message.warning(
+            `Đã chọn thành công ${
+              newSelectedRowKeys.length - selectedRowKeys.length
+            } sản phẩm. Có ${errors.length} lỗi:\n${errors.join("\n")}`
+          );
+        } else {
+          message.success(
+            `Đã chọn thành công ${
+              newSelectedRowKeys.length - selectedRowKeys.length
+            } sản phẩm từ Excel!`
+          );
+        }
       } catch (error) {
-        console.error("Lỗi khi nhập Excel:", error);
-        message.error("Nhập Excel thất bại!");
+        message.error("Lỗi khi đọc file Excel: " + error.message);
       }
     };
 
     reader.readAsArrayBuffer(file);
+    event.target.value = null;
   };
 
   return (
@@ -402,23 +444,16 @@ const Product = () => {
             <Option value="tenSanPham">Tên sản phẩm</Option>
             <Option value="soLuong">Số lượng</Option>
             <Option value="gia">Đơn giá</Option>
-            {loaiSanPham === "MAY_TINH" ? (
-              <Option value="tenCpu">CPU</Option>
-            ) : (
-              <>
-                <Option value="heDieuHanh">Hệ điều hành</Option>
-                <Option value="doPhanGiaiCamera">Độ phân giải camera</Option>
-              </>
-            )}
             <Option value="ram">RAM</Option>
             <Option value="rom">Bộ nhớ</Option>
-            {/* <Option value="loaiSanPham">Loại sản phẩm</Option> */}
+            <Option value="heDieuHanh">Hệ điều hành</Option>
           </Select>
           <Select
             value={loaiSanPham}
             onChange={setLoaiSanPham}
             className="w-40 h-[50px]"
           >
+            <Option value="TẤT_CẢ">Tất cả</Option>
             <Option value="MAY_TINH">Computer</Option>
             <Option value="DIEN_THOAI">Phone</Option>
           </Select>
@@ -480,6 +515,7 @@ const Product = () => {
                   type="primary"
                   icon={<FileExcelOutlined />}
                   className="min-w-[100px] h-[50px]"
+                  onClick={() => console.log("Nút Nhập Excel được nhấn")}
                 >
                   Nhập Excel
                 </Button>
@@ -534,34 +570,33 @@ const Product = () => {
           >
             <InputNumber min={0} style={{ width: "100%" }} />
           </Form.Item>
-          {loaiSanPham === "MAY_TINH" ? (
-            <>
-              <Form.Item name="tenCpu" label="CPU">
-                <Input />
-              </Form.Item>
-              <Form.Item name="ram" label="RAM">
-                <Input />
-              </Form.Item>
-              <Form.Item name="rom" label="Bộ nhớ">
-                <Input />
-              </Form.Item>
-            </>
-          ) : (
-            <>
-              <Form.Item name="heDieuHanh" label="Hệ điều hành">
-                <Input />
-              </Form.Item>
-              <Form.Item name="doPhanGiaiCamera" label="Độ phân giải camera">
-                <Input />
-              </Form.Item>
-              <Form.Item name="ram" label="RAM">
-                <Input />
-              </Form.Item>
-              <Form.Item name="rom" label="Bộ nhớ">
-                <Input />
-              </Form.Item>
-            </>
-          )}
+          <Form.Item
+            name="loaiSanPham"
+            label="Loại sản phẩm"
+            rules={[
+              { required: true, message: "Vui lòng chọn loại sản phẩm!" },
+            ]}
+          >
+            <Select>
+              <Option value="Computer">Computer</Option>
+              <Option value="Phone">Phone</Option>
+            </Select>
+          </Form.Item>
+          <Form.Item name="tenCpu" label="CPU">
+            <Input />
+          </Form.Item>
+          <Form.Item name="heDieuHanh" label="Hệ điều hành">
+            <Input />
+          </Form.Item>
+          <Form.Item name="doPhanGiaiCamera" label="Độ phân giải camera">
+            <Input />
+          </Form.Item>
+          <Form.Item name="ram" label="RAM">
+            <Input />
+          </Form.Item>
+          <Form.Item name="rom" label="Bộ nhớ">
+            <Input />
+          </Form.Item>
         </Form>
       </Modal>
 
@@ -593,7 +628,7 @@ const Product = () => {
           >
             <InputNumber min={0} style={{ width: "100%" }} />
           </Form.Item>
-          {loaiSanPham === "MAY_TINH" ? (
+          {selectedProduct?.loaiSanPham === "Computer" ? (
             <>
               <Form.Item name="tenCpu" label="CPU">
                 <Input />
@@ -630,7 +665,7 @@ const Product = () => {
         onOk={() => setIsViewModalOpen(false)}
         onCancel={() => setIsViewModalOpen(false)}
         footer={(modalProps) => {
-          const { OkBtn } = modalProps; // Sử dụng OkBtn
+          const { OkBtn } = modalProps;
           return <OkBtn />;
         }}
       >
@@ -648,7 +683,7 @@ const Product = () => {
             <p>
               <strong>Số lượng:</strong> {selectedProduct.soLuong}
             </p>
-            {loaiSanPham === "MAY_TINH" ? (
+            {selectedProduct.loaiSanPham === "Computer" ? (
               <>
                 <p>
                   <strong>CPU:</strong> {selectedProduct.tenCpu}

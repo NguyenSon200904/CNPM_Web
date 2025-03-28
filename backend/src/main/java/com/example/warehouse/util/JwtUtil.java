@@ -2,14 +2,16 @@ package com.example.warehouse.util;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
 
 @Component
 public class JwtUtil {
-  private final String SECRET_KEY = "your-secret-key"; // Thay bằng key bí mật của bạn
-  private final long EXPIRATION_TIME = 1000 * 60 * 60 * 10; // 10 giờ
+  @Value("${jwt.secret}")
+  private String SECRET_KEY; // Đọc từ application.properties
+  private final long EXPIRATION_TIME = 1000 * 60 * 60 * 24 * 7; // 7 ngày
 
   public String generateToken(String username) {
     return Jwts.builder()
