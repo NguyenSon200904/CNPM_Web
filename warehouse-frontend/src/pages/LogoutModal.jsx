@@ -1,10 +1,10 @@
 import { Modal } from "antd";
 
-const LogoutModal = ({ isVisible, onConfirm, onCancel }) => {
+const LogoutModal = ({ isOpen, onConfirm, onCancel }) => {
   return (
     <Modal
       title="Xác nhận đăng xuất"
-      visible={isVisible}
+      open={isOpen}
       onOk={onConfirm}
       onCancel={onCancel}
       width={400} // Tăng kích thước hộp thoại

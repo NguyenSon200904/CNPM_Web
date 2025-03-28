@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Table, Button, Input, DatePicker, message, Modal } from "antd";
 import {
   FileExcelOutlined,
@@ -13,6 +13,7 @@ import moment from "moment";
 const { RangePicker } = DatePicker;
 
 const ExportReceipts = () => {
+  const fileInputRef = useRef(null);
   const [dateRange, setDateRange] = useState([]);
   const [priceFrom, setPriceFrom] = useState(0);
   const [priceTo, setPriceTo] = useState(1000000000);
@@ -436,17 +437,16 @@ const ExportReceipts = () => {
           accept=".xlsx, .xls"
           onChange={handleImportExcel}
           style={{ display: "none" }}
-          id="import-excel"
+          ref={fileInputRef}
         />
-        <label htmlFor="import-excel">
-          <Button
-            type="primary"
-            icon={<FileExcelOutlined />}
-            className="min-w-[100px] h-[50px]"
-          >
-            Nhập Excel
-          </Button>
-        </label>
+        <Button
+          type="primary"
+          icon={<FileExcelOutlined />}
+          className="min-w-[100px] h-[50px]"
+          onClick={() => fileInputRef.current.click()}
+        >
+          Nhập Excel
+        </Button>
       </div>
 
       {/* Bộ lọc */}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Button,
   Input,
@@ -22,13 +22,14 @@ import * as XLSX from "xlsx";
 const { Option } = Select;
 
 const Product = () => {
+  const fileInputRef = useRef(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterBy, setFilterBy] = useState("maSanPham");
   const [loaiSanPham, setLoaiSanPham] = useState("TẤT_CẢ"); // Mặc định là "TẤT_CẢ"
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [data, setData] = useState([]);
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  const [selectedProducts, setSelectedProducts] = useState([]); // Mảng các chuỗi (key)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -36,10 +37,9 @@ const Product = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchProducts = async () => {
       setLoading(true);
       try {
-        // Luôn gửi tham số loaiSanPham, kể cả khi là "TẤT_CẢ"
         const params = { loaiSanPham };
         const response = await api.get("http://localhost:8080/api/products", {
           params,
@@ -48,7 +48,8 @@ const Product = () => {
           },
         });
         if (Array.isArray(response.data)) {
-          const formattedData = response.data.map((item, index) => ({
+          // Sửa response.products thành response.data
+          const formattedProducts = response.data.map((item, index) => ({
             key: item.maSanPham || index,
             maSanPham: item.maSanPham,
             tenSanPham: item.tenSanPham,
@@ -61,7 +62,7 @@ const Product = () => {
             ram: item.ram || "N/A",
             rom: item.rom || "N/A",
           }));
-          setData(formattedData);
+          setProducts(formattedProducts);
         } else {
           throw new Error("Dữ liệu trả về không phải là mảng");
         }
@@ -72,27 +73,27 @@ const Product = () => {
           window.location.href = "/login";
         } else {
           message.error("Không thể tải danh sách sản phẩm!");
-          setData([]);
+          setProducts([]);
         }
       } finally {
         setLoading(false);
       }
     };
-    fetchData();
+    fetchProducts();
 
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [loaiSanPham]);
 
-  const filteredData = data.filter((item) =>
+  const filteredProducts = products.filter((item) =>
     item[filterBy]?.toString().toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const rowSelection = {
-    selectedRowKeys,
+    selectedRowKeys: selectedProducts, // Sửa selectedProducts thành selectedRowKeys
     onChange: (newSelectedRowKeys) => {
-      setSelectedRowKeys(newSelectedRowKeys);
+      setSelectedProducts(newSelectedRowKeys);
     },
   };
 
@@ -100,7 +101,7 @@ const Product = () => {
   const baseColumns = [
     {
       title: "Mã sản phẩm",
-      dataIndex: "maSanPham",
+      dataIndex: "maSanPham", // Sửa productsIndex thành dataIndex
       key: "maSanPham",
       responsive: ["sm"],
     },
@@ -137,13 +138,23 @@ const Product = () => {
         render: (text) => text || "N/A",
       },
     ],
+    TẤT_CẢ: [
+      { title: "RAM", dataIndex: "ram", key: "ram", responsive: ["lg"] },
+      {
+        title: "Hệ điều hành",
+        dataIndex: "heDieuHanh",
+        key: "heDieuHanh",
+        responsive: ["md"],
+        render: (text) => text || "N/A",
+      },
+    ],
   };
 
   // Tạo danh sách cột động, đảm bảo "Loại sản phẩm" luôn ở cuối
   const columns = [
     ...baseColumns,
-    ...(loaiSanPham !== "TẤT_CẢ" ? additionalColumns[loaiSanPham] || [] : []),
-    loaiSanPhamColumn, // Đặt cột "Loại sản phẩm" ở cuối
+    ...(additionalColumns[loaiSanPham] || []),
+    loaiSanPhamColumn,
   ];
 
   const handleAdd = () => {
@@ -156,7 +167,7 @@ const Product = () => {
       const values = await form.validateFields();
       const newProduct = {
         ...values,
-        loaiSanPham: values.loaiSanPham || "Computer", // Mặc định là Computer nếu không chọn
+        loaiSanPham: values.loaiSanPham || "Computer",
       };
 
       await api.post("http://localhost:8080/api/products", newProduct);
@@ -168,7 +179,7 @@ const Product = () => {
       const response = await api.get("http://localhost:8080/api/products", {
         params,
       });
-      setData(
+      setProducts(
         response.data.map((item, index) => ({
           key: item.maSanPham || index,
           maSanPham: item.maSanPham,
@@ -190,11 +201,11 @@ const Product = () => {
   };
 
   const handleEdit = () => {
-    if (selectedRowKeys.length !== 1) {
+    if (selectedProducts.length !== 1) {
       message.warning("Vui lòng chọn đúng 1 sản phẩm để sửa!");
       return;
     }
-    const selected = data.find((item) => item.key === selectedRowKeys[0]);
+    const selected = products.find((item) => item.key === selectedProducts[0]);
     setSelectedProduct(selected);
     form.setFieldsValue(selected);
     setIsEditModalOpen(true);
@@ -206,7 +217,7 @@ const Product = () => {
       const updatedProduct = {
         ...values,
         maSanPham: selectedProduct.maSanPham,
-        loaiSanPham: selectedProduct.loaiSanPham, // Giữ nguyên loại sản phẩm
+        loaiSanPham: selectedProduct.loaiSanPham,
       };
 
       await api.put(
@@ -221,7 +232,7 @@ const Product = () => {
       const response = await api.get("http://localhost:8080/api/products", {
         params,
       });
-      setData(
+      setProducts(
         response.data.map((item, index) => ({
           key: item.maSanPham || index,
           maSanPham: item.maSanPham,
@@ -236,7 +247,7 @@ const Product = () => {
           rom: item.rom || "N/A",
         }))
       );
-      setSelectedRowKeys([]);
+      setSelectedProducts([]);
     } catch (error) {
       console.error("Lỗi khi sửa sản phẩm:", error);
       message.error("Sửa sản phẩm thất bại!");
@@ -244,14 +255,14 @@ const Product = () => {
   };
 
   const handleDelete = async () => {
-    if (selectedRowKeys.length === 0) {
+    if (selectedProducts.length === 0) {
       message.warning("Vui lòng chọn ít nhất 1 sản phẩm để xóa!");
       return;
     }
 
     try {
       await Promise.all(
-        selectedRowKeys.map((key) =>
+        selectedProducts.map((key) =>
           api.delete(`http://localhost:8080/api/products/${key}`)
         )
       );
@@ -261,7 +272,7 @@ const Product = () => {
       const response = await api.get("http://localhost:8080/api/products", {
         params,
       });
-      setData(
+      setProducts(
         response.data.map((item, index) => ({
           key: item.maSanPham || index,
           maSanPham: item.maSanPham,
@@ -276,7 +287,7 @@ const Product = () => {
           rom: item.rom || "N/A",
         }))
       );
-      setSelectedRowKeys([]);
+      setSelectedProducts([]);
     } catch (error) {
       console.error("Lỗi khi xóa sản phẩm:", error);
       message.error("Xóa sản phẩm thất bại!");
@@ -284,18 +295,18 @@ const Product = () => {
   };
 
   const handleViewDetail = () => {
-    if (selectedRowKeys.length !== 1) {
+    if (selectedProducts.length !== 1) {
       message.warning("Vui lòng chọn đúng 1 sản phẩm để xem chi tiết!");
       return;
     }
-    const selected = data.find((item) => item.key === selectedRowKeys[0]);
+    const selected = products.find((item) => item.key === selectedProducts[0]);
     setSelectedProduct(selected);
     setIsViewModalOpen(true);
   };
 
   const handleExportExcel = () => {
-    const exportData = filteredData.map((item) => {
-      const baseData = {
+    const exportProducts = filteredProducts.map((item) => {
+      const baseProducts = {
         "Mã sản phẩm": item.maSanPham,
         "Tên sản phẩm": item.tenSanPham,
         "Số lượng": item.soLuong,
@@ -304,20 +315,20 @@ const Product = () => {
       };
 
       if (loaiSanPham === "MAY_TINH" || loaiSanPham === "TẤT_CẢ") {
-        baseData["RAM"] = item.loaiSanPham === "Computer" ? item.ram : "N/A";
+        baseProducts["RAM"] =
+          item.loaiSanPham === "Computer" ? item.ram : "N/A";
       }
       if (loaiSanPham === "DIEN_THOAI" || loaiSanPham === "TẤT_CẢ") {
-        baseData["Hệ điều hành"] =
+        baseProducts["Hệ điều hành"] =
           item.loaiSanPham === "Phone" ? item.heDieuHanh : "N/A";
       }
 
-      // Đặt cột "Loại sản phẩm" ở cuối
-      baseData["Loại sản phẩm"] = item.loaiSanPham;
+      baseProducts["Loại sản phẩm"] = item.loaiSanPham;
 
-      return baseData;
+      return baseProducts;
     });
 
-    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const worksheet = XLSX.utils.json_to_sheet(exportProducts);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Products");
     XLSX.writeFile(workbook, "products.xlsx");
@@ -334,8 +345,8 @@ const Product = () => {
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
-        const dataArray = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(dataArray, { type: "array" });
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
@@ -346,7 +357,7 @@ const Product = () => {
         }
 
         const errors = [];
-        const newSelectedRowKeys = [...selectedRowKeys];
+        const newSelectedProducts = [...selectedProducts];
 
         jsonData.forEach((row, index) => {
           const maSanPham = row["Mã sản phẩm"]?.toString();
@@ -381,8 +392,7 @@ const Product = () => {
             return;
           }
 
-          // Kiểm tra sản phẩm có tồn tại trong danh sách data không
-          const product = data.find((p) => p.maSanPham === maSanPham);
+          const product = products.find((p) => p.maSanPham === maSanPham);
           if (!product) {
             errors.push(
               `Dòng ${
@@ -392,25 +402,25 @@ const Product = () => {
             return;
           }
 
-          // Nếu sản phẩm đã được chọn, không cần thêm lại vào selectedRowKeys
-          if (!newSelectedRowKeys.includes(maSanPham)) {
-            newSelectedRowKeys.push(maSanPham);
+          // Chỉ thêm maSanPham (key) vào newSelectedProducts
+          if (!newSelectedProducts.includes(maSanPham)) {
+            newSelectedProducts.push(maSanPham);
           }
         });
 
         // Cập nhật danh sách sản phẩm được chọn
-        setSelectedRowKeys(newSelectedRowKeys);
+        setSelectedProducts(newSelectedProducts);
 
         if (errors.length > 0) {
           message.warning(
             `Đã chọn thành công ${
-              newSelectedRowKeys.length - selectedRowKeys.length
+              newSelectedProducts.length - selectedProducts.length
             } sản phẩm. Có ${errors.length} lỗi:\n${errors.join("\n")}`
           );
         } else {
           message.success(
             `Đã chọn thành công ${
-              newSelectedRowKeys.length - selectedRowKeys.length
+              newSelectedProducts.length - selectedProducts.length
             } sản phẩm từ Excel!`
           );
         }
@@ -508,18 +518,16 @@ const Product = () => {
                 accept=".xlsx, .xls"
                 onChange={handleImportExcel}
                 style={{ display: "none" }}
-                id="import-excel"
+                ref={fileInputRef}
               />
-              <label htmlFor="import-excel">
-                <Button
-                  type="primary"
-                  icon={<FileExcelOutlined />}
-                  className="min-w-[100px] h-[50px]"
-                  onClick={() => console.log("Nút Nhập Excel được nhấn")}
-                >
-                  Nhập Excel
-                </Button>
-              </label>
+              <Button
+                type="primary"
+                icon={<FileExcelOutlined />}
+                className="min-w-[100px] h-[50px]"
+                onClick={() => fileInputRef.current.click()}
+              >
+                Nhập Excel
+              </Button>
             </>
           )}
         </div>
@@ -527,7 +535,7 @@ const Product = () => {
 
       <Table
         rowSelection={rowSelection}
-        dataSource={filteredData}
+        dataSource={filteredProducts} // Sửa productsSource thành dataSource
         columns={columns}
         pagination={{ pageSize: 7 }}
         rowKey="key"

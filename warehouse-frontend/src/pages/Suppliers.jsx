@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button, Input, Select, Table, message, Modal, Form } from "antd";
 import {
   PlusOutlined,
@@ -12,6 +12,7 @@ import * as XLSX from "xlsx";
 const { Option } = Select;
 
 const Supplier = () => {
+  const fileInputRef = useRef(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterBy, setFilterBy] = useState("id");
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -23,7 +24,6 @@ const Supplier = () => {
   const [form] = Form.useForm();
   const [selectedSupplier, setSelectedSupplier] = useState(null);
 
-  // Lấy dữ liệu từ backend
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -204,30 +204,61 @@ const Supplier = () => {
 
   const handleImportExcel = (event) => {
     const file = event.target.files[0];
+    if (!file) {
+      message.error("Vui lòng chọn file Excel!");
+      return;
+    }
+
     const reader = new FileReader();
-
     reader.onload = async (e) => {
-      const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: "array" });
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
       try {
-        await Promise.all(
-          jsonData.map(async (item) => {
-            const newSupplier = {
-              maNhaCungCap: item["Mã NCC"],
-              tenNhaCungCap: item["Tên nhà cung cấp"],
-              soDienThoai: item["Số điện thoại"],
-              diaChi: item["Địa chỉ"],
-            };
-            await api.post(
-              "http://localhost:8080/api/suppliers",
-              newSupplier
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+        if (jsonData.length === 0) {
+          message.error("File Excel trống!");
+          return;
+        }
+
+        const errors = [];
+        let successCount = 0;
+
+        for (let index = 0; index < jsonData.length; index++) {
+          const item = jsonData[index];
+          const newSupplier = {
+            maNhaCungCap: item["Mã NCC"]?.toString(),
+            tenNhaCungCap: item["Tên nhà cung cấp"]?.toString(),
+            soDienThoai: item["Số điện thoại"]?.toString(),
+            diaChi: item["Địa chỉ"]?.toString(),
+          };
+
+          if (
+            !newSupplier.maNhaCungCap ||
+            !newSupplier.tenNhaCungCap ||
+            !newSupplier.soDienThoai ||
+            !newSupplier.diaChi
+          ) {
+            errors.push(
+              `Dòng ${
+                index + 2
+              }: Dữ liệu không hợp lệ (thiếu hoặc sai định dạng).`
             );
-          })
-        );
-        message.success("Nhập Excel thành công!");
+            continue;
+          }
+
+          try {
+            await api.post("http://localhost:8080/api/suppliers", newSupplier);
+            successCount++;
+          } catch (error) {
+            errors.push(
+              `Dòng ${index + 2}: Lỗi khi thêm nhà cung cấp (maNhaCungCap: ${
+                newSupplier.maNhaCungCap
+              }) - ${error.response?.data?.message || error.message}`
+            );
+          }
+        }
 
         const response = await api.get("http://localhost:8080/api/suppliers");
         setData(
@@ -239,13 +270,28 @@ const Supplier = () => {
             address: item.diaChi,
           }))
         );
+
+        if (errors.length > 0) {
+          message.warning(
+            `Đã nhập thành công ${successCount} nhà cung cấp. Có ${
+              errors.length
+            } lỗi:\n${errors.join("\n")}`
+          );
+        } else {
+          message.success(
+            `Đã nhập thành công ${successCount} nhà cung cấp từ Excel!`
+          );
+        }
       } catch (error) {
-        console.error("Lỗi khi nhập Excel:", error);
-        message.error("Nhập Excel thất bại!");
+        console.error("Lỗi khi đọc file Excel:", error);
+        message.error("Lỗi khi đọc file Excel: " + error.message);
       }
     };
 
     reader.readAsArrayBuffer(file);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = null;
+    }
   };
 
   return (
@@ -313,17 +359,16 @@ const Supplier = () => {
                 accept=".xlsx, .xls"
                 onChange={handleImportExcel}
                 style={{ display: "none" }}
-                id="import-excel"
+                ref={fileInputRef}
               />
-              <label htmlFor="import-excel">
-                <Button
-                  type="primary"
-                  icon={<FileExcelOutlined />}
-                  className="min-w-[120px] h-[50px]"
-                >
-                  Nhập Excel
-                </Button>
-              </label>
+              <Button
+                type="primary"
+                icon={<FileExcelOutlined />}
+                className="min-w-[120px] h-[50px]"
+                onClick={() => fileInputRef.current.click()}
+              >
+                Nhập Excel
+              </Button>
             </>
           )}
         </div>
