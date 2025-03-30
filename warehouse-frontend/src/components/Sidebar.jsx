@@ -18,7 +18,7 @@ import {
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(true);
-  const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
+  const [isLogoutModalVisible, setIsLogoutModalOpen] = useState(false);
   const location = useLocation();
 
   const toggleSidebar = () => {
@@ -37,12 +37,32 @@ const Sidebar = () => {
     { path: "/thong-ke", name: "THỐNG KẾ", icon: <ChartPie size={24} /> },
   ];
 
+  // Thêm mảng accountItems cho các mục ở phần dưới (Đổi thông tin & Đăng xuất)
+  const accountItems = [
+    {
+      path: "/doi-thong-tin",
+      name: "ĐỔI THÔNG TIN",
+      icon: <Settings size={24} />,
+    },
+    // Không cần thêm "ĐĂNG XUẤT" vào đây vì nó không thay đổi route mà chỉ mở modal
+  ];
+
   // Cập nhật tiêu đề dựa trên route
   useEffect(() => {
-    const currentItem = menuItems.find(
+    // Kiểm tra trong menuItems
+    const currentMenuItem = menuItems.find(
       (item) => item.path === location.pathname
     );
-    document.title = currentItem ? currentItem.name : "Quản lý kho";
+    // Kiểm tra trong accountItems
+    const currentAccountItem = accountItems.find(
+      (item) => item.path === location.pathname
+    );
+    // Nếu tìm thấy trong menuItems, dùng name của menuItems; nếu không, kiểm tra accountItems
+    document.title = currentMenuItem
+      ? currentMenuItem.name
+      : currentAccountItem
+      ? currentAccountItem.name
+      : "Quản lý kho";
   }, [location.pathname]);
 
   return (
@@ -59,7 +79,7 @@ const Sidebar = () => {
       >
         <button
           onClick={toggleSidebar}
-          className="toggle-button text-white mr-2 focus:outline-none" // Thêm class toggle-button
+          className="toggle-button text-white mr-2 focus:outline-none"
         >
           <Menu size={24} className="custom-menu-icon" color="white" />
         </button>
@@ -109,7 +129,7 @@ const Sidebar = () => {
             className={`p-3 flex items-center gap-3 rounded-md hover:bg-red-700 cursor-pointer font-bold ${
               isOpen ? "justify-start" : "justify-center p-2"
             }`}
-            onClick={() => setIsLogoutModalVisible(true)}
+            onClick={() => setIsLogoutModalOpen(true)}
           >
             {React.cloneElement(<LogOut size={24} />, { color: "white" })}
             {isOpen && <span className="text-sm text-white">ĐĂNG XUẤT</span>}
@@ -119,12 +139,12 @@ const Sidebar = () => {
 
       {/* Logout Modal */}
       <LogoutModal
-        isVisible={isLogoutModalVisible}
+        isOpen={isLogoutModalVisible}
         onConfirm={() => {
           localStorage.removeItem("token");
           window.location.href = "/login";
         }}
-        onCancel={() => setIsLogoutModalVisible(false)}
+        onCancel={() => setIsLogoutModalOpen(false)}
       />
     </div>
   );

@@ -38,16 +38,8 @@ const ImportGoods = () => {
     const fetchProducts = async () => {
       setLoadingProducts(true);
       try {
-        const responseMayTinh = await api.get(
-          "http://localhost:8080/api/products?loaiSanPham=MAY_TINH"
-        );
-        const responseDienThoai = await api.get(
-          "http://localhost:8080/api/products?loaiSanPham=DIEN_THOAI"
-        );
-        const allProducts = [
-          ...responseMayTinh.data,
-          ...responseDienThoai.data,
-        ];
+        const response = await api.get("http://localhost:8080/api/products");
+        const allProducts = response.data;
         if (allProducts.length === 0) {
           message.warning(
             "Không có sản phẩm nào trong kho! Vui lòng kiểm tra database."
@@ -95,8 +87,8 @@ const ImportGoods = () => {
     const matchesSearch = value?.includes(searchTerm.toLowerCase());
     const matchesType =
       productType === "all" ||
-      (productType === "computer" && product.loaiSanPham === "MAY_TINH") ||
-      (productType === "phone" && product.loaiSanPham === "DIEN_THOAI");
+      (productType === "computer" && product.loaiSanPham === "Computer") || // Thay đổi từ "MAY_TINH" thành "Computer"
+      (productType === "phone" && product.loaiSanPham === "Phone"); // Thay đổi từ "DIEN_THOAI" thành "Phone"
     return matchesSearch && matchesType;
   });
 
