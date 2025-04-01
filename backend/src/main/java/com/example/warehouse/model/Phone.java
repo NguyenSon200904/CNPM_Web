@@ -20,13 +20,13 @@ public class Phone {
     private String doPhanGiaiCamera;
 
     @Column(name = "dungLuongPin")
-    private int dungLuongPin;
+    private String dungLuongPin; // Đảm bảo kiểu Integer
 
     @Column(name = "heDieuHanh", length = 25)
     private String heDieuHanh;
 
     @Column(name = "kichThuocMan")
-    private double kichThuocMan;
+    private Double kichThuocMan;
 
     @Column(name = "ram", length = 25)
     private String ram;

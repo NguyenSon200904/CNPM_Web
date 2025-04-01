@@ -12,7 +12,7 @@ import lombok.Data;
 public class ReceiptDetailDTO {
     @NotBlank(message = "Product code cannot be blank")
     @Size(max = 50, message = "Product code must not exceed 50 characters")
-    private String maSanPham; // Đổi tên từ maMay thành maSanPham
+    private String maSanPham;
 
     @Size(max = 20, message = "Product type must not exceed 20 characters")
     private String loaiSanPham;
@@ -22,4 +22,6 @@ public class ReceiptDetailDTO {
 
     @Min(value = 0, message = "Unit price must be greater than or equal to 0")
     private double donGia;
+
+    private ProductDTO sanPham; // Thêm trường sanPham
 }

@@ -17,13 +17,13 @@ public class Computer {
     private Product product;
 
     @Column(name = "congSuatNguon")
-    private int congSuatNguon;
+    private Integer congSuatNguon;
 
-    @Column(name = "dungLuongPin", length = 25)
+    @Column(name = "dungLuongPin")
     private String dungLuongPin;
 
     @Column(name = "kichThuocMan")
-    private double kichThuocMan;
+    private Double kichThuocMan;
 
     @Column(name = "loaiMay", length = 255)
     private String loaiMay;

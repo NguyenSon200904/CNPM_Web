@@ -20,7 +20,7 @@ const Login = () => {
     setLoading(true);
     try {
       const response = await axios.post("http://localhost:8080/api/login", {
-        userName: values.username,
+        username: values.username,
         password: values.password,
       });
 

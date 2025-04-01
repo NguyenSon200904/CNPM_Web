@@ -30,7 +30,7 @@ public class AccountService {
     }
 
     // Tìm danh sách tài khoản theo role
-    public List<Account> findByRole(int role) {
+    public List<Account> findByRole(String role) {
         return accountRepository.findByRole(role);
     }
 

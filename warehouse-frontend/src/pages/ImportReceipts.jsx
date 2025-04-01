@@ -32,12 +32,12 @@ const ImportReceipts = () => {
     try {
       const response = await api.get("http://localhost:8080/api/receipts");
       const formattedReceipts = response.data.map((receipt) => ({
-        id: receipt.maPhieuNhap,
-        supplier: receipt.nhaCungCap?.tenNhaCungCap || "Không có thông tin",
-        creator: receipt.nguoiTao?.userName || "Không có thông tin",
+        id: receipt.maPhieu, // Thay đổi từ maPhieuNhap thành maPhieu
+        supplier: receipt.maNhaCungCap || "Không có thông tin", // Chỉ có maNhaCungCap
+        creator: receipt.nguoiTao || "Không có thông tin",
         total: receipt.tongTien,
-        date: moment(receipt.ngayNhap).format("YYYY-MM-DD HH:mm"),
-        chiTietPhieuNhaps: receipt.chiTietPhieuNhaps || [],
+        date: moment(receipt.thoiGianTao).format("YYYY-MM-DD HH:mm"), // Thay đổi từ ngayNhap thành thoiGianTao
+        chiTietPhieuNhaps: receipt.details || [], // Thay đổi từ chiTietPhieuNhaps thành details
       }));
       setReceipts(formattedReceipts);
     } catch (error) {
@@ -135,8 +135,8 @@ const ImportReceipts = () => {
             <Table
               dataSource={receipt.chiTietPhieuNhaps.map((item, index) => ({
                 key: index,
-                maSanPham: item.id?.maSanPham || "Không có thông tin",
-                tenSanPham: item.product?.tenSanPham || "Không có thông tin",
+                maSanPham: item.maSanPham || "Không có thông tin",
+                tenSanPham: item.sanPham?.tenSanPham || "Không có thông tin",
                 loaiSanPham: item.loaiSanPham || "Không có thông tin",
                 soLuong: item.soLuong,
                 donGia: item.donGia,

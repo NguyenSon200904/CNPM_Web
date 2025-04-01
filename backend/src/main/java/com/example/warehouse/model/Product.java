@@ -40,9 +40,9 @@ public class Product {
     @JsonProperty("xuatXu")
     private String xuatXu;
 
-    @Column(name = "trang_thai", length = 20)
+    @Column(name = "trang_thai")
     @JsonProperty("trangThai")
-    private String trangThai;
+    private Integer trangThai; // Đổi thành Integer
 
     @OneToMany(mappedBy = "sanPham")
     @JsonManagedReference(value = "product-receiptDetails")

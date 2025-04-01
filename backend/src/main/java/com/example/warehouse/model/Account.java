@@ -25,7 +25,7 @@ public class Account {
     private String password;
 
     @Column(name = "role", nullable = false)
-    private int role;
+    private String role;
 
     @Column(name = "status")
     private int status;

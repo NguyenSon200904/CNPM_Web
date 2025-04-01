@@ -50,6 +50,7 @@ com\example\warehouse\controller\AuthController.class
 com\example\warehouse\dto\MayTinhDTO.class
 com\example\warehouse\model\Receipt.class
 com\example\warehouse\repository\ProductRepository.class
+com\example\warehouse\dto\CustomDoubleDeserializer.class
 com\example\warehouse\controller\AccountController.class
 com\example\warehouse\config\SecurityConfig.class
 com\example\warehouse\config\WebConfig.class

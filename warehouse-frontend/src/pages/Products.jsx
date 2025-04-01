@@ -25,11 +25,11 @@ const Product = () => {
   const fileInputRef = useRef(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterBy, setFilterBy] = useState("maSanPham");
-  const [loaiSanPham, setLoaiSanPham] = useState("TẤT_CẢ"); // Mặc định là "TẤT_CẢ"
+  const [loaiSanPham, setLoaiSanPham] = useState("TẤT_CẢ");
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [selectedProducts, setSelectedProducts] = useState([]); // Mảng các chuỗi (key)
+  const [selectedProducts, setSelectedProducts] = useState([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -48,7 +48,6 @@ const Product = () => {
           },
         });
         if (Array.isArray(response.data)) {
-          // Sửa response.products thành response.data
           const formattedProducts = response.data.map((item, index) => ({
             key: item.maSanPham || index,
             maSanPham: item.maSanPham,
@@ -61,6 +60,10 @@ const Product = () => {
             doPhanGiaiCamera: item.doPhanGiaiCamera || "N/A",
             ram: item.ram || "N/A",
             rom: item.rom || "N/A",
+            dungLuongPin: item.dungLuongPin || "N/A",
+            kichThuocMan: item.kichThuocMan || "N/A",
+            congSuatNguon: item.congSuatNguon || "N/A",
+            maBoard: item.maBoard || "N/A",
           }));
           setProducts(formattedProducts);
         } else {
@@ -71,10 +74,14 @@ const Product = () => {
         if (error.response && error.response.status === 401) {
           localStorage.removeItem("accessToken");
           window.location.href = "/login";
+        } else if (error.response && error.response.status === 500) {
+          message.error(
+            "Lỗi server: Không thể tải danh sách sản phẩm. Vui lòng kiểm tra backend!"
+          );
         } else {
           message.error("Không thể tải danh sách sản phẩm!");
-          setProducts([]);
         }
+        setProducts([]);
       } finally {
         setLoading(false);
       }
@@ -91,17 +98,16 @@ const Product = () => {
   );
 
   const rowSelection = {
-    selectedRowKeys: selectedProducts, // Sửa selectedProducts thành selectedRowKeys
+    selectedRowKeys: selectedProducts,
     onChange: (newSelectedRowKeys) => {
       setSelectedProducts(newSelectedRowKeys);
     },
   };
 
-  // Định nghĩa các cột cơ bản (không bao gồm cột "Loại sản phẩm")
   const baseColumns = [
     {
       title: "Mã sản phẩm",
-      dataIndex: "maSanPham", // Sửa productsIndex thành dataIndex
+      dataIndex: "maSanPham",
       key: "maSanPham",
       responsive: ["sm"],
     },
@@ -116,7 +122,6 @@ const Product = () => {
     { title: "Bộ nhớ", dataIndex: "rom", key: "rom", responsive: ["lg"] },
   ];
 
-  // Định nghĩa cột "Loại sản phẩm" (luôn ở cuối)
   const loaiSanPhamColumn = {
     title: "Loại sản phẩm",
     dataIndex: "loaiSanPham",
@@ -124,7 +129,6 @@ const Product = () => {
     responsive: ["lg"],
   };
 
-  // Định nghĩa cột bổ sung dựa trên loaiSanPham
   const additionalColumns = {
     MAY_TINH: [
       { title: "RAM", dataIndex: "ram", key: "ram", responsive: ["lg"] },
@@ -150,7 +154,6 @@ const Product = () => {
     ],
   };
 
-  // Tạo danh sách cột động, đảm bảo "Loại sản phẩm" luôn ở cuối
   const columns = [
     ...baseColumns,
     ...(additionalColumns[loaiSanPham] || []),
@@ -192,6 +195,10 @@ const Product = () => {
           doPhanGiaiCamera: item.doPhanGiaiCamera || "N/A",
           ram: item.ram || "N/A",
           rom: item.rom || "N/A",
+          dungLuongPin: item.dungLuongPin || "N/A",
+          kichThuocMan: item.kichThuocMan || "N/A",
+          congSuatNguon: item.congSuatNguon || "N/A",
+          maBoard: item.maBoard || "N/A",
         }))
       );
     } catch (error) {
@@ -218,11 +225,48 @@ const Product = () => {
         ...values,
         maSanPham: selectedProduct.maSanPham,
         loaiSanPham: selectedProduct.loaiSanPham,
+        gia:
+          values.gia === "N/A" || !values.gia || isNaN(parseFloat(values.gia))
+            ? 0
+            : parseFloat(values.gia), // Chuyển "N/A" thành 0
+        trangThai:
+          values.trangThai === "N/A" ||
+          !values.trangThai ||
+          isNaN(parseInt(values.trangThai))
+            ? 0
+            : parseInt(values.trangThai), // Chuyển đổi trạng thái
+        dungLuongPin:
+          values.dungLuongPin === "N/A" || !values.dungLuongPin
+            ? "0"
+            : values.dungLuongPin, // Chuyển đổi dung lượng pin
+        kichThuocMan:
+          values.kichThuocMan === "N/A" ||
+          !values.kichThuocMan ||
+          isNaN(parseFloat(values.kichThuocMan))
+            ? 0
+            : parseFloat(values.kichThuocMan), // Chuyển "N/A" thành 0 cho kichThuocMan
+        ram: values.ram === "N/A" || !values.ram ? null : values.ram, // Chuyển "N/A" thành null cho ram
+        rom: values.rom === "N/A" || !values.rom ? null : values.rom, // Chuyển "N/A" thành null cho rom
+        heDieuHanh:
+          values.heDieuHanh === "N/A" || !values.heDieuHanh
+            ? null
+            : values.heDieuHanh, // Chuyển "N/A" thành null cho heDieuHanh
+        doPhanGiaiCamera:
+          values.doPhanGiaiCamera === "N/A" || !values.doPhanGiaiCamera
+            ? null
+            : values.doPhanGiaiCamera, // Chuyển "N/A" thành null cho doPhanGiaiCamera
       };
+
+      console.log("Dữ liệu gửi đi:", updatedProduct); // Log để kiểm tra dữ liệu
 
       await api.put(
         `http://localhost:8080/api/products/${selectedProduct.maSanPham}`,
-        updatedProduct
+        updatedProduct,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        }
       );
       message.success("Sửa sản phẩm thành công!");
       setIsEditModalOpen(false);
@@ -231,6 +275,9 @@ const Product = () => {
       const params = { loaiSanPham };
       const response = await api.get("http://localhost:8080/api/products", {
         params,
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
       });
       setProducts(
         response.data.map((item, index) => ({
@@ -245,12 +292,30 @@ const Product = () => {
           doPhanGiaiCamera: item.doPhanGiaiCamera || "N/A",
           ram: item.ram || "N/A",
           rom: item.rom || "N/A",
+          dungLuongPin: item.dungLuongPin || "N/A",
+          kichThuocMan: item.kichThuocMan || "N/A",
+          congSuatNguon: item.congSuatNguon || "N/A",
+          maBoard: item.maBoard || "N/A",
         }))
       );
       setSelectedProducts([]);
     } catch (error) {
       console.error("Lỗi khi sửa sản phẩm:", error);
-      message.error("Sửa sản phẩm thất bại!");
+      if (error.response && error.response.status === 401) {
+        localStorage.removeItem("accessToken");
+        message.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!");
+        window.location.href = "/login";
+      } else if (error.response && error.response.status === 403) {
+        message.error(
+          "Bạn không có quyền sửa sản phẩm! Vui lòng kiểm tra quyền truy cập."
+        );
+      } else if (error.response && error.response.status === 500) {
+        message.error(
+          "Lỗi server: Không thể sửa sản phẩm. Vui lòng kiểm tra backend!"
+        );
+      } else {
+        message.error("Sửa sản phẩm thất bại!");
+      }
     }
   };
 
@@ -300,9 +365,52 @@ const Product = () => {
       return;
     }
     const selected = products.find((item) => item.key === selectedProducts[0]);
+    console.log("Selected product:", selected);
+    if (!selected) {
+      message.error("Không tìm thấy sản phẩm được chọn!");
+      return;
+    }
     setSelectedProduct(selected);
     setIsViewModalOpen(true);
   };
+
+  const commonColumns = [
+    { title: "Mã sản phẩm", dataIndex: "maSanPham", key: "maSanPham" },
+    { title: "Tên sản phẩm", dataIndex: "tenSanPham", key: "tenSanPham" },
+    {
+      title: "Đơn giá",
+      dataIndex: "gia",
+      key: "gia",
+      render: (value) => `${value?.toLocaleString() || 0}đ`,
+    },
+    { title: "Số lượng", dataIndex: "soLuong", key: "soLuong" },
+    { title: "Loại sản phẩm", dataIndex: "loaiSanPham", key: "loaiSanPham" },
+    { title: "RAM", dataIndex: "ram", key: "ram" },
+    { title: "Bộ nhớ", dataIndex: "rom", key: "rom" },
+    { title: "Dung lượng pin", dataIndex: "dungLuongPin", key: "dungLuongPin" },
+    { title: "Kích thước màn", dataIndex: "kichThuocMan", key: "kichThuocMan" },
+  ];
+
+  const phoneColumns = [
+    ...commonColumns,
+    { title: "Hệ điều hành", dataIndex: "heDieuHanh", key: "heDieuHanh" },
+    {
+      title: "Độ phân giải camera",
+      dataIndex: "doPhanGiaiCamera",
+      key: "doPhanGiaiCamera",
+    },
+  ];
+
+  const computerColumns = [
+    ...commonColumns,
+    { title: "CPU", dataIndex: "tenCpu", key: "tenCpu" },
+    {
+      title: "Công suất nguồn",
+      dataIndex: "congSuatNguon",
+      key: "congSuatNguon",
+    },
+    { title: "Mã board", dataIndex: "maBoard", key: "maBoard" },
+  ];
 
   const handleExportExcel = () => {
     const exportProducts = filteredProducts.map((item) => {
@@ -366,7 +474,6 @@ const Product = () => {
           const gia = Number(row["Đơn giá"]);
           const loaiSanPham = row["Loại sản phẩm"]?.toString();
 
-          // Kiểm tra các trường bắt buộc
           if (
             !maSanPham ||
             !tenSanPham ||
@@ -382,7 +489,6 @@ const Product = () => {
             return;
           }
 
-          // Kiểm tra số lượng
           if (soLuong < 1) {
             errors.push(
               `Dòng ${
@@ -402,13 +508,11 @@ const Product = () => {
             return;
           }
 
-          // Chỉ thêm maSanPham (key) vào newSelectedProducts
           if (!newSelectedProducts.includes(maSanPham)) {
             newSelectedProducts.push(maSanPham);
           }
         });
 
-        // Cập nhật danh sách sản phẩm được chọn
         setSelectedProducts(newSelectedProducts);
 
         if (errors.length > 0) {
@@ -535,7 +639,7 @@ const Product = () => {
 
       <Table
         rowSelection={rowSelection}
-        dataSource={filteredProducts} // Sửa productsSource thành dataSource
+        dataSource={filteredProducts}
         columns={columns}
         pagination={{ pageSize: 7 }}
         rowKey="key"
@@ -605,6 +709,18 @@ const Product = () => {
           <Form.Item name="rom" label="Bộ nhớ">
             <Input />
           </Form.Item>
+          <Form.Item name="dungLuongPin" label="Dung lượng pin">
+            <Input />
+          </Form.Item>
+          <Form.Item name="kichThuocMan" label="Kích thước màn hình">
+            <Input />
+          </Form.Item>
+          <Form.Item name="congSuatNguon" label="Công suất nguồn">
+            <Input />
+          </Form.Item>
+          <Form.Item name="maBoard" label="Mã board">
+            <Input />
+          </Form.Item>
         </Form>
       </Modal>
 
@@ -647,6 +763,18 @@ const Product = () => {
               <Form.Item name="rom" label="Bộ nhớ">
                 <Input />
               </Form.Item>
+              <Form.Item name="dungLuongPin" label="Dung lượng pin">
+                <Input />
+              </Form.Item>
+              <Form.Item name="kichThuocMan" label="Kích thước màn hình">
+                <Input />
+              </Form.Item>
+              <Form.Item name="congSuatNguon" label="Công suất nguồn">
+                <Input />
+              </Form.Item>
+              <Form.Item name="maBoard" label="Mã board">
+                <Input />
+              </Form.Item>
             </>
           ) : (
             <>
@@ -662,6 +790,12 @@ const Product = () => {
               <Form.Item name="rom" label="Bộ nhớ">
                 <Input />
               </Form.Item>
+              <Form.Item name="dungLuongPin" label="Dung lượng pin">
+                <Input />
+              </Form.Item>
+              <Form.Item name="kichThuocMan" label="Kích thước màn hình">
+                <Input />
+              </Form.Item>
             </>
           )}
         </Form>
@@ -672,58 +806,30 @@ const Product = () => {
         open={isViewModalOpen}
         onOk={() => setIsViewModalOpen(false)}
         onCancel={() => setIsViewModalOpen(false)}
-        footer={(modalProps) => {
-          const { OkBtn } = modalProps;
-          return <OkBtn />;
-        }}
+        footer={[
+          <Button
+            key="ok"
+            type="primary"
+            onClick={() => setIsViewModalOpen(false)}
+          >
+            OK
+          </Button>,
+        ]}
+        width={1000}
       >
-        {selectedProduct && (
-          <div>
-            <p>
-              <strong>Mã sản phẩm:</strong> {selectedProduct.maSanPham}
-            </p>
-            <p>
-              <strong>Tên sản phẩm:</strong> {selectedProduct.tenSanPham}
-            </p>
-            <p>
-              <strong>Đơn giá:</strong> {selectedProduct.gia?.toLocaleString()}đ
-            </p>
-            <p>
-              <strong>Số lượng:</strong> {selectedProduct.soLuong}
-            </p>
-            {selectedProduct.loaiSanPham === "Computer" ? (
-              <>
-                <p>
-                  <strong>CPU:</strong> {selectedProduct.tenCpu}
-                </p>
-                <p>
-                  <strong>RAM:</strong> {selectedProduct.ram}
-                </p>
-                <p>
-                  <strong>Bộ nhớ:</strong> {selectedProduct.rom}
-                </p>
-              </>
-            ) : (
-              <>
-                <p>
-                  <strong>Hệ điều hành:</strong> {selectedProduct.heDieuHanh}
-                </p>
-                <p>
-                  <strong>Độ phân giải camera:</strong>{" "}
-                  {selectedProduct.doPhanGiaiCamera}
-                </p>
-                <p>
-                  <strong>RAM:</strong> {selectedProduct.ram}
-                </p>
-                <p>
-                  <strong>Bộ nhớ:</strong> {selectedProduct.rom}
-                </p>
-              </>
-            )}
-            <p>
-              <strong>Loại sản phẩm:</strong> {selectedProduct.loaiSanPham}
-            </p>
-          </div>
+        {selectedProduct ? (
+          <Table
+            dataSource={[selectedProduct]}
+            columns={
+              selectedProduct.loaiSanPham === "Computer"
+                ? computerColumns
+                : phoneColumns
+            }
+            pagination={false}
+            bordered
+          />
+        ) : (
+          <p>Không có dữ liệu để hiển thị</p>
         )}
       </Modal>
     </div>
