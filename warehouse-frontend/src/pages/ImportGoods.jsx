@@ -15,6 +15,7 @@ import moment from "moment";
 const { Option } = Select;
 
 const ImportGoods = () => {
+  const [messageApi, contextHolder] = message.useMessage();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterBy, setFilterBy] = useState("maSanPham");
   const [productType, setProductType] = useState("all");
@@ -41,16 +42,16 @@ const ImportGoods = () => {
         const response = await api.get("http://localhost:8080/api/products");
         const allProducts = response.data;
         if (allProducts.length === 0) {
-          message.warning(
+          messageApi.warning(
             "Không có sản phẩm nào trong kho! Vui lòng kiểm tra database."
           );
         } else {
           setProducts(allProducts);
         }
       } catch (error) {
-        message.error(
+        messageApi.error(
           "Không thể tải danh sách sản phẩm: " +
-            (error.response?.data?.error || error.message)
+            (error.response?.data?.error || error.messageApi)
         );
       } finally {
         setLoadingProducts(false);
@@ -62,16 +63,16 @@ const ImportGoods = () => {
       try {
         const response = await api.get("http://localhost:8080/api/suppliers");
         if (response.data.length === 0) {
-          message.warning(
+          messageApi.warning(
             "Không có nhà cung cấp nào! Vui lòng kiểm tra database."
           );
         } else {
           setSuppliers(response.data);
         }
       } catch (error) {
-        message.error(
+        messageApi.error(
           "Không thể tải danh sách nhà cung cấp: " +
-            (error.response?.data?.error || error.message)
+            (error.response?.data?.error || error.messageApi)
         );
       } finally {
         setLoadingSuppliers(false);
@@ -95,7 +96,7 @@ const ImportGoods = () => {
   const handleQuantityChange = (id, value) => {
     const quantity = Number(value);
     if (quantity < 1) {
-      message.error("Số lượng phải lớn hơn 0");
+      messageApi.error("Số lượng phải lớn hơn 0");
       return;
     }
     setQuantities((prev) => ({ ...prev, [id]: quantity }));
@@ -108,7 +109,7 @@ const ImportGoods = () => {
       !record.gia ||
       !record.loaiSanPham
     ) {
-      message.error("Sản phẩm không hợp lệ, thiếu thông tin bắt buộc!");
+      messageApi.error("Sản phẩm không hợp lệ, thiếu thông tin bắt buộc!");
       return;
     }
 
@@ -125,7 +126,7 @@ const ImportGoods = () => {
             : item
         );
       }
-      message.success(`Đã thêm ${record.tenSanPham} vào phiếu nhập`);
+      messageApi.success(`Đã thêm ${record.tenSanPham} vào phiếu nhập`);
       return [
         ...prev,
         {
@@ -144,13 +145,13 @@ const ImportGoods = () => {
   const handleEditQuantity = (id, newQuantity) => {
     const quantity = Number(newQuantity);
     if (quantity < 1) {
-      message.error("Số lượng phải lớn hơn 0");
+      messageApi.error("Số lượng phải lớn hơn 0");
       return;
     }
     setSelectedProducts((prev) =>
       prev.map((item) => (item.maSanPham === id ? { ...item, quantity } : item))
     );
-    message.success("Cập nhật số lượng thành công");
+    messageApi.success("Cập nhật số lượng thành công");
   };
 
   const handleDeleteProduct = (id) => {
@@ -164,18 +165,18 @@ const ImportGoods = () => {
         setSelectedProducts((prev) =>
           prev.filter((item) => item.maSanPham !== id)
         );
-        message.success("Xóa sản phẩm thành công");
+        messageApi.success("Xóa sản phẩm thành công");
       },
     });
   };
 
   const handleImportGoods = async () => {
     if (!selectedSupplier) {
-      message.error("Vui lòng chọn nhà cung cấp!");
+      messageApi.error("Vui lòng chọn nhà cung cấp!");
       return;
     }
     if (selectedProducts.length === 0) {
-      message.error("Vui lòng chọn ít nhất một sản phẩm!");
+      messageApi.error("Vui lòng chọn ít nhất một sản phẩm!");
       return;
     }
 
@@ -187,7 +188,7 @@ const ImportGoods = () => {
         !product.loaiSanPham
     );
     if (invalidProducts.length > 0) {
-      message.error(
+      messageApi.error(
         "Một số sản phẩm thiếu thông tin bắt buộc (mã, số lượng, giá, loại sản phẩm)!"
       );
       console.log("Sản phẩm không hợp lệ:", invalidProducts);
@@ -228,7 +229,7 @@ const ImportGoods = () => {
       !receiptData.chiTietPhieuNhaps ||
       receiptData.chiTietPhieuNhaps.length === 0
     ) {
-      message.error("Không có chi tiết phiếu nhập nào được tạo!");
+      messageApi.error("Không có chi tiết phiếu nhập nào được tạo!");
       return;
     }
 
@@ -238,17 +239,19 @@ const ImportGoods = () => {
         receiptData
       );
       console.log("Response từ server:", response.data);
-      message.success("Nhập hàng thành công!");
+      messageApi.success("Nhập hàng thành công!");
       setReceiptCode("");
       setSelectedSupplier(null);
       setSelectedProducts([]);
       setQuantities({});
       navigate("/phieu-nhap");
     } catch (error) {
-      console.error("Lỗi từ server:", error.response?.data || error.message);
-      message.error(
+      console.error("Lỗi từ server:", error.response?.data || error.messageApi);
+      messageApi.error(
         "Nhập hàng thất bại: " +
-          (error.response?.data?.error || error.response?.data || error.message)
+          (error.response?.data?.error ||
+            error.response?.data ||
+            error.messageApi)
       );
     }
   };
@@ -256,7 +259,7 @@ const ImportGoods = () => {
   const handleImportExcel = (event) => {
     const file = event.target.files[0];
     if (!file) {
-      message.error("Vui lòng chọn file Excel!");
+      messageApi.error("Vui lòng chọn file Excel!");
       return;
     }
 
@@ -270,7 +273,7 @@ const ImportGoods = () => {
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
         if (jsonData.length === 0) {
-          message.error("File Excel trống!");
+          messageApi.error("File Excel trống!");
           return;
         }
 
@@ -338,20 +341,20 @@ const ImportGoods = () => {
         setSelectedProducts(newSelectedProducts);
 
         if (errors.length > 0) {
-          message.warning(
+          messageApi.warning(
             `Đã nhập thành công ${
               newSelectedProducts.length - selectedProducts.length
             } sản phẩm. Có ${errors.length} lỗi:\n${errors.join("\n")}`
           );
         } else {
-          message.success(
+          messageApi.success(
             `Đã nhập thành công ${
               newSelectedProducts.length - selectedProducts.length
             } sản phẩm từ Excel!`
           );
         }
       } catch (error) {
-        message.error("Lỗi khi đọc file Excel: " + error.message);
+        messageApi.error("Lỗi khi đọc file Excel: " + error.messageApi);
       }
     };
 
@@ -443,6 +446,7 @@ const ImportGoods = () => {
 
   return (
     <div className="p-4 h-full flex flex-col">
+      {contextHolder}
       <h2 className="text-2xl font-bold mb-4">Nhập hàng</h2>
       <div className="grid grid-cols-2 gap-4 flex-grow min-h-[500px]">
         <div className="bg-white p-4 shadow rounded flex flex-col flex-grow overflow-y-auto">

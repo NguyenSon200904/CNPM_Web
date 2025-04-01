@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional; // Thêm import này
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -258,6 +259,7 @@ public class ProductController {
     // DELETE: Xóa sản phẩm
     @DeleteMapping("/products/{maSanPham}")
     @PreAuthorize("hasAnyRole('ROLE_Admin', 'ROLE_Quản lý kho')")
+    @Transactional // Thêm annotation này để đảm bảo giao dịch
     public ResponseEntity<String> deleteProduct(@PathVariable("maSanPham") String maSanPham) {
         try {
             Optional<SanPham> sanPhamOpt = sanPhamRepository.findById(maSanPham);
@@ -266,13 +268,17 @@ public class ProductController {
             }
 
             SanPham sanPham = sanPhamOpt.get();
+            // Xóa bản ghi trong bảng MayTinh hoặc DienThoai trước
             if (sanPham.getLoaiSanPham().equals("Computer")) {
-                mayTinhRepository.deleteByMaSanPham(maSanPham);
+                Optional<MayTinh> mayTinhOpt = mayTinhRepository.findByMaSanPham(maSanPham);
+                mayTinhOpt.ifPresent(mayTinh -> mayTinhRepository.delete(mayTinh));
             } else if (sanPham.getLoaiSanPham().equals("Phone")) {
-                dienThoaiRepository.deleteByMaSanPham(maSanPham);
+                Optional<DienThoai> dienThoaiOpt = dienThoaiRepository.findByMaSanPham(maSanPham);
+                dienThoaiOpt.ifPresent(dienThoai -> dienThoaiRepository.delete(dienThoai));
             }
 
-            sanPhamRepository.deleteById(maSanPham);
+            // Sau đó xóa bản ghi trong bảng SanPham
+            sanPhamRepository.delete(sanPham);
 
             return new ResponseEntity<>("Xóa sản phẩm thành công!", HttpStatus.OK);
         } catch (Exception e) {

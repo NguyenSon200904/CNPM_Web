@@ -12,6 +12,7 @@ import * as XLSX from "xlsx";
 const { Option } = Select;
 
 const Supplier = () => {
+  const [messageApi, contextHolder] = message.useMessage();
   const fileInputRef = useRef(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterBy, setFilterBy] = useState("id");
@@ -43,7 +44,7 @@ const Supplier = () => {
         }
       } catch (error) {
         console.error("Lỗi khi lấy dữ liệu nhà cung cấp:", error);
-        message.error("Không thể tải danh sách nhà cung cấp!");
+        messageApi.error("Không thể tải danh sách nhà cung cấp!");
         setData([]);
       } finally {
         setLoading(false);
@@ -90,7 +91,7 @@ const Supplier = () => {
       };
 
       await api.post("http://localhost:8080/api/suppliers", newSupplier);
-      message.success("Thêm nhà cung cấp thành công!");
+      messageApi.success("Thêm nhà cung cấp thành công!");
       setIsAddModalOpen(false);
       form.resetFields();
 
@@ -106,13 +107,13 @@ const Supplier = () => {
       );
     } catch (error) {
       console.error("Lỗi khi thêm nhà cung cấp:", error);
-      message.error("Thêm nhà cung cấp thất bại!");
+      messageApi.error("Thêm nhà cung cấp thất bại!");
     }
   };
 
   const handleEdit = () => {
     if (selectedRowKeys.length !== 1) {
-      message.warning("Vui lòng chọn đúng 1 nhà cung cấp để sửa!");
+      messageApi.warning("Vui lòng chọn đúng 1 nhà cung cấp để sửa!");
       return;
     }
     const selected = data.find((item) => item.key === selectedRowKeys[0]);
@@ -135,7 +136,7 @@ const Supplier = () => {
         `http://localhost:8080/api/suppliers/${selectedSupplier.id}`,
         updatedSupplier
       );
-      message.success("Sửa nhà cung cấp thành công!");
+      messageApi.success("Sửa nhà cung cấp thành công!");
       setIsEditModalOpen(false);
       form.resetFields();
 
@@ -152,13 +153,13 @@ const Supplier = () => {
       setSelectedRowKeys([]);
     } catch (error) {
       console.error("Lỗi khi sửa nhà cung cấp:", error);
-      message.error("Sửa nhà cung cấp thất bại!");
+      messageApi.error("Sửa nhà cung cấp thất bại!");
     }
   };
 
   const handleDelete = async () => {
     if (selectedRowKeys.length === 0) {
-      message.warning("Vui lòng chọn ít nhất 1 nhà cung cấp để xóa!");
+      messageApi.warning("Vui lòng chọn ít nhất 1 nhà cung cấp để xóa!");
       return;
     }
 
@@ -168,7 +169,7 @@ const Supplier = () => {
           api.delete(`http://localhost:8080/api/suppliers/${key}`)
         )
       );
-      message.success("Xóa nhà cung cấp thành công!");
+      messageApi.success("Xóa nhà cung cấp thành công!");
 
       const response = await api.get("http://localhost:8080/api/suppliers");
       setData(
@@ -183,7 +184,7 @@ const Supplier = () => {
       setSelectedRowKeys([]);
     } catch (error) {
       console.error("Lỗi khi xóa nhà cung cấp:", error);
-      message.error("Xóa nhà cung cấp thất bại!");
+      messageApi.error("Xóa nhà cung cấp thất bại!");
     }
   };
 
@@ -199,13 +200,13 @@ const Supplier = () => {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Suppliers");
     XLSX.writeFile(workbook, "suppliers.xlsx");
-    message.success("Xuất Excel thành công!");
+    messageApi.success("Xuất Excel thành công!");
   };
 
   const handleImportExcel = (event) => {
     const file = event.target.files[0];
     if (!file) {
-      message.error("Vui lòng chọn file Excel!");
+      messageApi.error("Vui lòng chọn file Excel!");
       return;
     }
 
@@ -218,7 +219,7 @@ const Supplier = () => {
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
         if (jsonData.length === 0) {
-          message.error("File Excel trống!");
+          messageApi.error("File Excel trống!");
           return;
         }
 
@@ -255,7 +256,7 @@ const Supplier = () => {
             errors.push(
               `Dòng ${index + 2}: Lỗi khi thêm nhà cung cấp (maNhaCungCap: ${
                 newSupplier.maNhaCungCap
-              }) - ${error.response?.data?.message || error.message}`
+              }) - ${error.response?.data?.messageApi || error.messageApi}`
             );
           }
         }
@@ -272,19 +273,19 @@ const Supplier = () => {
         );
 
         if (errors.length > 0) {
-          message.warning(
+          messageApi.warning(
             `Đã nhập thành công ${successCount} nhà cung cấp. Có ${
               errors.length
             } lỗi:\n${errors.join("\n")}`
           );
         } else {
-          message.success(
+          messageApi.success(
             `Đã nhập thành công ${successCount} nhà cung cấp từ Excel!`
           );
         }
       } catch (error) {
         console.error("Lỗi khi đọc file Excel:", error);
-        message.error("Lỗi khi đọc file Excel: " + error.message);
+        messageApi.error("Lỗi khi đọc file Excel: " + error.messageApi);
       }
     };
 
@@ -296,6 +297,7 @@ const Supplier = () => {
 
   return (
     <div className="p-4">
+      {contextHolder}
       <h2 className="text-2xl font-bold mb-4">Quản lý nhà cung cấp</h2>
 
       <div className="flex flex-wrap justify-between gap-2 mb-4">
@@ -395,7 +397,7 @@ const Supplier = () => {
             name="id"
             label="Mã nhà cung cấp"
             rules={[
-              { required: true, message: "Vui lòng nhập mã nhà cung cấp!" },
+              { required: true, messageApi: "Vui lòng nhập mã nhà cung cấp!" },
             ]}
           >
             <Input />
@@ -404,7 +406,7 @@ const Supplier = () => {
             name="name"
             label="Tên nhà cung cấp"
             rules={[
-              { required: true, message: "Vui lòng nhập tên nhà cung cấp!" },
+              { required: true, messageApi: "Vui lòng nhập tên nhà cung cấp!" },
             ]}
           >
             <Input />
@@ -413,7 +415,7 @@ const Supplier = () => {
             name="phone"
             label="Số điện thoại"
             rules={[
-              { required: true, message: "Vui lòng nhập số điện thoại!" },
+              { required: true, messageApi: "Vui lòng nhập số điện thoại!" },
             ]}
           >
             <Input />
@@ -421,7 +423,7 @@ const Supplier = () => {
           <Form.Item
             name="address"
             label="Địa chỉ"
-            rules={[{ required: true, message: "Vui lòng nhập địa chỉ!" }]}
+            rules={[{ required: true, messageApi: "Vui lòng nhập địa chỉ!" }]}
           >
             <Input />
           </Form.Item>
@@ -439,7 +441,7 @@ const Supplier = () => {
             name="name"
             label="Tên nhà cung cấp"
             rules={[
-              { required: true, message: "Vui lòng nhập tên nhà cung cấp!" },
+              { required: true, messageApi: "Vui lòng nhập tên nhà cung cấp!" },
             ]}
           >
             <Input />
@@ -448,7 +450,7 @@ const Supplier = () => {
             name="phone"
             label="Số điện thoại"
             rules={[
-              { required: true, message: "Vui lòng nhập số điện thoại!" },
+              { required: true, messageApi: "Vui lòng nhập số điện thoại!" },
             ]}
           >
             <Input />
@@ -456,7 +458,7 @@ const Supplier = () => {
           <Form.Item
             name="address"
             label="Địa chỉ"
-            rules={[{ required: true, message: "Vui lòng nhập địa chỉ!" }]}
+            rules={[{ required: true, messageApi: "Vui lòng nhập địa chỉ!" }]}
           >
             <Input />
           </Form.Item>
