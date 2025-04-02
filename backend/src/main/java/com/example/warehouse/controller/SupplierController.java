@@ -1,8 +1,12 @@
 package com.example.warehouse.controller;
 
 import com.example.warehouse.entity.NhaCungCap;
+import com.example.warehouse.repository.SupplierRepository;
 import com.example.warehouse.service.SupplierService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,10 +19,19 @@ public class SupplierController {
     @Autowired
     private SupplierService supplierService;
 
-    // GET: Lấy danh sách nhà cung cấp
+    @Autowired
+    private SupplierRepository supplierRepository;
+
+    // Gộp getSuppliers() và getAllSuppliers() thành một phương thức
     @GetMapping("/suppliers")
-    public List<NhaCungCap> getSuppliers() {
-        return supplierService.findAll();
+    @PreAuthorize("hasAnyRole('ROLE_Admin', 'ROLE_Quản lý kho')")
+    public ResponseEntity<List<NhaCungCap>> getAllSuppliers() {
+        try {
+            List<NhaCungCap> suppliers = supplierRepository.findAll();
+            return new ResponseEntity<>(suppliers, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     // POST: Thêm nhà cung cấp mới
@@ -48,4 +61,5 @@ public class SupplierController {
         }
         supplierService.deleteByMaNhaCungCap(maNhaCungCap);
     }
+
 }

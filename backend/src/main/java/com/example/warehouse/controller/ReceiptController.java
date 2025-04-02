@@ -2,20 +2,31 @@ package com.example.warehouse.controller;
 
 import com.example.warehouse.dto.ReceiptDTO;
 import com.example.warehouse.dto.ReceiptDetailDTO;
+import com.example.warehouse.entity.NhaCungCap;
 import com.example.warehouse.dto.ProductDTO;
+import com.example.warehouse.model.Product;
 import com.example.warehouse.model.Receipt;
 import com.example.warehouse.model.ReceiptDetail;
+import com.example.warehouse.repository.ProductRepository;
+import com.example.warehouse.repository.ReceiptDetailRepository;
+import com.example.warehouse.repository.ReceiptRepository;
+import com.example.warehouse.repository.SupplierRepository;
 import com.example.warehouse.service.ReceiptService;
+
+import jakarta.transaction.Transactional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -27,6 +38,18 @@ public class ReceiptController {
 
     @Autowired
     private ReceiptService receiptService;
+
+    @Autowired
+    private ReceiptRepository receiptRepository;
+
+    @Autowired
+    private ReceiptDetailRepository receiptDetailRepository;
+
+    @Autowired
+    private SupplierRepository supplierRepository;
+
+    @Autowired
+    private ProductRepository productRepository;
 
     // GET: Lấy danh sách phiếu nhập
     @GetMapping("/receipts")
@@ -181,6 +204,109 @@ public class ReceiptController {
         } catch (Exception e) {
             logger.error("Lỗi khi xóa phiếu nhập với ID {}: {}", id, e.getMessage(), e);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    // Thêm endpoint PUT để cập nhật phiếu nhập
+    @PutMapping("/receipts/{maPhieu}")
+    @PreAuthorize("hasAnyRole('ROLE_Admin', 'ROLE_Quản lý kho')")
+    @Transactional
+    public ResponseEntity<String> updateReceipt(
+            @PathVariable("maPhieu") Long maPhieu,
+            @RequestBody ReceiptDTO receiptDTO) {
+        try {
+            // Tìm phiếu nhập theo maPhieu
+            Optional<Receipt> receiptOpt = receiptRepository.findById(maPhieu);
+            if (!receiptOpt.isPresent()) {
+                return new ResponseEntity<>("Phiếu nhập không tồn tại!", HttpStatus.NOT_FOUND);
+            }
+
+            Receipt receipt = receiptOpt.get();
+
+            // Cập nhật nhà cung cấp
+            Optional<NhaCungCap> nhaCungCapOpt = supplierRepository.findById(receiptDTO.getMaNhaCungCap());
+            if (!nhaCungCapOpt.isPresent()) {
+                return new ResponseEntity<>("Nhà cung cấp không tồn tại!", HttpStatus.NOT_FOUND);
+            }
+            receipt.setNhaCungCap(nhaCungCapOpt.get());
+
+            // Cập nhật chi tiết phiếu nhập (chiTietPhieuNhaps)
+            List<ReceiptDetail> existingDetails = receipt.getChiTietPhieuNhaps();
+            List<ReceiptDetailDTO> updatedDetails = receiptDTO.getDetails();
+
+            if (existingDetails.size() != updatedDetails.size()) {
+                return new ResponseEntity<>("Danh sách chi tiết không hợp lệ!", HttpStatus.BAD_REQUEST);
+            }
+
+            // Kiểm tra số lượng trước khi cập nhật
+            for (int i = 0; i < existingDetails.size(); i++) {
+                ReceiptDetail detail = existingDetails.get(i);
+                ReceiptDetailDTO detailDTO = updatedDetails.get(i);
+
+                // Kiểm tra maSanPham có khớp không
+                if (!detail.getId().getMaSanPham().equals(detailDTO.getMaSanPham())) {
+                    return new ResponseEntity<>("Mã sản phẩm không khớp!", HttpStatus.BAD_REQUEST);
+                }
+
+                // Tính sự thay đổi số lượng (delta)
+                int oldSoLuong = detail.getSoLuong();
+                int newSoLuong = detailDTO.getSoLuong();
+                int delta = newSoLuong - oldSoLuong;
+
+                // Lấy sản phẩm từ kho
+                Optional<Product> productOpt = productRepository.findById(detail.getId().getMaSanPham());
+                if (!productOpt.isPresent()) {
+                    return new ResponseEntity<>("Sản phẩm không tồn tại!", HttpStatus.NOT_FOUND);
+                }
+                Product product = productOpt.get();
+
+                // Kiểm tra số lượng trong kho
+                int currentSoLuong = product.getSoLuong();
+                if (currentSoLuong - delta < 0) { // Sửa logic: trừ delta thay vì cộng
+                    return new ResponseEntity<>(
+                            "Số lượng trong kho không đủ! Sản phẩm " + product.getMaSanPham() + " chỉ còn "
+                                    + currentSoLuong + " đơn vị.",
+                            HttpStatus.BAD_REQUEST);
+                }
+            }
+
+            // Nếu tất cả kiểm tra đều hợp lệ, tiến hành cập nhật
+            double tongTien = 0;
+            for (int i = 0; i < existingDetails.size(); i++) {
+                ReceiptDetail detail = existingDetails.get(i);
+                ReceiptDetailDTO detailDTO = updatedDetails.get(i);
+
+                // Tính lại delta
+                int oldSoLuong = detail.getSoLuong();
+                int newSoLuong = detailDTO.getSoLuong();
+                int delta = newSoLuong - oldSoLuong;
+
+                // Cập nhật số lượng trong ReceiptDetail
+                detail.setSoLuong(newSoLuong);
+
+                // Tính lại thành tiền (soLuong * donGia)
+                double thanhTien = detail.getSoLuong() * detail.getDonGia();
+                tongTien += thanhTien;
+
+                // Cập nhật số lượng trong Product
+                Optional<Product> productOpt = productRepository.findById(detail.getId().getMaSanPham());
+                Product product = productOpt.get();
+                int currentSoLuong = product.getSoLuong();
+                product.setSoLuong(currentSoLuong - delta); // Sửa logic: trừ delta thay vì cộng
+                productRepository.save(product);
+
+                // Lưu lại chi tiết phiếu nhập
+                receiptDetailRepository.save(detail);
+            }
+
+            // Cập nhật tổng tiền của phiếu nhập
+            receipt.setTongTien(tongTien);
+            receiptRepository.save(receipt);
+
+            return new ResponseEntity<>("Cập nhật phiếu nhập thành công!", HttpStatus.OK);
+        } catch (Error e) {
+            return new ResponseEntity<>("Lỗi khi cập nhật phiếu nhập: " + e.getMessage(),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

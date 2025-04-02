@@ -1,5 +1,15 @@
 import { useState, useEffect, useRef } from "react";
-import { Table, Button, Input, DatePicker, message, Modal } from "antd";
+import {
+  Table,
+  Button,
+  Input,
+  DatePicker,
+  Modal,
+  Form,
+  InputNumber,
+  Select,
+  App,
+} from "antd";
 import {
   FileExcelOutlined,
   DeleteOutlined,
@@ -9,35 +19,60 @@ import {
 import api from "../api";
 import * as XLSX from "xlsx";
 import moment from "moment";
-import { useNavigate } from "react-router-dom";
 
 const { RangePicker } = DatePicker;
+const { Option } = Select;
 
 const ImportReceipts = () => {
+  const { message } = App.useApp();
   const [dateRange, setDateRange] = useState([]);
   const [priceFrom, setPriceFrom] = useState(0);
-  const [priceTo, setPriceTo] = useState(1000000000);
+  const [priceTo, setPriceTo] = useState(100000000000);
   const [receipts, setReceipts] = useState([]);
+  const [suppliers, setSuppliers] = useState([]); // Thêm state để lưu danh sách nhà cung cấp
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedReceipt, setSelectedReceipt] = useState(null);
+  const [form] = Form.useForm();
   const fileInputRef = useRef(null);
-  const navigate = useNavigate();
 
   useEffect(() => {
     fetchReceipts();
   }, []);
 
+  // Lấy danh sách nhà cung cấp khi mở modal chỉnh sửa
+  const fetchSuppliers = async () => {
+    try {
+      const response = await api.get("http://localhost:8080/api/suppliers", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+      });
+      setSuppliers(response.data);
+    } catch (error) {
+      message.error(
+        "Không thể tải danh sách nhà cung cấp: " +
+          (error.response?.data?.error || error.message)
+      );
+    }
+  };
+
   const fetchReceipts = async () => {
     setLoading(true);
     try {
-      const response = await api.get("http://localhost:8080/api/receipts");
+      const response = await api.get("http://localhost:8080/api/receipts", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+      });
       const formattedReceipts = response.data.map((receipt) => ({
-        id: receipt.maPhieu, // Thay đổi từ maPhieuNhap thành maPhieu
-        supplier: receipt.maNhaCungCap || "Không có thông tin", // Chỉ có maNhaCungCap
+        id: receipt.maPhieu,
+        supplier: receipt.maNhaCungCap || "Không có thông tin",
         creator: receipt.nguoiTao || "Không có thông tin",
         total: receipt.tongTien,
-        date: moment(receipt.thoiGianTao).format("YYYY-MM-DD HH:mm"), // Thay đổi từ ngayNhap thành thoiGianTao
-        chiTietPhieuNhaps: receipt.details || [], // Thay đổi từ chiTietPhieuNhaps thành details
+        date: moment(receipt.thoiGianTao).format("YYYY-MM-DD HH:mm"),
+        chiTietPhieuNhaps: receipt.details || [],
       }));
       setReceipts(formattedReceipts);
     } catch (error) {
@@ -79,7 +114,13 @@ const ImportReceipts = () => {
         try {
           await Promise.all(
             selectedRowKeys.map((id) =>
-              api.delete(`http://localhost:8080/api/receipts/${id}`)
+              api.delete(`http://localhost:8080/api/receipts/${id}`, {
+                headers: {
+                  Authorization: `Bearer ${localStorage.getItem(
+                    "accessToken"
+                  )}`,
+                },
+              })
             )
           );
           message.success("Xóa phiếu nhập thành công!");
@@ -102,9 +143,90 @@ const ImportReceipts = () => {
     }
 
     const receiptToEdit = receipts.find((r) => r.id === selectedRowKeys[0]);
-    navigate(`/edit-receipt/${receiptToEdit.id}`, {
-      state: { receipt: receiptToEdit },
+    setSelectedReceipt(receiptToEdit);
+    form.setFieldsValue({
+      maNhaCungCap: receiptToEdit.supplier,
+      chiTietPhieuNhaps: receiptToEdit.chiTietPhieuNhaps.map((item) => ({
+        maSanPham: item.maSanPham,
+        tenSanPham: item.sanPham?.tenSanPham || "Không có thông tin",
+        soLuong: item.soLuong,
+        donGia: item.donGia,
+      })),
     });
+    fetchSuppliers(); // Lấy danh sách nhà cung cấp khi mở modal
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditOk = async () => {
+    try {
+      const values = await form.validateFields();
+
+      // Lấy danh sách sản phẩm từ API để kiểm tra số lượng
+      const productsResponse = await api.get(
+        "http://localhost:8080/api/products",
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        }
+      );
+      const products = productsResponse.data;
+
+      // Kiểm tra số lượng trước khi gửi yêu cầu
+      for (let i = 0; i < values.chiTietPhieuNhaps.length; i++) {
+        const item = values.chiTietPhieuNhaps[i];
+        const oldItem = selectedReceipt.chiTietPhieuNhaps[i];
+        const delta = item.soLuong - oldItem.soLuong;
+
+        // Tìm sản phẩm trong danh sách
+        const product = products.find((p) => p.maSanPham === item.maSanPham);
+        if (!product) {
+          message.error(`Sản phẩm ${item.maSanPham} không tồn tại!`);
+          return;
+        }
+
+        // Kiểm tra số lượng trong kho
+        const currentSoLuong = product.soLuong;
+        if (currentSoLuong + delta < 0) {
+          message.error(
+            `Số lượng trong kho không đủ! Sản phẩm ${item.maSanPham} chỉ còn ${currentSoLuong} đơn vị.`
+          );
+          return;
+        }
+      }
+
+      // Nếu kiểm tra hợp lệ, gửi yêu cầu cập nhật
+      const updatedReceipt = {
+        maPhieu: selectedReceipt.id,
+        maNhaCungCap: values.maNhaCungCap,
+        details: values.chiTietPhieuNhaps.map((item, index) => ({
+          maSanPham: selectedReceipt.chiTietPhieuNhaps[index].maSanPham,
+          soLuong: item.soLuong,
+          donGia: selectedReceipt.chiTietPhieuNhaps[index].donGia,
+        })),
+      };
+
+      await api.put(
+        `http://localhost:8080/api/receipts/${selectedReceipt.id}`,
+        updatedReceipt,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        }
+      );
+      message.success(
+        "Cập nhật phiếu nhập thành công! Vui lòng làm mới trang sản phẩm để thấy thay đổi."
+      );
+      setIsEditModalOpen(false);
+      fetchReceipts();
+      setSelectedRowKeys([]);
+    } catch (error) {
+      message.error(
+        "Cập nhật phiếu nhập thất bại: " +
+          (error.response?.data || error.message)
+      );
+    }
   };
 
   const handleViewDetails = () => {
@@ -244,11 +366,15 @@ const ImportReceipts = () => {
             tongTien,
             nguoiTao: { userName },
             nhaCungCap: { maNhaCungCap },
-            chiTietPhieuNhaps: [], // Cần thêm logic để nhập chi tiết từ file Excel
+            chiTietPhieuNhaps: [],
           };
 
           try {
-            await api.post("http://localhost:8080/api/receipts", receiptData);
+            await api.post("http://localhost:8080/api/receipts", receiptData, {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+              },
+            });
             newReceipts.push(receiptData);
           } catch (error) {
             errors.push(
@@ -414,6 +540,77 @@ const ImportReceipts = () => {
           loading={loading}
         />
       </div>
+
+      {/* Modal chỉnh sửa phiếu nhập */}
+      <Modal
+        title={`Sửa phiếu nhập PN${selectedReceipt?.id}`}
+        open={isEditModalOpen}
+        onOk={handleEditOk}
+        onCancel={() => setIsEditModalOpen(false)}
+        width={800}
+      >
+        <Form form={form} layout="vertical">
+          <Form.Item
+            name="maNhaCungCap"
+            label="Nhà cung cấp"
+            rules={[{ required: true, message: "Vui lòng chọn nhà cung cấp!" }]}
+          >
+            <Select placeholder="Chọn nhà cung cấp">
+              {suppliers.map((supplier) => (
+                <Option
+                  key={supplier.maNhaCungCap}
+                  value={supplier.maNhaCungCap}
+                >
+                  {`${supplier.maNhaCungCap} - ${supplier.tenNhaCungCap}`}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          <h4 className="font-bold mt-4">Danh sách sản phẩm</h4>
+          <Form.List name="chiTietPhieuNhaps">
+            {(fields) => (
+              <>
+                {fields.map(({ key, name, ...restField }) => (
+                  <div key={key} className="border p-2 mb-2 rounded">
+                    <Form.Item
+                      {...restField}
+                      name={[name, "maSanPham"]}
+                      label="Mã sản phẩm"
+                    >
+                      <Input disabled />
+                    </Form.Item>
+                    <Form.Item
+                      {...restField}
+                      name={[name, "tenSanPham"]}
+                      label="Tên sản phẩm"
+                    >
+                      <Input disabled />
+                    </Form.Item>
+                    <Form.Item
+                      {...restField}
+                      name={[name, "soLuong"]}
+                      label="Số lượng"
+                      rules={[
+                        { required: true, message: "Vui lòng nhập số lượng!" },
+                      ]}
+                    >
+                      <InputNumber min={1} style={{ width: "100%" }} />
+                    </Form.Item>
+                    <Form.Item
+                      {...restField}
+                      name={[name, "donGia"]}
+                      label="Đơn giá"
+                    >
+                      <InputNumber disabled style={{ width: "100%" }} />
+                    </Form.Item>
+                  </div>
+                ))}
+              </>
+            )}
+          </Form.List>
+        </Form>
+      </Modal>
     </div>
   );
 };
