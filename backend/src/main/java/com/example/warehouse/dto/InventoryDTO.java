@@ -1,22 +1,24 @@
 package com.example.warehouse.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class InventoryDTO {
+    @JsonProperty("maSanPham")
     private String maSanPham;
+
+    @JsonProperty("tenSanPham")
     private String tenSanPham;
+
+    @JsonProperty("loaiSanPham")
     private String loaiSanPham;
+
+    @JsonProperty("gia")
     private double gia;
+
+    @JsonProperty("soLuongTonKho")
     private int soLuongTonKho;
 
-    // Constructor
-    public InventoryDTO(String maSanPham, String tenSanPham, String loaiSanPham, double gia, int soLuongTonKho) {
-        this.maSanPham = maSanPham;
-        this.tenSanPham = tenSanPham;
-        this.loaiSanPham = loaiSanPham;
-        this.gia = gia;
-        this.soLuongTonKho = soLuongTonKho;
-    }
-
-    // Getters and setters
+    // Getters và setters
     public String getMaSanPham() {
         return maSanPham;
     }

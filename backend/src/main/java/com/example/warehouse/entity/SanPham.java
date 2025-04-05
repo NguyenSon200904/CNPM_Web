@@ -16,8 +16,8 @@ public class SanPham {
 
   private Double gia;
 
-  @Column(name = "so_luong")
-  private Integer soLuong; // Xóa @Column(name = "so_luong")
+  @Column(name = "so_luong_co_the_nhap")
+  private Long soLuongCoTheNhap; // Xóa @Column(name = "so_luong")
 
   @Column(name = "trang_thai")
   private Integer trangThai; // Xóa @Column(name = "trang_thai")

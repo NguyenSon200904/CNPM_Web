@@ -17,4 +17,6 @@ public interface ProductRepository extends JpaRepository<Product, String> {
 
     @Query("SELECT COUNT(p) FROM Product p")
     long countAll();
+
+    List<Product> findByMaSanPhamIn(List<String> maSanPhams);
 }

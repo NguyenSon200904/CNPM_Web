@@ -211,7 +211,7 @@ const ImportGoods = () => {
           maSanPham: product.maSanPham,
         },
         loaiSanPham: product.loaiSanPham,
-        soLuong: product.quantity,
+        soLuong: product.quantity, // Sửa từ soLuongCoTheNhap thành soLuong
         donGia: product.price,
         sanPham: {
           maSanPham: product.maSanPham,
@@ -240,6 +240,10 @@ const ImportGoods = () => {
       );
       console.log("Response từ server:", response.data);
       messageApi.success("Nhập hàng thành công!");
+
+      // Thông báo cho trang "Quản lý sản phẩm" làm mới dữ liệu
+      localStorage.setItem("refreshProducts", Date.now().toString());
+
       setReceiptCode("");
       setSelectedSupplier(null);
       setSelectedProducts([]);
@@ -283,14 +287,14 @@ const ImportGoods = () => {
         jsonData.forEach((row, index) => {
           const maSanPham = row.maSanPham?.toString();
           const tenSanPham = row.tenSanPham?.toString();
-          const soLuong = Number(row.soLuong);
+          const soLuongCoTheNhap = Number(row.soLuongCoTheNhap);
           const gia = Number(row.gia);
           const loaiSanPham = row.loaiSanPham?.toString();
 
           if (
             !maSanPham ||
             !tenSanPham ||
-            isNaN(soLuong) ||
+            isNaN(soLuongCoTheNhap) ||
             isNaN(gia) ||
             !loaiSanPham
           ) {
@@ -302,7 +306,7 @@ const ImportGoods = () => {
             return;
           }
 
-          if (soLuong < 1) {
+          if (soLuongCoTheNhap < 1) {
             errors.push(
               `Dòng ${
                 index + 2
@@ -325,11 +329,11 @@ const ImportGoods = () => {
             (item) => item.maSanPham === maSanPham
           );
           if (existingProduct) {
-            existingProduct.quantity += soLuong;
+            existingProduct.quantity += soLuongCoTheNhap;
           } else {
             newSelectedProducts.push({
               ...product,
-              quantity: soLuong,
+              quantity: soLuongCoTheNhap,
               id: maSanPham,
               name: tenSanPham,
               price: gia,
@@ -370,7 +374,11 @@ const ImportGoods = () => {
   const columns = [
     { title: "Mã sản phẩm", dataIndex: "maSanPham", key: "maSanPham" },
     { title: "Tên sản phẩm", dataIndex: "tenSanPham", key: "tenSanPham" },
-    { title: "Số lượng", dataIndex: "soLuong", key: "soLuong" },
+    {
+      title: "Số lượng có thể nhập",
+      dataIndex: "soLuongCoTheNhap",
+      key: "soLuongCoTheNhap",
+    },
     {
       title: "Đơn giá",
       dataIndex: "gia",
@@ -465,7 +473,9 @@ const ImportGoods = () => {
             >
               <Select.Option value="maSanPham">Mã sản phẩm</Select.Option>
               <Select.Option value="tenSanPham">Tên sản phẩm</Select.Option>
-              <Select.Option value="soLuong">Số lượng</Select.Option>
+              <Select.Option value="soLuongCoTheNhap">
+                Số lượng có thể nhập
+              </Select.Option>
               <Select.Option value="gia">Đơn giá</Select.Option>
             </Select>
             <Select

@@ -154,7 +154,7 @@ public class ExportReceiptService {
             detail.setSanPham(product);
 
             // Cập nhật số lượng sản phẩm trong bảng sanpham (giảm đi)
-            product.setSoLuong(product.getSoLuong() - detail.getSoLuong());
+            product.setSoLuongCoTheNhap(product.getSoLuongCoTheNhap() - detail.getSoLuong());
             productRepository.save(product);
         }
 
@@ -174,7 +174,7 @@ public class ExportReceiptService {
             Product product = productRepository.findById(detail.getId().getMaSanPham())
                     .orElseThrow(
                             () -> new RuntimeException("Sản phẩm không tồn tại: " + detail.getId().getMaSanPham()));
-            product.setSoLuong(product.getSoLuong() + detail.getSoLuong());
+            product.setSoLuongCoTheNhap(product.getSoLuongCoTheNhap() + detail.getSoLuong());
             productRepository.save(product);
         }
         exportReceiptRepository.deleteById(id);

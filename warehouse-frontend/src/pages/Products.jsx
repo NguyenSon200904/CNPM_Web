@@ -27,7 +27,7 @@ const Product = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterBy, setFilterBy] = useState("maSanPham");
   const [loaiSanPham, setLoaiSanPham] = useState("TẤT_CẢ");
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isMobile, _setIsMobile] = useState(window.innerWidth < 768);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState([]);
@@ -55,7 +55,7 @@ const Product = () => {
             key: item.maSanPham || index,
             maSanPham: item.maSanPham,
             tenSanPham: item.tenSanPham,
-            soLuong: item.soLuong,
+            soLuongCoTheNhap: item.soLuongCoTheNhap,
             gia: item.gia,
             loaiSanPham: item.loaiSanPham,
             tenCpu: item.tenCpu || "N/A",
@@ -89,12 +89,23 @@ const Product = () => {
         setLoading(false);
       }
     };
+
     fetchProducts();
 
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [loaiSanPham]);
+    // Lắng nghe sự kiện làm mới từ localStorage
+    const handleStorageChange = () => {
+      const refreshTimestamp = localStorage.getItem("refreshProducts");
+      if (refreshTimestamp) {
+        fetchProducts();
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, [loaiSanPham, messageApi]);
 
   const filteredProducts = products.filter((item) =>
     item[filterBy]?.toString().toLowerCase().includes(searchTerm.toLowerCase())
@@ -115,7 +126,11 @@ const Product = () => {
       responsive: ["sm"],
     },
     { title: "Tên sản phẩm", dataIndex: "tenSanPham", key: "tenSanPham" },
-    { title: "Số lượng", dataIndex: "soLuong", key: "soLuong" },
+    {
+      title: "Số lượng có thể nhập",
+      dataIndex: "soLuongCoTheNhap",
+      key: "soLuongCoTheNhap",
+    },
     {
       title: "Đơn giá",
       dataIndex: "gia",
@@ -259,7 +274,7 @@ const Product = () => {
           key: item.maSanPham || index,
           maSanPham: item.maSanPham,
           tenSanPham: item.tenSanPham,
-          soLuong: item.soLuong,
+          soLuongCoTheNhap: item.soLuongCoTheNhap,
           gia: item.gia,
           loaiSanPham: item.loaiSanPham,
           tenCpu: item.tenCpu || "N/A",
@@ -366,7 +381,7 @@ const Product = () => {
           key: item.maSanPham || index,
           maSanPham: item.maSanPham,
           tenSanPham: item.tenSanPham,
-          soLuong: item.soLuong,
+          soLuongCoTheNhap: item.soLuongCoTheNhap,
           gia: item.gia,
           loaiSanPham: item.loaiSanPham,
           tenCpu: item.tenCpu || "N/A",
@@ -424,7 +439,7 @@ const Product = () => {
           key: item.maSanPham || index,
           maSanPham: item.maSanPham,
           tenSanPham: item.tenSanPham,
-          soLuong: item.soLuong,
+          soLuongCoTheNhap: item.soLuongCoTheNhap,
           gia: item.gia,
           loaiSanPham: item.loaiSanPham,
           tenCpu: item.tenCpu || "N/A",
@@ -465,7 +480,11 @@ const Product = () => {
       key: "gia",
       render: (value) => `${value?.toLocaleString() || 0}đ`,
     },
-    { title: "Số lượng", dataIndex: "soLuong", key: "soLuong" },
+    {
+      title: "Số lượng có thể nhập",
+      dataIndex: "soLuongCoTheNhap",
+      key: "soLuongCoTheNhap",
+    },
     { title: "Loại sản phẩm", dataIndex: "loaiSanPham", key: "loaiSanPham" },
     { title: "RAM", dataIndex: "ram", key: "ram" },
     { title: "Bộ nhớ", dataIndex: "rom", key: "rom" },
@@ -499,7 +518,7 @@ const Product = () => {
       const baseProducts = {
         "Mã sản phẩm": item.maSanPham,
         "Tên sản phẩm": item.tenSanPham,
-        "Số lượng": item.soLuong,
+        "Số lượng có thể nhập": item.soLuongCoTheNhap,
         "Đơn giá": item.gia,
         "Bộ nhớ": item.rom,
       };
@@ -552,14 +571,14 @@ const Product = () => {
         jsonData.forEach((row, index) => {
           const maSanPham = row["Mã sản phẩm"]?.toString();
           const tenSanPham = row["Tên sản phẩm"]?.toString();
-          const soLuong = Number(row["Số lượng"]);
+          const soLuongCoTheNhap = Number(row["Số lượng có thể nhập"]);
           const gia = Number(row["Đơn giá"]);
           const loaiSanPham = row["Loại sản phẩm"]?.toString();
 
           if (
             !maSanPham ||
             !tenSanPham ||
-            isNaN(soLuong) ||
+            isNaN(soLuongCoTheNhap) ||
             isNaN(gia) ||
             !loaiSanPham
           ) {
@@ -571,7 +590,7 @@ const Product = () => {
             return;
           }
 
-          if (soLuong < 1) {
+          if (soLuongCoTheNhap < 1) {
             errors.push(
               `Dòng ${
                 index + 2
@@ -639,7 +658,7 @@ const Product = () => {
           >
             <Option value="maSanPham">Mã sản phẩm</Option>
             <Option value="tenSanPham">Tên sản phẩm</Option>
-            <Option value="soLuong">Số lượng</Option>
+            <Option value="soLuongCoTheNhap">Số lượng có thể nhập</Option>
             <Option value="gia">Đơn giá</Option>
             <Option value="ram">RAM</Option>
             <Option value="rom">Bộ nhớ</Option>
@@ -763,14 +782,18 @@ const Product = () => {
           <Form.Item
             name="maSanPham"
             label="Mã sản phẩm"
-            rules={[{ required: true, messageApi: "Vui lòng nhập mã sản phẩm!" }]}
+            rules={[
+              { required: true, messageApi: "Vui lòng nhập mã sản phẩm!" },
+            ]}
           >
             <Input />
           </Form.Item>
           <Form.Item
             name="tenSanPham"
             label="Tên sản phẩm"
-            rules={[{ required: true, messageApi: "Vui lòng nhập tên sản phẩm!" }]}
+            rules={[
+              { required: true, messageApi: "Vui lòng nhập tên sản phẩm!" },
+            ]}
           >
             <Input />
           </Form.Item>
@@ -782,8 +805,8 @@ const Product = () => {
             <InputNumber min={0} style={{ width: "100%" }} />
           </Form.Item>
           <Form.Item
-            name="soLuong"
-            label="Số lượng"
+            name="soLuongCoTheNhap"
+            label="Số lượng có thể nhập"
             rules={[{ required: true, messageApi: "Vui lòng nhập số lượng!" }]}
           >
             <InputNumber min={0} style={{ width: "100%" }} />
@@ -850,7 +873,9 @@ const Product = () => {
           <Form.Item
             name="tenSanPham"
             label="Tên sản phẩm"
-            rules={[{ required: true, messageApi: "Vui lòng nhập tên sản phẩm!" }]}
+            rules={[
+              { required: true, messageApi: "Vui lòng nhập tên sản phẩm!" },
+            ]}
           >
             <Input />
           </Form.Item>
@@ -862,8 +887,8 @@ const Product = () => {
             <InputNumber min={0} style={{ width: "100%" }} />
           </Form.Item>
           <Form.Item
-            name="soLuong"
-            label="Số lượng"
+            name="soLuongCoTheNhap"
+            label="Số lượng có thể nhập"
             rules={[{ required: true, messageApi: "Vui lòng nhập số lượng!" }]}
           >
             <InputNumber min={0} style={{ width: "100%" }} />

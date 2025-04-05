@@ -20,4 +20,5 @@ public interface ExportReceiptRepository extends JpaRepository<ExportReceipt, Lo
 
     @Query("SELECT SUM(r.tongTien) FROM ExportReceipt r WHERE r.ngayXuat BETWEEN :start AND :end")
     Double getTotalExportAmountByNgayXuatBetween(LocalDateTime start, LocalDateTime end);
+
 }

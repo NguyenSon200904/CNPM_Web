@@ -1,6 +1,6 @@
 package com.example.warehouse.model;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -32,27 +32,25 @@ public class Product {
     @JsonProperty("gia")
     private double gia;
 
-    @Column(name = "so_luong", nullable = false)
-    @JsonProperty("soLuong")
-    private int soLuong;
-
     @Column(name = "xuat_xu", length = 50)
     @JsonProperty("xuatXu")
     private String xuatXu;
 
     @Column(name = "trang_thai")
     @JsonProperty("trangThai")
-    private Integer trangThai; // Đổi thành Integer
+    private Integer trangThai;
+
+    @Column(name = "so_luong_co_the_nhap")
+    @JsonProperty("soLuongCoTheNhap")
+    private long soLuongCoTheNhap; // Thay int bằng long
 
     @OneToMany(mappedBy = "sanPham")
-    @JsonManagedReference(value = "product-receiptDetails")
+    @JsonIgnore // Ngăn Jackson serialize trường này
     @ToString.Exclude
-    @JsonProperty("receiptDetails")
     private List<ReceiptDetail> receiptDetails;
 
     @OneToMany(mappedBy = "sanPham")
-    @JsonManagedReference(value = "product-exportReceiptDetails")
+    @JsonIgnore // Ngăn Jackson serialize trường này
     @ToString.Exclude
-    @JsonProperty("exportReceiptDetails")
     private List<ExportReceiptDetail> exportReceiptDetails;
 }

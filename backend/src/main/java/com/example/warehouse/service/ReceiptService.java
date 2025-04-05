@@ -1,12 +1,10 @@
 package com.example.warehouse.service;
 
 import com.example.warehouse.model.Account;
-import com.example.warehouse.model.Product;
 import com.example.warehouse.model.Receipt;
 import com.example.warehouse.model.ReceiptDetail;
 import com.example.warehouse.entity.NhaCungCap;
 import com.example.warehouse.repository.AccountRepository;
-import com.example.warehouse.repository.ProductRepository;
 import com.example.warehouse.repository.ReceiptRepository;
 import com.example.warehouse.repository.SupplierRepository;
 import org.slf4j.Logger;
@@ -26,9 +24,6 @@ public class ReceiptService {
 
     @Autowired
     private ReceiptRepository receiptRepository;
-
-    @Autowired
-    private ProductRepository productRepository;
 
     @Autowired
     private SupplierRepository supplierRepository;
@@ -110,10 +105,6 @@ public class ReceiptService {
                 logger.error("Chi tiết phiếu nhập không hợp lệ, thiếu mã sản phẩm: {}", detail);
                 throw new IllegalArgumentException("Chi tiết phiếu nhập không hợp lệ: thiếu mã sản phẩm.");
             }
-            if (detail.getSanPham() == null || detail.getSanPham().getMaSanPham() == null) {
-                logger.error("Sản phẩm trong chi tiết phiếu nhập không hợp lệ: {}", detail.getSanPham());
-                throw new IllegalArgumentException("Sản phẩm trong chi tiết phiếu nhập không hợp lệ.");
-            }
         }
 
         // Lưu Receipt trước để tạo maPhieuNhap
@@ -125,16 +116,6 @@ public class ReceiptService {
             // Gán maPhieuNhap vào ReceiptDetailId
             detail.getId().setMaPhieuNhap(savedReceipt.getMaPhieuNhap());
             detail.setReceipt(savedReceipt);
-
-            // Tìm và gán Product
-            Product product = productRepository.findById(detail.getId().getMaSanPham())
-                    .orElseThrow(
-                            () -> new RuntimeException("Sản phẩm không tồn tại: " + detail.getId().getMaSanPham()));
-            detail.setSanPham(product);
-
-            // Cập nhật số lượng sản phẩm
-            product.setSoLuong(product.getSoLuong() + detail.getSoLuong());
-            productRepository.save(product);
         }
 
         // Gán lại chiTietPhieuNhaps và lưu
@@ -148,14 +129,6 @@ public class ReceiptService {
     public void deleteById(Long id) {
         Receipt receipt = receiptRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Phiếu nhập không tồn tại: " + id));
-        // Cập nhật số lượng sản phẩm trước khi xóa
-        for (ReceiptDetail detail : receipt.getChiTietPhieuNhaps()) {
-            Product product = productRepository.findById(detail.getId().getMaSanPham())
-                    .orElseThrow(
-                            () -> new RuntimeException("Sản phẩm không tồn tại: " + detail.getId().getMaSanPham()));
-            product.setSoLuong(product.getSoLuong() - detail.getSoLuong());
-            productRepository.save(product);
-        }
         receiptRepository.deleteById(id);
     }
 

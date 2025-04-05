@@ -50,7 +50,7 @@ public class ProductController {
                     dto.setMaSanPham(sanPham.getMaSanPham());
                     dto.setTenSanPham(sanPham.getTenSanPham());
                     dto.setGia(sanPham.getGia());
-                    dto.setSoLuong(sanPham.getSoLuong());
+                    dto.setSoLuongCoTheNhap(sanPham.getSoLuongCoTheNhap());
                     dto.setLoaiSanPham(sanPham.getLoaiSanPham());
                     dto.setXuatXu(sanPham.getXuatXu());
                     try {
@@ -95,7 +95,7 @@ public class ProductController {
                     dto.setMaSanPham(sanPham.getMaSanPham());
                     dto.setTenSanPham(sanPham.getTenSanPham());
                     dto.setGia(sanPham.getGia());
-                    dto.setSoLuong(sanPham.getSoLuong());
+                    dto.setSoLuongCoTheNhap(sanPham.getSoLuongCoTheNhap());
                     dto.setLoaiSanPham(sanPham.getLoaiSanPham());
                     dto.setXuatXu(sanPham.getXuatXu());
                     try {
@@ -154,7 +154,7 @@ public class ProductController {
             } catch (NumberFormatException e) {
                 sanPham.setGia(0.0);
             }
-            sanPham.setSoLuong(productDTO.getSoLuong());
+            sanPham.setSoLuongCoTheNhap(productDTO.getSoLuongCoTheNhap());
             sanPham.setLoaiSanPham(productDTO.getLoaiSanPham());
             sanPham.setXuatXu(productDTO.getXuatXu());
             sanPham.setTrangThai(productDTO.getTrangThai() != null ? productDTO.getTrangThai() : 0);
@@ -215,7 +215,7 @@ public class ProductController {
             } catch (NumberFormatException e) {
                 existingSanPham.setGia(0.0);
             }
-            existingSanPham.setSoLuong(productDTO.getSoLuong());
+            existingSanPham.setSoLuongCoTheNhap(productDTO.getSoLuongCoTheNhap());
             existingSanPham.setLoaiSanPham(productDTO.getLoaiSanPham());
             existingSanPham.setXuatXu(productDTO.getXuatXu());
             existingSanPham.setTrangThai(productDTO.getTrangThai() != null ? productDTO.getTrangThai() : 0);

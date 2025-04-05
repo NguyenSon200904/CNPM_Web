@@ -20,10 +20,10 @@ const ExportGoods = () => {
   const [productType, setProductType] = useState("all");
   const [quantities, setQuantities] = useState({});
   const [selectedProducts, setSelectedProducts] = useState([]);
-  const [receiptCode, setReceiptCode] = useState("");
+  const [receiptCode, setReceiptCode] = useState(""); // Mã phiếu xuất do người dùng nhập
   const [creator, setCreator] = useState("admin");
-  const [inventory, setInventory] = useState([]); // Đổi từ products thành inventory
-  const [loadingInventory, setLoadingInventory] = useState(false); // Đổi từ loadingProducts thành loadingInventory
+  const [inventory, setInventory] = useState([]);
+  const [loadingInventory, setLoadingInventory] = useState(false);
 
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
@@ -35,11 +35,15 @@ const ExportGoods = () => {
     const fetchInventory = async () => {
       setLoadingInventory(true);
       try {
-        const response = await api.get("http://localhost:8080/api/inventory");
+        const response = await api.get("http://localhost:8080/api/inventory", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        });
         const formattedInventory = response.data.map((item) => ({
           maSanPham: item.maSanPham,
           tenSanPham: item.tenSanPham,
-          soLuong: item.soLuongTonKho, // Số lượng tồn kho thực tế
+          soLuong: item.soLuong,
           gia: item.gia,
           loaiSanPham: item.loaiSanPham,
         }));
@@ -52,14 +56,15 @@ const ExportGoods = () => {
       } catch (error) {
         message.error(
           "Không thể tải danh sách hàng hóa trong kho: " +
-            (error.response?.data || error.message)
+            (error.response?.data?.message || error.message)
         );
       } finally {
         setLoadingInventory(false);
       }
     };
+
     fetchInventory();
-  }, []);
+  }, []); // Xóa fetchLatestReceiptCode
 
   const filteredData = inventory.filter((item) => {
     const value = item[filterBy]?.toString().toLowerCase();
@@ -166,18 +171,24 @@ const ExportGoods = () => {
       return;
     }
 
+    if (!receiptCode || isNaN(receiptCode) || Number(receiptCode) <= 0) {
+      message.error("Mã phiếu xuất phải là một số lớn hơn 0!");
+      return;
+    }
+
     const totalAmount = selectedProducts.reduce(
       (sum, item) => sum + item.quantity * item.price,
       0
     );
 
     const receiptData = {
+      maPhieuXuat: Number(receiptCode), // Chuyển receiptCode thành số
       ngayXuat: moment().format("YYYY-MM-DDTHH:mm:ss"),
       tongTien: totalAmount,
       nguoiTao: { userName: creator },
       chiTietPhieuXuats: selectedProducts.map((product) => ({
         id: {
-          maPhieuXuat: null,
+          maPhieuXuat: Number(receiptCode), // Chuyển thành số
           maSanPham: product.maSanPham,
         },
         soLuong: product.quantity,
@@ -186,11 +197,15 @@ const ExportGoods = () => {
     };
 
     try {
-      await api.post("http://localhost:8080/api/export-receipts", receiptData);
+      await api.post("http://localhost:8080/api/export-receipts", receiptData, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+      });
       message.success("Xuất hàng thành công!");
-      setReceiptCode("");
       setSelectedProducts([]);
       setQuantities({});
+      setReceiptCode(""); // Reset mã phiếu xuất sau khi xuất hàng
       navigate("/phieu-xuat");
     } catch (error) {
       message.error(
@@ -450,12 +465,15 @@ const ExportGoods = () => {
         <div className="bg-white p-4 shadow rounded flex flex-col flex-grow overflow-y-auto">
           <h3 className="font-bold mb-2 text-black">Thông tin xuất hàng</h3>
           <div className="flex flex-col gap-2 flex-grow overflow-hidden">
-            <Input
-              placeholder="Mã phiếu xuất"
-              value={receiptCode}
-              onChange={(e) => setReceiptCode(e.target.value)}
-              className="border h-[50px] p-2 rounded-lg"
-            />
+            <div className="flex flex-col gap-1">
+              <label className="text-black font-medium">Mã phiếu xuất</label>
+              <Input
+                placeholder="Nhập mã phiếu xuất"
+                value={receiptCode}
+                onChange={(e) => setReceiptCode(e.target.value)}
+                className="border h-[50px] p-2 rounded-lg"
+              />
+            </div>
             <Input
               placeholder="Người tạo phiếu"
               value={creator}

@@ -149,7 +149,7 @@ const ImportReceipts = () => {
       chiTietPhieuNhaps: receiptToEdit.chiTietPhieuNhaps.map((item) => ({
         maSanPham: item.maSanPham,
         tenSanPham: item.sanPham?.tenSanPham || "Không có thông tin",
-        soLuong: item.soLuong,
+        soLuongCoTheNhap: item.soLuongCoTheNhap,
         donGia: item.donGia,
       })),
     });
@@ -176,7 +176,7 @@ const ImportReceipts = () => {
       for (let i = 0; i < values.chiTietPhieuNhaps.length; i++) {
         const item = values.chiTietPhieuNhaps[i];
         const oldItem = selectedReceipt.chiTietPhieuNhaps[i];
-        const delta = item.soLuong - oldItem.soLuong;
+        const delta = item.soLuongCoTheNhap - oldItem.soLuongCoTheNhap;
 
         // Tìm sản phẩm trong danh sách
         const product = products.find((p) => p.maSanPham === item.maSanPham);
@@ -186,10 +186,10 @@ const ImportReceipts = () => {
         }
 
         // Kiểm tra số lượng trong kho
-        const currentSoLuong = product.soLuong;
-        if (currentSoLuong + delta < 0) {
+        const currentSoLuongCoTheNhap = product.soLuongCoTheNhap;
+        if (currentSoLuongCoTheNhap + delta < 0) {
           message.error(
-            `Số lượng trong kho không đủ! Sản phẩm ${item.maSanPham} chỉ còn ${currentSoLuong} đơn vị.`
+            `Số lượng trong kho không đủ! Sản phẩm ${item.maSanPham} chỉ còn ${currentSoLuongCoTheNhap} đơn vị.`
           );
           return;
         }
@@ -201,7 +201,7 @@ const ImportReceipts = () => {
         maNhaCungCap: values.maNhaCungCap,
         details: values.chiTietPhieuNhaps.map((item, index) => ({
           maSanPham: selectedReceipt.chiTietPhieuNhaps[index].maSanPham,
-          soLuong: item.soLuong,
+          soLuongCoTheNhap: item.soLuongCoTheNhap,
           donGia: selectedReceipt.chiTietPhieuNhaps[index].donGia,
         })),
       };
@@ -260,7 +260,7 @@ const ImportReceipts = () => {
                 maSanPham: item.maSanPham || "Không có thông tin",
                 tenSanPham: item.sanPham?.tenSanPham || "Không có thông tin",
                 loaiSanPham: item.loaiSanPham || "Không có thông tin",
-                soLuong: item.soLuong,
+                soLuongCoTheNhap: item.soLuongCoTheNhap,
                 donGia: item.donGia,
               }))}
               columns={[
@@ -279,7 +279,11 @@ const ImportReceipts = () => {
                   dataIndex: "loaiSanPham",
                   key: "loaiSanPham",
                 },
-                { title: "Số lượng", dataIndex: "soLuong", key: "soLuong" },
+                {
+                  title: "Số lượng",
+                  dataIndex: "soLuongCoTheNhap",
+                  key: "soLuongCoTheNhap",
+                },
                 {
                   title: "Đơn giá",
                   dataIndex: "donGia",
@@ -589,7 +593,7 @@ const ImportReceipts = () => {
                     </Form.Item>
                     <Form.Item
                       {...restField}
-                      name={[name, "soLuong"]}
+                      name={[name, "soLuongCoTheNhap"]}
                       label="Số lượng"
                       rules={[
                         { required: true, message: "Vui lòng nhập số lượng!" },

@@ -1,7 +1,13 @@
 package com.example.warehouse.controller;
 
 import com.example.warehouse.model.ExportReceipt;
+import com.example.warehouse.model.ExportReceiptDetail;
+import com.example.warehouse.repository.ExportReceiptDetailRepository;
+import com.example.warehouse.repository.ReceiptDetailRepository;
 import com.example.warehouse.service.ExportReceiptService;
+
+import jakarta.transaction.Transactional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +28,12 @@ public class ExportReceiptController {
 
     @Autowired
     private ExportReceiptService exportReceiptService;
+
+    @Autowired
+    private ReceiptDetailRepository receiptDetailRepository;
+
+    @Autowired
+    private ExportReceiptDetailRepository exportReceiptDetailRepository;
 
     // GET: Lấy danh sách phiếu xuất
     @GetMapping("/export-receipts")
@@ -59,9 +71,33 @@ public class ExportReceiptController {
 
     // POST: Tạo phiếu xuất mới
     @PostMapping("/export-receipts")
+    @Transactional
     public ResponseEntity<?> createExportReceipt(@RequestBody ExportReceipt receipt) {
         logger.info("Nhận request tạo phiếu xuất: {}", receipt);
         try {
+            // Lấy danh sách chi tiết phiếu xuất
+            List<ExportReceiptDetail> details = receipt.getChiTietPhieuXuats();
+
+            // Kiểm tra số lượng tồn kho
+            for (ExportReceiptDetail detail : details) {
+                String maSanPham = detail.getId().getMaSanPham();
+                int soLuongXuat = detail.getSoLuong();
+
+                // Tính số lượng tồn kho
+                int totalImported = receiptDetailRepository.getTotalImportedQuantityByMaSanPham(maSanPham);
+                int totalExported = exportReceiptDetailRepository.getTotalExportedQuantityByMaSanPham(maSanPham);
+                int soLuongTonKho = totalImported - totalExported;
+
+                if (soLuongXuat > soLuongTonKho) {
+                    logger.error("Số lượng xuất vượt quá số lượng tồn kho cho sản phẩm: {}", maSanPham);
+                    Map<String, String> errorResponse = new HashMap<>();
+                    errorResponse.put("error", "Số lượng xuất (" + soLuongXuat + ") vượt quá số lượng tồn kho ("
+                            + soLuongTonKho + ") cho sản phẩm " + maSanPham);
+                    return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+                }
+            }
+
+            // Lưu phiếu xuất
             ExportReceipt savedReceipt = exportReceiptService.save(receipt);
             logger.info("Tạo phiếu xuất thành công: {}", savedReceipt);
             return new ResponseEntity<>(savedReceipt, HttpStatus.CREATED);

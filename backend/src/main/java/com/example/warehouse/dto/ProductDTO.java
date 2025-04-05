@@ -21,7 +21,7 @@ public class ProductDTO {
     @Size(max = 50, message = "Product name must not exceed 50 characters")
     private String tenSanPham;
 
-    private int soLuong;
+    private long soLuongCoTheNhap;
 
     @JsonDeserialize(using = CustomDoubleDeserializer.class)
     private Double gia; // Sử dụng deserializer tùy chỉnh

@@ -19,4 +19,11 @@ public interface ReceiptDetailRepository extends JpaRepository<ReceiptDetail, Re
     @Query("SELECT CASE WHEN COUNT(rd) > 0 THEN true ELSE false END FROM ReceiptDetail rd WHERE rd.id.maPhieuNhap = :maPhieuNhap AND rd.id.maSanPham = :maSanPham")
     boolean existsByIdMaPhieuNhapAndIdMaSanPham(@Param("maPhieuNhap") Long maPhieuNhap,
             @Param("maSanPham") String maSanPham);
+
+    @Query("SELECT rd.id.maSanPham, SUM(rd.soLuong) FROM ReceiptDetail rd GROUP BY rd.id.maSanPham")
+    List<Object[]> getTotalQuantityByProduct();
+
+    @Query("SELECT COALESCE(SUM(rd.soLuong), 0) FROM ReceiptDetail rd WHERE rd.id.maSanPham = :maSanPham")
+    int getTotalImportedQuantityByMaSanPham(@Param("maSanPham") String maSanPham);
+
 }
