@@ -23,7 +23,7 @@ public class ReceiptDetailController {
     }
 
     @GetMapping("/{maPhieuNhap}/{maSanPham}")
-    public ResponseEntity<ReceiptDetail> getReceiptDetailById(@PathVariable Long maPhieuNhap,
+    public ResponseEntity<ReceiptDetail> getReceiptDetailById(@PathVariable int maPhieuNhap,
             @PathVariable String maSanPham) {
         ReceiptDetailId id = new ReceiptDetailId();
         id.setMaPhieuNhap(maPhieuNhap);
@@ -36,7 +36,7 @@ public class ReceiptDetailController {
     }
 
     @GetMapping("/ma-phieu/{maPhieuNhap}")
-    public ResponseEntity<List<ReceiptDetail>> getReceiptDetailsByMaPhieuNhap(@PathVariable Long maPhieuNhap) {
+    public ResponseEntity<List<ReceiptDetail>> getReceiptDetailsByMaPhieuNhap(@PathVariable int maPhieuNhap) { // Sửa từ Long thành int
         List<ReceiptDetail> receiptDetails = receiptDetailService.findByIdMaPhieuNhap(maPhieuNhap);
         return ResponseEntity.ok(receiptDetails);
     }
@@ -60,7 +60,7 @@ public class ReceiptDetailController {
 
     @PutMapping("/{maPhieuNhap}/{maSanPham}")
     public ResponseEntity<ReceiptDetail> updateReceiptDetail(
-            @PathVariable Long maPhieuNhap, @PathVariable String maSanPham, @RequestBody ReceiptDetail receiptDetail) {
+            @PathVariable int maPhieuNhap, @PathVariable String maSanPham, @RequestBody ReceiptDetail receiptDetail) { // Sửa từ Long thành int
         ReceiptDetailId id = new ReceiptDetailId();
         id.setMaPhieuNhap(maPhieuNhap);
         id.setMaSanPham(maSanPham);
@@ -73,7 +73,7 @@ public class ReceiptDetailController {
     }
 
     @DeleteMapping("/{maPhieuNhap}/{maSanPham}")
-    public ResponseEntity<Void> deleteReceiptDetail(@PathVariable Long maPhieuNhap, @PathVariable String maSanPham) {
+    public ResponseEntity<Void> deleteReceiptDetail(@PathVariable int maPhieuNhap, @PathVariable String maSanPham) {
         ReceiptDetailId id = new ReceiptDetailId();
         id.setMaPhieuNhap(maPhieuNhap);
         id.setMaSanPham(maSanPham);

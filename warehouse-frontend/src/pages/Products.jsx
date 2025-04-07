@@ -160,16 +160,6 @@ const Product = () => {
         render: (text) => text || "N/A",
       },
     ],
-    TẤT_CẢ: [
-      { title: "RAM", dataIndex: "ram", key: "ram", responsive: ["lg"] },
-      {
-        title: "Hệ điều hành",
-        dataIndex: "heDieuHanh",
-        key: "heDieuHanh",
-        responsive: ["md"],
-        render: (text) => text || "N/A",
-      },
-    ],
   };
 
   const columns = [
@@ -218,6 +208,12 @@ const Product = () => {
           isNaN(parseInt(values.trangThai))
             ? 0
             : parseInt(values.trangThai),
+        soLuongCoTheNhap:
+          values.soLuongCoTheNhap === "N/A" ||
+          !values.soLuongCoTheNhap ||
+          isNaN(parseInt(values.soLuongCoTheNhap))
+            ? 0
+            : parseInt(values.soLuongCoTheNhap),
         dungLuongPin:
           values.dungLuongPin === "N/A" || !values.dungLuongPin
             ? "0"
@@ -281,7 +277,7 @@ const Product = () => {
           heDieuHanh: item.heDieuHanh || "N/A",
           doPhanGiaiCamera: item.doPhanGiaiCamera || "N/A",
           ram: item.ram || "N/A",
-          rom: item.rom || "N/A",
+          rom: item.ram || "N/A",
           dungLuongPin: item.dungLuongPin || "N/A",
           kichThuocMan: item.kichThuocMan || "N/A",
           congSuatNguon: item.congSuatNguon || "N/A",
@@ -332,6 +328,12 @@ const Product = () => {
           isNaN(parseInt(values.trangThai))
             ? 0
             : parseInt(values.trangThai),
+        soLuongCoTheNhap:
+          values.soLuongCoTheNhap === "N/A" ||
+          !values.soLuongCoTheNhap ||
+          isNaN(parseInt(values.soLuongCoTheNhap))
+            ? 0
+            : parseInt(values.soLuongCoTheNhap),
         dungLuongPin:
           values.dungLuongPin === "N/A" || !values.dungLuongPin
             ? "0"
@@ -352,6 +354,16 @@ const Product = () => {
           values.doPhanGiaiCamera === "N/A" || !values.doPhanGiaiCamera
             ? null
             : values.doPhanGiaiCamera,
+        tenCpu:
+          values.tenCpu === "N/A" || !values.tenCpu ? null : values.tenCpu,
+        congSuatNguon:
+          values.congSuatNguon === "N/A" ||
+          !values.congSuatNguon ||
+          isNaN(parseInt(values.congSuatNguon))
+            ? 0
+            : parseInt(values.congSuatNguon),
+        maBoard:
+          values.maBoard === "N/A" || !values.maBoard ? null : values.maBoard,
       };
 
       console.log("Dữ liệu gửi đi:", updatedProduct);
@@ -410,6 +422,8 @@ const Product = () => {
         messageApi.error(
           "Lỗi server: Không thể sửa sản phẩm. Vui lòng kiểm tra backend!"
         );
+      } else if (error.response && error.response.data) {
+        messageApi.error("Sửa sản phẩm thất bại: " + error.response.data.error);
       } else {
         messageApi.error("Sửa sản phẩm thất bại!");
       }
@@ -782,32 +796,28 @@ const Product = () => {
           <Form.Item
             name="maSanPham"
             label="Mã sản phẩm"
-            rules={[
-              { required: true, messageApi: "Vui lòng nhập mã sản phẩm!" },
-            ]}
+            rules={[{ required: true, message: "Vui lòng nhập mã sản phẩm!" }]}
           >
             <Input />
           </Form.Item>
           <Form.Item
             name="tenSanPham"
             label="Tên sản phẩm"
-            rules={[
-              { required: true, messageApi: "Vui lòng nhập tên sản phẩm!" },
-            ]}
+            rules={[{ required: true, message: "Vui lòng nhập tên sản phẩm!" }]}
           >
             <Input />
           </Form.Item>
           <Form.Item
             name="gia"
             label="Đơn giá"
-            rules={[{ required: true, messageApi: "Vui lòng nhập đơn giá!" }]}
+            rules={[{ required: true, message: "Vui lòng nhập đơn giá!" }]}
           >
             <InputNumber min={0} style={{ width: "100%" }} />
           </Form.Item>
           <Form.Item
             name="soLuongCoTheNhap"
             label="Số lượng có thể nhập"
-            rules={[{ required: true, messageApi: "Vui lòng nhập số lượng!" }]}
+            rules={[{ required: true, message: "Vui lòng nhập số lượng!" }]}
           >
             <InputNumber min={0} style={{ width: "100%" }} />
           </Form.Item>
@@ -873,23 +883,21 @@ const Product = () => {
           <Form.Item
             name="tenSanPham"
             label="Tên sản phẩm"
-            rules={[
-              { required: true, messageApi: "Vui lòng nhập tên sản phẩm!" },
-            ]}
+            rules={[{ required: true, message: "Vui lòng nhập tên sản phẩm!" }]}
           >
             <Input />
           </Form.Item>
           <Form.Item
             name="gia"
             label="Đơn giá"
-            rules={[{ required: true, messageApi: "Vui lòng nhập đơn giá!" }]}
+            rules={[{ required: true, message: "Vui lòng nhập đơn giá!" }]}
           >
             <InputNumber min={0} style={{ width: "100%" }} />
           </Form.Item>
           <Form.Item
             name="soLuongCoTheNhap"
             label="Số lượng có thể nhập"
-            rules={[{ required: true, messageApi: "Vui lòng nhập số lượng!" }]}
+            rules={[{ required: true, message: "Vui lòng nhập số lượng!" }]}
           >
             <InputNumber min={0} style={{ width: "100%" }} />
           </Form.Item>

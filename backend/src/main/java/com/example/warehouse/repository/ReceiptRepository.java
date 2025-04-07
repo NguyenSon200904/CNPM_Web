@@ -8,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public interface ReceiptRepository extends JpaRepository<Receipt, Long> {
+public interface ReceiptRepository extends JpaRepository<Receipt, Integer> {
 
     @Query("SELECT r FROM Receipt r WHERE r.nguoiTao.userName = :userName")
     List<Receipt> findByNguoiTaoUserName(@Param("userName") String userName);

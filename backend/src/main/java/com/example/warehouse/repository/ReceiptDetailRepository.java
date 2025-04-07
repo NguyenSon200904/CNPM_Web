@@ -11,13 +11,13 @@ import java.util.List;
 public interface ReceiptDetailRepository extends JpaRepository<ReceiptDetail, ReceiptDetailId> {
 
     @Query("SELECT rd FROM ReceiptDetail rd WHERE rd.id.maPhieuNhap = :maPhieuNhap")
-    List<ReceiptDetail> findByIdMaPhieuNhap(@Param("maPhieuNhap") Long maPhieuNhap);
+    List<ReceiptDetail> findByIdMaPhieuNhap(@Param("maPhieuNhap") int maPhieuNhap);
 
     @Query("SELECT rd FROM ReceiptDetail rd WHERE rd.id.maSanPham = :maSanPham")
     List<ReceiptDetail> findByIdMaSanPham(@Param("maSanPham") String maSanPham);
 
     @Query("SELECT CASE WHEN COUNT(rd) > 0 THEN true ELSE false END FROM ReceiptDetail rd WHERE rd.id.maPhieuNhap = :maPhieuNhap AND rd.id.maSanPham = :maSanPham")
-    boolean existsByIdMaPhieuNhapAndIdMaSanPham(@Param("maPhieuNhap") Long maPhieuNhap,
+    boolean existsByIdMaPhieuNhapAndIdMaSanPham(@Param("maPhieuNhap") int maPhieuNhap,
             @Param("maSanPham") String maSanPham);
 
     @Query("SELECT rd.id.maSanPham, SUM(rd.soLuong) FROM ReceiptDetail rd GROUP BY rd.id.maSanPham")

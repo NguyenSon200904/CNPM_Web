@@ -21,7 +21,7 @@ public class Receipt {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "ma_phieu_nhap")
     @JsonProperty("maPhieuNhap")
-    private Long maPhieuNhap;
+    private int maPhieuNhap;
 
     @Column(name = "ngay_nhap")
     @JsonProperty("ngayNhap")

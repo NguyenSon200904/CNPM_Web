@@ -40,10 +40,12 @@ const ExportGoods = () => {
             Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },
         });
+        console.log("Dữ liệu từ API /api/inventory:", response.data); // Kiểm tra dữ liệu từ API
+
         const formattedInventory = response.data.map((item) => ({
           maSanPham: item.maSanPham,
           tenSanPham: item.tenSanPham,
-          soLuong: item.soLuong,
+          soLuong: item.soLuongTonKho || 0, // Sửa ánh xạ từ soLuong thành soLuongTonKho
           gia: item.gia,
           loaiSanPham: item.loaiSanPham,
         }));
@@ -53,6 +55,7 @@ const ExportGoods = () => {
           );
         }
         setInventory(formattedInventory);
+        console.log("Dữ liệu kho sau khi ánh xạ:", formattedInventory); // Kiểm tra dữ liệu sau ánh xạ
       } catch (error) {
         message.error(
           "Không thể tải danh sách hàng hóa trong kho: " +
@@ -64,15 +67,15 @@ const ExportGoods = () => {
     };
 
     fetchInventory();
-  }, []); // Xóa fetchLatestReceiptCode
+  }, []);
 
   const filteredData = inventory.filter((item) => {
     const value = item[filterBy]?.toString().toLowerCase();
     const matchesSearch = value?.includes(searchTerm.toLowerCase());
     const matchesType =
       productType === "all" ||
-      (productType === "computer" && item.loaiSanPham === "Máy tính") ||
-      (productType === "phone" && item.loaiSanPham === "Điện thoại");
+      (productType === "computer" && item.loaiSanPham === "Computer") ||
+      (productType === "phone" && item.loaiSanPham === "Phone");
     return matchesSearch && matchesType;
   });
 

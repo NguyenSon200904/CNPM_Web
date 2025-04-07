@@ -16,7 +16,7 @@ public interface ExportReceiptDetailService {
 
     boolean existsById(ExportReceiptDetailId id);
 
-    boolean existsByIdMaPhieuXuatAndIdMaSanPham(Long maPhieuXuat, String maSanPham);
+    boolean existsByIdMaPhieuXuatAndIdMaSanPham(int maPhieuXuat, String maSanPham);
 
     List<ExportReceiptDetail> findByIdMaPhieuXuat(Long maPhieuXuat);
 }

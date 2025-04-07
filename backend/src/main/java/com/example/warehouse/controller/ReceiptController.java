@@ -119,7 +119,7 @@ public class ReceiptController {
 
     // GET: Lấy phiếu nhập theo ID
     @GetMapping("/receipts/{id}")
-    public ResponseEntity<ReceiptDTO> getReceiptById(@PathVariable Long id) {
+    public ResponseEntity<ReceiptDTO> getReceiptById(@PathVariable int id) {
         try {
             logger.info("Lấy phiếu nhập với ID: {}", id);
             Receipt receipt = receiptService.findById(id);
@@ -253,7 +253,7 @@ public class ReceiptController {
 
     // DELETE: Xóa phiếu nhập
     @DeleteMapping("/receipts/{id}")
-    public ResponseEntity<Void> deleteReceipt(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteReceipt(@PathVariable int id) {
         try {
             logger.info("Xóa phiếu nhập với ID: {}", id);
             receiptService.deleteById(id);
@@ -269,7 +269,7 @@ public class ReceiptController {
     @PutMapping("/receipts/{maPhieu}")
     @PreAuthorize("hasAnyRole('ROLE_Admin', 'ROLE_Quản lý kho')")
     public ResponseEntity<String> updateReceipt(
-            @PathVariable("maPhieu") Long maPhieu,
+            @PathVariable("maPhieu") int maPhieu,
             @RequestBody ReceiptDTO receiptDTO) {
         try {
             logger.info("Cập nhật phiếu nhập với mã phiếu: {}", maPhieu);

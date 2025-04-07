@@ -31,7 +31,7 @@ public class ReceiptService {
     @Autowired
     private AccountRepository accountRepository;
 
-    public Receipt findById(Long id) {
+    public Receipt findById(int id) { // Sửa từ Long thành int
         return receiptRepository.findById(id).orElse(null);
     }
 
@@ -114,7 +114,7 @@ public class ReceiptService {
         // Gán lại chiTietPhieuNhaps và cập nhật maPhieuNhap
         for (ReceiptDetail detail : details) {
             // Gán maPhieuNhap vào ReceiptDetailId
-            detail.getId().setMaPhieuNhap(savedReceipt.getMaPhieuNhap());
+            detail.getId().setMaPhieuNhap(savedReceipt.getMaPhieuNhap()); // Bây giờ sẽ hoạt động vì cả hai đều là int
             detail.setReceipt(savedReceipt);
         }
 
@@ -126,7 +126,7 @@ public class ReceiptService {
     }
 
     @Transactional
-    public void deleteById(Long id) {
+    public void deleteById(int id) { // Sửa từ Long thành int
         Receipt receipt = receiptRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Phiếu nhập không tồn tại: " + id));
         receiptRepository.deleteById(id);

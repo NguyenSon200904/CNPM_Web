@@ -30,11 +30,11 @@ public class ReceiptDetailService {
         receiptDetailRepository.deleteById(id);
     }
 
-    public boolean existsByIdMaPhieuNhapAndIdMaSanPham(Long maPhieuNhap, String maSanPham) {
+    public boolean existsByIdMaPhieuNhapAndIdMaSanPham(int maPhieuNhap, String maSanPham) {
         return receiptDetailRepository.existsByIdMaPhieuNhapAndIdMaSanPham(maPhieuNhap, maSanPham);
     }
 
-    public List<ReceiptDetail> findByIdMaPhieuNhap(Long maPhieuNhap) {
+    public List<ReceiptDetail> findByIdMaPhieuNhap(int maPhieuNhap) {
         return receiptDetailRepository.findByIdMaPhieuNhap(maPhieuNhap);
     }
 

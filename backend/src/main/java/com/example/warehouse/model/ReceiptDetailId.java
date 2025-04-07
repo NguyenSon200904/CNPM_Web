@@ -12,18 +12,18 @@ public class ReceiptDetailId implements Serializable {
 
     @Column(name = "ma_phieu_nhap")
     @JsonProperty("maPhieuNhap")
-    private Long maPhieuNhap;
+    private int maPhieuNhap;
 
     @Column(name = "ma_san_pham")
     @JsonProperty("maSanPham")
     private String maSanPham;
 
     // Getters and setters
-    public Long getMaPhieuNhap() {
+    public int getMaPhieuNhap() {
         return maPhieuNhap;
     }
 
-    public void setMaPhieuNhap(Long maPhieuNhap) {
+    public void setMaPhieuNhap(int maPhieuNhap) {
         this.maPhieuNhap = maPhieuNhap;
     }
 

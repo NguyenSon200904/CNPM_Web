@@ -66,14 +66,27 @@ const ImportReceipts = () => {
           Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
       });
-      const formattedReceipts = response.data.map((receipt) => ({
-        id: receipt.maPhieu,
-        supplier: receipt.maNhaCungCap || "Không có thông tin",
-        creator: receipt.nguoiTao || "Không có thông tin",
-        total: receipt.tongTien,
-        date: moment(receipt.thoiGianTao).format("YYYY-MM-DD HH:mm"),
-        chiTietPhieuNhaps: receipt.details || [],
-      }));
+      console.log("Dữ liệu từ API /api/receipts:", response.data); // Kiểm tra dữ liệu trả về
+
+      const formattedReceipts = response.data.map((receipt) => {
+        // Kiểm tra dữ liệu trong receipt.details
+        console.log("Chi tiết phiếu nhập:", receipt.details);
+
+        return {
+          id: receipt.maPhieu,
+          supplier: receipt.maNhaCungCap || "Không có thông tin",
+          creator: receipt.nguoiTao || "Không có thông tin",
+          total: receipt.tongTien,
+          date: moment(receipt.thoiGianTao).format("YYYY-MM-DD HH:mm"),
+          chiTietPhieuNhaps: (receipt.details || []).map((detail) => ({
+            maSanPham: detail.maSanPham || "Không có thông tin",
+            tenSanPham: detail.sanPham?.tenSanPham || "Không có thông tin",
+            loaiSanPham: detail.loaiSanPham || "Không có thông tin",
+            soLuongCoTheNhap: detail.soLuong || 0, // Ánh xạ đúng trường số lượng từ API
+            donGia: detail.donGia || 0,
+          })),
+        };
+      });
       setReceipts(formattedReceipts);
     } catch (error) {
       message.error(
@@ -143,12 +156,18 @@ const ImportReceipts = () => {
     }
 
     const receiptToEdit = receipts.find((r) => r.id === selectedRowKeys[0]);
+    console.log("Dữ liệu phiếu nhập được chọn:", receiptToEdit); // Kiểm tra dữ liệu phiếu nhập
+    console.log(
+      "Chi tiết phiếu nhập trong handleEdit:",
+      receiptToEdit.chiTietPhieuNhaps
+    ); // Kiểm tra chi tiết phiếu nhập
+
     setSelectedReceipt(receiptToEdit);
     form.setFieldsValue({
       maNhaCungCap: receiptToEdit.supplier,
       chiTietPhieuNhaps: receiptToEdit.chiTietPhieuNhaps.map((item) => ({
         maSanPham: item.maSanPham,
-        tenSanPham: item.sanPham?.tenSanPham || "Không có thông tin",
+        tenSanPham: item.tenSanPham || "Không có thông tin",
         soLuongCoTheNhap: item.soLuongCoTheNhap,
         donGia: item.donGia,
       })),
@@ -224,7 +243,7 @@ const ImportReceipts = () => {
     } catch (error) {
       message.error(
         "Cập nhật phiếu nhập thất bại: " +
-          (error.response?.data || error.message)
+          (error.response?.data?.error || error.message)
       );
     }
   };
@@ -258,7 +277,7 @@ const ImportReceipts = () => {
               dataSource={receipt.chiTietPhieuNhaps.map((item, index) => ({
                 key: index,
                 maSanPham: item.maSanPham || "Không có thông tin",
-                tenSanPham: item.sanPham?.tenSanPham || "Không có thông tin",
+                tenSanPham: item.tenSanPham || "Không có thông tin",
                 loaiSanPham: item.loaiSanPham || "Không có thông tin",
                 soLuongCoTheNhap: item.soLuongCoTheNhap,
                 donGia: item.donGia,

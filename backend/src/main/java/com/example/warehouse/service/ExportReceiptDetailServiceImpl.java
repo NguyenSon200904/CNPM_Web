@@ -42,7 +42,7 @@ public class ExportReceiptDetailServiceImpl implements ExportReceiptDetailServic
   }
 
   @Override
-  public boolean existsByIdMaPhieuXuatAndIdMaSanPham(Long maPhieuXuat, String maSanPham) {
+  public boolean existsByIdMaPhieuXuatAndIdMaSanPham(int maPhieuXuat, String maSanPham) {
     ExportReceiptDetailId id = new ExportReceiptDetailId();
     id.setMaPhieuXuat(maPhieuXuat);
     id.setMaSanPham(maSanPham);
