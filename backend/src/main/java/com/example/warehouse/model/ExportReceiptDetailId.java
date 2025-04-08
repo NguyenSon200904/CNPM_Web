@@ -12,7 +12,7 @@ public class ExportReceiptDetailId implements Serializable {
 
     @Column(name = "ma_phieu_xuat")
     @JsonProperty("maPhieuXuat")
-    private int maPhieuXuat;
+    private Integer maPhieuXuat;
 
     @Column(name = "ma_san_pham")
     @JsonProperty("maSanPham")
@@ -23,7 +23,7 @@ public class ExportReceiptDetailId implements Serializable {
         return maPhieuXuat;
     }
 
-    public void setMaPhieuXuat(int maPhieuXuat) {
+    public void setMaPhieuXuat(Integer maPhieuXuat) {
         this.maPhieuXuat = maPhieuXuat;
     }
 

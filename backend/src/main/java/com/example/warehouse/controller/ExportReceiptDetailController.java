@@ -23,7 +23,7 @@ public class ExportReceiptDetailController {
     }
 
     @GetMapping("/{maPhieuXuat}/{maSanPham}")
-    public ResponseEntity<ExportReceiptDetail> getDetailById(@PathVariable int maPhieuXuat,
+    public ResponseEntity<ExportReceiptDetail> getDetailById(@PathVariable Integer maPhieuXuat,
             @PathVariable String maSanPham) {
         ExportReceiptDetailId id = new ExportReceiptDetailId();
         id.setMaPhieuXuat(maPhieuXuat);
@@ -47,7 +47,7 @@ public class ExportReceiptDetailController {
     }
 
     @PutMapping("/{maPhieuXuat}/{maSanPham}")
-    public ResponseEntity<ExportReceiptDetail> updateDetail(@PathVariable int maPhieuXuat,
+    public ResponseEntity<ExportReceiptDetail> updateDetail(@PathVariable Integer maPhieuXuat,
             @PathVariable String maSanPham,
             @RequestBody ExportReceiptDetail detail) {
         ExportReceiptDetailId id = new ExportReceiptDetailId();
@@ -62,7 +62,7 @@ public class ExportReceiptDetailController {
     }
 
     @DeleteMapping("/{maPhieuXuat}/{maSanPham}")
-    public ResponseEntity<Void> deleteDetail(@PathVariable int maPhieuXuat,
+    public ResponseEntity<Void> deleteDetail(@PathVariable Integer maPhieuXuat,
             @PathVariable String maSanPham) {
         ExportReceiptDetailId id = new ExportReceiptDetailId();
         id.setMaPhieuXuat(maPhieuXuat);

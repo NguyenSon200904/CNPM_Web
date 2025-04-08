@@ -30,16 +30,25 @@ public class SupplierService {
 
     // Lưu hoặc cập nhật nhà cung cấp
     public NhaCungCap save(NhaCungCap nhaCungCap) {
+        if (nhaCungCap == null) {
+            throw new IllegalArgumentException("Nhà cung cấp không được null!");
+        }
         return supplierRepository.save(nhaCungCap);
     }
 
     // Xóa nhà cung cấp theo maNhaCungCap
     public void deleteByMaNhaCungCap(String maNhaCungCap) {
+        if (maNhaCungCap == null) {
+            throw new IllegalArgumentException("Mã nhà cung cấp không được null!");
+        }
         supplierRepository.deleteById(maNhaCungCap);
     }
 
     // Kiểm tra xem nhà cung cấp có tồn tại hay không
     public boolean existsByMaNhaCungCap(String maNhaCungCap) {
+        if (maNhaCungCap == null) {
+            return false;
+        }
         return supplierRepository.existsByMaNhaCungCap(maNhaCungCap);
     }
 }

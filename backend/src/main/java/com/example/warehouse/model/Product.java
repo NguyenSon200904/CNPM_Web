@@ -1,6 +1,7 @@
 package com.example.warehouse.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -49,8 +50,13 @@ public class Product {
     @ToString.Exclude
     private List<ReceiptDetail> receiptDetails;
 
-    @OneToMany(mappedBy = "sanPham")
-    @JsonIgnore // Ngăn Jackson serialize trường này
-    @ToString.Exclude
+    // @OneToMany(mappedBy = "sanPham")
+    // @JsonIgnore // Ngăn Jackson serialize trường này
+    // @ToString.Exclude
+    // private List<ExportReceiptDetail> exportReceiptDetails;
+
+    @OneToMany(mappedBy = "sanPham", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonManagedReference(value = "product-exportReceiptDetails")
+    @JsonIgnore
     private List<ExportReceiptDetail> exportReceiptDetails;
 }

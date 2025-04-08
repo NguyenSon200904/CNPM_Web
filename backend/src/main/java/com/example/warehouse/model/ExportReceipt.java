@@ -19,7 +19,7 @@ public class ExportReceipt {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "ma_phieu_xuat")
     @JsonProperty("maPhieuXuat")
-    private int maPhieuXuat;
+    private Integer maPhieuXuat;
 
     @Column(name = "ngay_xuat")
     @JsonProperty("ngayXuat")

@@ -18,9 +18,9 @@ public class ExportReceiptDetail {
     @JsonProperty("exportReceipt")
     private ExportReceipt exportReceipt;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY) // Giữ LAZY, vì chúng ta sẽ fetch bằng JOIN FETCH
     @JoinColumn(name = "ma_san_pham", insertable = false, updatable = false)
-    @JsonBackReference(value = "product-exportReceiptDetails")
+    // @JsonBackReference(value = "product-exportReceiptDetails")
     @JsonProperty("sanPham")
     private Product sanPham;
 
