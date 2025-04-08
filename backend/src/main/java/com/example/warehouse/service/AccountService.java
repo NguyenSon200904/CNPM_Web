@@ -2,6 +2,8 @@ package com.example.warehouse.service;
 
 import com.example.warehouse.model.Account;
 import com.example.warehouse.repository.AccountRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -9,9 +11,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class AccountService {
+
+    private static final Logger logger = LoggerFactory.getLogger(AccountService.class);
 
     @Autowired
     private AccountRepository accountRepository;
@@ -20,82 +25,102 @@ public class AccountService {
     private BCryptPasswordEncoder passwordEncoder;
 
     public List<Account> findAll() {
+        logger.info("Lấy danh sách tất cả tài khoản từ repository");
         List<Account> accounts = accountRepository.findAll();
-        accounts.forEach(this::mapRoleToNumber); // Ánh xạ role thành số
+        // Log chỉ userName và role để tránh LazyInitializationException
+        String accountSummary = accounts.stream()
+                .map(account -> "userName=" + account.getUserName() + ", role=" + account.getRole())
+                .collect(Collectors.joining("; "));
+        logger.info("Danh sách tài khoản: [{}]", accountSummary);
         return accounts;
     }
 
     public Optional<Account> findByUserName(String userName) {
+        logger.info("Tìm tài khoản với userName: {}", userName);
         Optional<Account> account = accountRepository.findByUserName(userName);
-        account.ifPresent(this::mapRoleToNumber);
+        if (account.isPresent()) {
+            Account acc = account.get();
+            logger.info("Tài khoản tìm thấy: userName={}, role={}", acc.getUserName(), acc.getRole());
+        } else {
+            logger.warn("Không tìm thấy tài khoản với userName: {}", userName);
+        }
         return account;
     }
 
     public Optional<Account> findByEmail(String email) {
+        logger.info("Tìm tài khoản với email: {}", email);
         Optional<Account> account = accountRepository.findByEmail(email);
-        account.ifPresent(this::mapRoleToNumber);
+        if (account.isPresent()) {
+            Account acc = account.get();
+            logger.info("Tài khoản tìm thấy: userName={}, role={}", acc.getUserName(), acc.getRole());
+        } else {
+            logger.warn("Không tìm thấy tài khoản với email: {}", email);
+        }
         return account;
     }
 
     public List<Account> findByRole(String role) {
-        return accountRepository.findByRole(role);
+        logger.info("Tìm tài khoản với role: {}", role);
+        List<Account> accounts = accountRepository.findByRole(role);
+        String accountSummary = accounts.stream()
+                .map(account -> "userName=" + account.getUserName() + ", role=" + account.getRole())
+                .collect(Collectors.joining("; "));
+        logger.info("Danh sách tài khoản với role {}: [{}]", role, accountSummary);
+        return accounts;
     }
 
     public List<Account> findByStatus(Integer status) {
-        return accountRepository.findByStatus(status);
+        logger.info("Tìm tài khoản với status: {}", status);
+        List<Account> accounts = accountRepository.findByStatus(status);
+        String accountSummary = accounts.stream()
+                .map(account -> "userName=" + account.getUserName() + ", role=" + account.getRole())
+                .collect(Collectors.joining("; "));
+        logger.info("Danh sách tài khoản với status {}: [{}]", status, accountSummary);
+        return accounts;
     }
 
     public boolean existsByUserName(String userName) {
-        return accountRepository.existsByUserName(userName);
+        boolean exists = accountRepository.existsByUserName(userName);
+        logger.info("Kiểm tra userName {} tồn tại: {}", userName, exists);
+        return exists;
     }
 
     public boolean existsByEmail(String email) {
-        return accountRepository.existsByEmail(email);
+        boolean exists = accountRepository.existsByEmail(email);
+        logger.info("Kiểm tra email {} tồn tại: {}", email, exists);
+        return exists;
     }
 
     @Transactional
     public Account save(Account account) {
+        logger.info("Lưu tài khoản: userName={}, role={}", account.getUserName(), account.getRole());
         if (account.getPassword() != null && !account.getPassword().isEmpty()) {
             account.setPassword(passwordEncoder.encode(account.getPassword()));
+            logger.info("Mã hóa mật khẩu cho tài khoản: {}", account.getUserName());
         }
-        return accountRepository.save(account);
+        Account savedAccount = accountRepository.save(account);
+        logger.info("Tài khoản đã được lưu: userName={}, role={}", savedAccount.getUserName(), savedAccount.getRole());
+        return savedAccount;
     }
 
     @Transactional
     public void deleteByUserName(String userName) {
+        logger.info("Xóa tài khoản với userName: {}", userName);
         accountRepository.deleteById(userName);
+        logger.info("Tài khoản với userName {} đã được xóa", userName);
     }
 
     @Transactional
     public void resetPassword(String userName, String newPassword) {
+        logger.info("Đặt lại mật khẩu cho userName: {}", userName);
         Optional<Account> accountOptional = accountRepository.findByUserName(userName);
         if (accountOptional.isEmpty()) {
+            logger.error("Tài khoản với userName {} không tồn tại", userName);
             throw new RuntimeException("Tài khoản không tồn tại!");
         }
         Account account = accountOptional.get();
         account.setPassword(passwordEncoder.encode(newPassword));
         accountRepository.save(account);
-    }
-
-    private void mapRoleToNumber(Account account) {
-        String roleStr = account.getRole();
-        int roleNumber;
-        switch (roleStr) {
-            case "Admin":
-                roleNumber = 0;
-                break;
-            case "Nhân viên nhập kho":
-                roleNumber = 1;
-                break;
-            case "Nhân viên xuất kho":
-                roleNumber = 2;
-                break;
-            case "Quản lý kho":
-                roleNumber = 3;
-                break;
-            default:
-                roleNumber = 0; // Mặc định là Admin
-        }
-        account.setRole(String.valueOf(roleNumber));
+        logger.info("Đặt lại mật khẩu thành công cho userName: {}", userName);
     }
 }

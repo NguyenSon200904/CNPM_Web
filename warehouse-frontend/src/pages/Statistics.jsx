@@ -30,20 +30,21 @@ const Statistics = () => {
   });
   const [loading, setLoading] = useState(false);
 
+  // Đặt lại các bộ lọc khi chuyển tab
   useEffect(() => {
     setSearchTerm("");
     setDateRange([]);
-  }, [activeTab]);
-
-  const handleTabChange = (key) => {
-    setActiveTab(key);
-    setCurrentPage(1);
     const defaultFilter = {
       products: "code",
       invoices: "key",
       accounts: "username",
     };
-    setFilterKey(defaultFilter[key]);
+    setFilterKey(defaultFilter[activeTab]);
+  }, [activeTab]);
+
+  const handleTabChange = (key) => {
+    setActiveTab(key);
+    setCurrentPage(1);
   };
 
   // Lấy dữ liệu từ API
@@ -52,73 +53,136 @@ const Statistics = () => {
       setLoading(true);
       try {
         // Lấy dữ liệu sản phẩm
-        const inventoryResponse = await api.get("/inventory"); // Sử dụng api thay vì axios
-        const receiptsResponse = await api.get("/receipts"); // Sử dụng api thay vì axios
-        const exportReceiptsResponse = await api.get("/export-receipts"); // Sử dụng api thay vì axios
+        const inventoryResponse = await api.get("/inventory");
+        const receiptsResponse = await api.get("/receipts");
+        const exportReceiptsResponse = await api.get("/export-receipts");
 
         // Tính số lượng nhập và xuất cho từng sản phẩm
         const importQuantities = {};
         const exportQuantities = {};
 
-        receiptsResponse.data.forEach((receipt) => {
-          receipt.chiTietPhieuNhaps.forEach((detail) => {
-            const maSanPham = detail.id.maSanPham;
-            importQuantities[maSanPham] =
-              (importQuantities[maSanPham] || 0) + detail.soLuong;
+        // Xử lý dữ liệu phiếu nhập
+        console.log("Dữ liệu từ /receipts:", receiptsResponse.data); // Thêm log để kiểm tra
+        if (receiptsResponse?.data && Array.isArray(receiptsResponse.data)) {
+          receiptsResponse.data.forEach((receipt) => {
+            if (receipt?.details && Array.isArray(receipt.details)) {
+              receipt.details.forEach((detail) => {
+                const maSanPham = detail?.maSanPham;
+                if (maSanPham) {
+                  importQuantities[maSanPham] =
+                    (importQuantities[maSanPham] || 0) + (detail.soLuong || 0);
+                }
+              });
+            }
           });
-        });
+        } else {
+          console.warn("Dữ liệu từ /receipts không hợp lệ:", receiptsResponse);
+        }
 
-        exportReceiptsResponse.data.forEach((exportReceipt) => {
-          exportReceipt.chiTietPhieuXuats.forEach((detail) => {
-            const maSanPham = detail.id.maSanPham;
-            exportQuantities[maSanPham] =
-              (exportQuantities[maSanPham] || 0) + detail.soLuong;
+        // Xử lý dữ liệu phiếu xuất
+        console.log(
+          "Dữ liệu từ /export-receipts:",
+          exportReceiptsResponse.data
+        ); // Thêm log để kiểm tra
+        if (
+          exportReceiptsResponse?.data &&
+          Array.isArray(exportReceiptsResponse.data)
+        ) {
+          exportReceiptsResponse.data.forEach((exportReceipt) => {
+            if (
+              exportReceipt?.chiTietPhieuXuats &&
+              Array.isArray(exportReceipt.chiTietPhieuXuats)
+            ) {
+              exportReceipt.chiTietPhieuXuats.forEach((detail) => {
+                const maSanPham = detail?.id?.maSanPham;
+                if (maSanPham) {
+                  exportQuantities[maSanPham] =
+                    (exportQuantities[maSanPham] || 0) + (detail.soLuong || 0);
+                }
+              });
+            }
           });
-        });
+        } else {
+          console.warn(
+            "Dữ liệu từ /export-receipts không hợp lệ:",
+            exportReceiptsResponse
+          );
+        }
 
-        const productsData = inventoryResponse.data.map((item, index) => ({
-          key: index + 1,
-          code: item.maSanPham,
-          name: item.tenSanPham,
-          imported: importQuantities[item.maSanPham] || 0,
-          exported: exportQuantities[item.maSanPham] || 0,
-        }));
+        // Xử lý dữ liệu sản phẩm
+        const productsData =
+          inventoryResponse?.data && Array.isArray(inventoryResponse.data)
+            ? inventoryResponse.data.map((item, index) => {
+                console.log(
+                  "Sản phẩm:",
+                  item.maSanPham,
+                  "Nhập:",
+                  importQuantities[item.maSanPham],
+                  "Xuất:",
+                  exportQuantities[item.maSanPham]
+                ); // Thêm log để kiểm tra
+                return {
+                  key: index + 1,
+                  code: item.maSanPham || "N/A",
+                  name: item.tenSanPham || "N/A",
+                  imported: importQuantities[item.maSanPham] || 0,
+                  exported: exportQuantities[item.maSanPham] || 0,
+                };
+              })
+            : [];
 
-        // Lấy dữ liệu phiếu (kết hợp phiếu nhập và phiếu xuất)
+        // Xử lý dữ liệu phiếu (kết hợp phiếu nhập và phiếu xuất)
         const invoicesData = [
-          ...receiptsResponse.data.map((receipt) => ({
-            key: `PN-${receipt.maPhieuNhap}`,
-            type: "Phiếu nhập",
-            creator: receipt.nguoiTao?.userName || "Không xác định",
-            total: receipt.tongTien,
-            date: moment(receipt.ngayNhap).format("DD/MM/YYYY HH:mm"),
-          })),
-          ...exportReceiptsResponse.data.map((exportReceipt) => ({
-            key: `PX-${exportReceipt.maPhieuXuat}`,
-            type: "Phiếu xuất",
-            creator: exportReceipt.nguoiTao?.userName || "Không xác định",
-            total: exportReceipt.tongTien,
-            date: moment(exportReceipt.ngayXuat).format("DD/MM/YYYY HH:mm"),
-          })),
+          ...(receiptsResponse?.data && Array.isArray(receiptsResponse.data)
+            ? receiptsResponse.data
+                .filter((receipt) => receipt.maPhieu) // Lọc bỏ các phiếu không có maPhieu
+                .map((receipt) => ({
+                  key: `PN-${receipt.maPhieu}`,
+                  type: "Phiếu nhập",
+                  creator: receipt.nguoiTao || "Không xác định",
+                  total: receipt.tongTien || 0,
+                  date: receipt.thoiGianTao
+                    ? moment(receipt.thoiGianTao).format("DD/MM/YYYY HH:mm")
+                    : "N/A",
+                }))
+            : []),
+          ...(exportReceiptsResponse?.data &&
+          Array.isArray(exportReceiptsResponse.data)
+            ? exportReceiptsResponse.data
+                .filter((exportReceipt) => exportReceipt.maPhieuXuat) // Lọc bỏ các phiếu không có maPhieuXuat
+                .map((exportReceipt) => ({
+                  key: `PX-${exportReceipt.maPhieuXuat}`,
+                  type: "Phiếu xuất",
+                  creator: exportReceipt.nguoiTao?.userName || "Không xác định",
+                  total: exportReceipt.tongTien || 0,
+                  date: exportReceipt.ngayXuat
+                    ? moment(exportReceipt.ngayXuat).format("DD/MM/YYYY HH:mm")
+                    : "N/A",
+                }))
+            : []),
         ].sort(
           (a, b) =>
-            moment(b.date, "DD/MM/YYYY HH:mm").unix() -
-            moment(a.date, "DD/MM/YYYY HH:mm").unix()
-        );
+            moment(a.date, "DD/MM/YYYY HH:mm").unix() -
+            moment(b.date, "DD/MM/YYYY HH:mm").unix()
+        ); // Sắp xếp từ cũ đến mới
 
         // Lấy dữ liệu tài khoản
-        const accountsResponse = await api.get("/accounts"); // Sử dụng api thay vì axios
-        const accountsData = accountsResponse.data.map((account, index) => ({
-          key: index + 1,
-          username: account.userName,
-          fullname: account.fullName,
-          email: account.email,
-          role: mapRole(account.role),
-          status: account.status === 1 ? "Active" : "Inactive",
-        }));
+        const accountsResponse = await api.get("/accounts");
+        console.log("Dữ liệu từ /accounts:", accountsResponse.data); // Thêm log để kiểm tra
+        const accountsData =
+          accountsResponse?.data && Array.isArray(accountsResponse.data)
+            ? accountsResponse.data.map((account, index) => ({
+                key: index + 1,
+                username: account.userName || "N/A",
+                fullname: account.fullName || "N/A",
+                email: account.email || "N/A",
+                role: account.role || "Không xác định", // Hiển thị trực tiếp role từ backend
+                status: account.status === 1 ? "Active" : "Inactive",
+              }))
+            : [];
 
         // Lấy số lượng nhà cung cấp
-        const suppliersResponse = await api.get("/suppliers"); // Sử dụng api thay vì axios
+        const suppliersResponse = await api.get("/suppliers");
 
         // Cập nhật dữ liệu
         setData({
@@ -129,11 +193,12 @@ const Statistics = () => {
 
         // Cập nhật số liệu cho các Card
         setStats({
-          productCount: inventoryResponse.data.filter(
-            (item) => item.soLuongTonKho > 0
-          ).length,
-          supplierCount: suppliersResponse.data.length,
-          accountCount: accountsResponse.data.length,
+          productCount: inventoryResponse?.data
+            ? inventoryResponse.data.filter((item) => item.soLuongTonKho > 0)
+                .length
+            : 0,
+          supplierCount: suppliersResponse?.data?.length || 0,
+          accountCount: accountsResponse?.data?.length || 0,
         });
       } catch (error) {
         console.error("Error fetching statistics data:", error);
@@ -147,19 +212,6 @@ const Statistics = () => {
     };
     fetchData();
   }, []);
-
-  const mapRole = (role) => {
-    switch (role) {
-      case 1:
-        return "Nhân viên nhập";
-      case 2:
-        return "Nhân viên xuất";
-      case 3:
-        return "Quản lý kho";
-      default:
-        return "Admin";
-    }
-  };
 
   // Cấu hình cột cho từng tab
   const columns = {
@@ -215,14 +267,16 @@ const Statistics = () => {
 
   // Lọc dữ liệu theo tiêu chí đã chọn và khoảng thời gian (nếu có)
   const filteredData = useMemo(() => {
-    let filtered = data[activeTab].filter((item) =>
-      item[filterKey]
-        ?.toString()
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase())
-    );
+    let filtered =
+      data[activeTab] && Array.isArray(data[activeTab])
+        ? data[activeTab].filter((item) => {
+            const value = item[filterKey]
+              ? item[filterKey].toString().toLowerCase()
+              : "";
+            return value.includes(searchTerm.toLowerCase());
+          })
+        : [];
 
-    // Lọc theo khoảng thời gian trong tab "Phiếu"
     if (activeTab === "invoices" && dateRange.length === 2) {
       const [start, end] = dateRange;
       filtered = filtered.filter((item) => {
@@ -236,7 +290,6 @@ const Statistics = () => {
 
   return (
     <div className="p-4 -mt-6">
-      {/* Thống kê */}
       <div className="grid grid-cols-3 gap-4 mb-4">
         <Card className="p-4 flex items-center bg-yellow-400 text-white h-32">
           <div className="text-6xl flex-shrink-0 mr-4">
@@ -266,13 +319,11 @@ const Statistics = () => {
           </div>
         </Card>
       </div>
-      {/* Tabs chọn nội dung */}
       <Tabs activeKey={activeTab} onChange={handleTabChange} className="mb-4">
         <TabPane tab="Sản phẩm" key="products" />
         <TabPane tab="Phiếu" key="invoices" />
         <TabPane tab="Tài khoản" key="accounts" />
       </Tabs>
-      {/* Thanh tìm kiếm và lọc */}
       <div className="flex gap-2 mb-4 items-center">
         <Input
           placeholder="Nhập từ khóa..."
@@ -301,7 +352,6 @@ const Statistics = () => {
           </div>
         )}
       </div>
-      {/* Bảng dữ liệu */}
       <Table
         dataSource={filteredData}
         columns={columns[activeTab]}

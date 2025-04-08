@@ -3,6 +3,8 @@ package com.example.warehouse.controller;
 import com.example.warehouse.model.Account;
 import com.example.warehouse.service.AccountService;
 import com.example.warehouse.util.JwtUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -22,6 +24,8 @@ import java.util.Optional;
 @RestController
 public class AuthController {
 
+    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
+
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
@@ -39,12 +43,15 @@ public class AuthController {
         String username = loginRequest.get("username");
         String password = loginRequest.get("password");
 
+        logger.info("Đăng nhập với userName: {}", username);
+
         // Kiểm tra thông tin đăng nhập
         String sql = "SELECT password, role FROM account WHERE user_name = ?";
         Map<String, Object> user;
         try {
             user = jdbcTemplate.queryForMap(sql, username);
         } catch (Exception e) {
+            logger.error("Lỗi khi kiểm tra thông tin đăng nhập cho userName: {}, lỗi: {}", username, e.getMessage());
             return ResponseEntity.status(401).body(Collections.singletonMap("error", "Invalid credentials"));
         }
 
@@ -52,47 +59,39 @@ public class AuthController {
         String storedPassword = (String) user.get("password");
         if (passwordEncoder.matches(password, storedPassword)) {
             String role = (String) user.get("role");
+            logger.info("Đăng nhập thành công cho userName: {}, role: {}", username, role);
             List<String> roles = Collections.singletonList(role); // Tạo danh sách vai trò
 
             // Tạo token với vai trò
             String token = jwtUtil.generateToken(username, roles);
             return ResponseEntity.ok(Collections.singletonMap("token", token));
         } else {
+            logger.warn("Mật khẩu không đúng cho userName: {}", username);
             return ResponseEntity.status(401).body(Collections.singletonMap("error", "Invalid credentials"));
         }
     }
 
     @GetMapping("/api/auth/me")
     public ResponseEntity<Account> getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-        Optional<Account> accountOptional = accountService.findByUserName(username);
-        if (accountOptional.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        Account account = accountOptional.get();
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String username = authentication.getName();
+            logger.info("Lấy thông tin người dùng hiện tại: {}", username);
 
-        // Ánh xạ role từ String sang số
-        String roleStr = account.getRole();
-        int roleNumber;
-        switch (roleStr) {
-            case "Admin":
-                roleNumber = 0;
-                break;
-            case "Nhân viên nhập":
-                roleNumber = 1;
-                break;
-            case "Nhân viên xuất":
-                roleNumber = 2;
-                break;
-            case "Quản lý kho":
-                roleNumber = 3;
-                break;
-            default:
-                roleNumber = 0; // Mặc định là Admin nếu không xác định
-        }
-        account.setRole(String.valueOf(roleNumber)); // Chuyển role thành String chứa số
+            Optional<Account> accountOptional = accountService.findByUserName(username);
+            if (accountOptional.isEmpty()) {
+                logger.warn("Không tìm thấy người dùng: {}", username);
+                return ResponseEntity.notFound().build();
+            }
 
-        return ResponseEntity.ok(account);
+            Account account = accountOptional.get();
+            logger.info("Người dùng hiện tại: userName={}, role={}", account.getUserName(), account.getRole());
+
+            // Không ánh xạ role thành số, trả về role nguyên bản dưới dạng chuỗi
+            return ResponseEntity.ok(account);
+        } catch (Exception e) {
+            logger.error("Lỗi khi lấy thông tin người dùng hiện tại: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).build();
+        }
     }
 }
