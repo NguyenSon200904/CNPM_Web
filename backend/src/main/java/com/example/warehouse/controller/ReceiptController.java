@@ -267,7 +267,7 @@ public class ReceiptController {
 
     // PUT: Cập nhật phiếu nhập
     @PutMapping("/receipts/{maPhieu}")
-    @PreAuthorize("hasAnyRole('ROLE_Admin', 'ROLE_Quản lý kho')")
+    @PreAuthorize("hasAnyRole('ROLE_Admin', 'ROLE_Manager')")
     public ResponseEntity<String> updateReceipt(
             @PathVariable("maPhieu") int maPhieu,
             @RequestBody ReceiptDTO receiptDTO) {

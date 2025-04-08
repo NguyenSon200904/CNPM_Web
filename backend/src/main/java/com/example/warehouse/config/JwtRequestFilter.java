@@ -38,15 +38,15 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
     if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
       if (jwtUtil.validateToken(jwt)) {
-        // Trích xuất vai trò từ token
         List<String> roles = jwtUtil.extractRoles(jwt);
-        System.out.println("Extracted roles: " + roles); // Thêm log
+        System.out.println("Extracted roles: " + roles);
+        // Chỉ thêm tiền tố ROLE_ và thay khoảng trắng bằng dấu gạch dưới, không chuyển
+        // hoa/thường
         List<SimpleGrantedAuthority> authorities = roles.stream()
-            .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+            .map(role -> new SimpleGrantedAuthority("ROLE_" + role.replace(" ", "_")))
             .collect(Collectors.toList());
         System.out.println("Authorities: " + authorities);
 
-        // Tạo UsernamePasswordAuthenticationToken với vai trò
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
             username, null, authorities);
         authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

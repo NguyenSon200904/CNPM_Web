@@ -37,9 +37,8 @@ public class ExportReceiptController {
     @Autowired
     private ExportReceiptDetailRepository exportReceiptDetailRepository;
 
-    // GET: Lấy danh sách phiếu xuất
     @GetMapping("/export-receipts")
-    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_USER')")
+    @PreAuthorize("hasAnyRole('ROLE_Admin', 'ROLE_Manager')")
     public ResponseEntity<List<ExportReceipt>> getAllExportReceipts() {
         try {
             logger.info("Lấy danh sách phiếu xuất");
@@ -55,9 +54,8 @@ public class ExportReceiptController {
         }
     }
 
-    // GET: Lấy phiếu xuất theo ID
     @GetMapping("export-receipts/{id}")
-    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_USER')")
+    @PreAuthorize("hasAnyRole('ROLE_Admin', 'ROLE_Manager')")
     public ResponseEntity<ExportReceipt> getExportReceiptById(@PathVariable Integer id) {
         try {
             logger.info("Lấy phiếu xuất với ID: {}", id);
@@ -73,22 +71,16 @@ public class ExportReceiptController {
         }
     }
 
-    // POST: Tạo phiếu xuất mới
     @PostMapping("/export-receipts")
-    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_USER')")
+    @PreAuthorize("hasAnyRole('ROLE_Admin', 'ROLE_Manager')")
     @Transactional
     public ResponseEntity<?> createExportReceipt(@RequestBody ExportReceipt receipt) {
         logger.info("Nhận request tạo phiếu xuất: {}", receipt);
         try {
-            // Lấy danh sách chi tiết phiếu xuất
             List<ExportReceiptDetail> details = receipt.getChiTietPhieuXuats();
-
-            // Kiểm tra số lượng tồn kho
             for (ExportReceiptDetail detail : details) {
                 String maSanPham = detail.getId().getMaSanPham();
                 int soLuongXuat = detail.getSoLuong();
-
-                // Tính số lượng tồn kho
                 int totalImported = receiptDetailRepository.getTotalImportedQuantityByMaSanPham(maSanPham);
                 int totalExported = exportReceiptDetailRepository.getTotalExportedQuantityByMaSanPham(maSanPham);
                 int soLuongTonKho = totalImported - totalExported;
@@ -102,7 +94,6 @@ public class ExportReceiptController {
                 }
             }
 
-            // Lưu phiếu xuất
             ExportReceipt savedReceipt = exportReceiptService.save(receipt);
             logger.info("Tạo phiếu xuất thành công: {}", savedReceipt);
             return new ResponseEntity<>(savedReceipt, HttpStatus.CREATED);
@@ -119,21 +110,18 @@ public class ExportReceiptController {
         }
     }
 
-    // PUT: Cập nhật phiếu xuất
     @PutMapping("/export-receipts/{id}")
-    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_USER')")
+    @PreAuthorize("hasAnyRole('ROLE_Admin', 'ROLE_Manager')")
     @Transactional
     public ResponseEntity<?> updateExportReceipt(@PathVariable Integer id, @RequestBody ExportReceipt receipt) {
         logger.info("Nhận request cập nhật phiếu xuất với ID: {}", id);
         try {
-            // Kiểm tra xem phiếu xuất có tồn tại không
             ExportReceipt existingReceipt = exportReceiptService.findById(id);
             if (existingReceipt == null) {
                 logger.warn("Không tìm thấy phiếu xuất với ID: {}", id);
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
 
-            // Cập nhật thông tin phiếu xuất
             receipt.setMaPhieuXuat(id);
             ExportReceipt updatedReceipt = exportReceiptService.save(receipt);
             logger.info("Cập nhật phiếu xuất thành công: {}", updatedReceipt);
@@ -151,9 +139,8 @@ public class ExportReceiptController {
         }
     }
 
-    // DELETE: Xóa phiếu xuất
     @DeleteMapping("/export-receipts/{id}")
-    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_USER')")
+    @PreAuthorize("hasAnyRole('ROLE_Admin', 'ROLE_Manager')")
     public ResponseEntity<Void> deleteExportReceipt(@PathVariable Integer id) {
         try {
             logger.info("Xóa phiếu xuất với ID: {}", id);
@@ -165,23 +152,20 @@ public class ExportReceiptController {
         }
     }
 
-    // POST: Thêm chi tiết phiếu xuất
     @PostMapping("/export-receipts/{id}/details")
-    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_USER')")
+    @PreAuthorize("hasAnyRole('ROLE_Admin', 'ROLE_Manager')")
     @Transactional
     public ResponseEntity<?> addExportReceiptDetail(
             @PathVariable Integer id,
             @RequestBody ExportReceiptDetail detail) {
         logger.info("Nhận request thêm chi tiết phiếu xuất cho phiếu xuất ID: {}", id);
         try {
-            // Kiểm tra xem phiếu xuất có tồn tại không
             ExportReceipt existingReceipt = exportReceiptService.findById(id);
             if (existingReceipt == null) {
                 logger.warn("Không tìm thấy phiếu xuất với ID: {}", id);
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
 
-            // Kiểm tra số lượng tồn kho
             String maSanPham = detail.getId().getMaSanPham();
             int soLuongXuat = detail.getSoLuong();
 
@@ -197,12 +181,10 @@ public class ExportReceiptController {
                 return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
             }
 
-            // Thiết lập ID cho chi tiết phiếu xuất
             detail.getId().setMaPhieuXuat(id);
             ExportReceiptDetail savedDetail = exportReceiptDetailRepository.save(detail);
             logger.info("Thêm chi tiết phiếu xuất thành công: {}", savedDetail);
 
-            // Cập nhật tổng tiền của phiếu xuất
             ExportReceipt updatedReceipt = exportReceiptService.findById(id);
             updatedReceipt.setTongTien(
                     updatedReceipt.getChiTietPhieuXuats().stream()
@@ -219,27 +201,23 @@ public class ExportReceiptController {
         }
     }
 
-    // DELETE: Xóa chi tiết phiếu xuất
     @DeleteMapping("/export-receipts/{id}/details/{maSanPham}")
-    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_USER')")
+    @PreAuthorize("hasAnyRole('ROLE_Admin', 'ROLE_Manager')")
     @Transactional
     public ResponseEntity<Void> deleteExportReceiptDetail(
             @PathVariable Integer id,
             @PathVariable String maSanPham) {
         logger.info("Nhận request xóa chi tiết phiếu xuất với ID: {} và mã sản phẩm: {}", id, maSanPham);
         try {
-            // Kiểm tra xem phiếu xuất có tồn tại không
             ExportReceipt existingReceipt = exportReceiptService.findById(id);
             if (existingReceipt == null) {
                 logger.warn("Không tìm thấy phiếu xuất với ID: {}", id);
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
 
-            // Xóa chi tiết phiếu xuất
             exportReceiptDetailRepository.deleteByIdMaPhieuXuatAndIdMaSanPham(id, maSanPham);
             logger.info("Xóa chi tiết phiếu xuất thành công cho phiếu xuất ID: {} và mã sản phẩm: {}", id, maSanPham);
 
-            // Cập nhật tổng tiền của phiếu xuất
             ExportReceipt updatedReceipt = exportReceiptService.findById(id);
             updatedReceipt.setTongTien(
                     updatedReceipt.getChiTietPhieuXuats().stream()

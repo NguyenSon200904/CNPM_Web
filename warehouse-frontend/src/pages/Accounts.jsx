@@ -15,12 +15,32 @@ const Accounts = () => {
   const [selectedRows, setSelectedRows] = useState([]);
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [isResetPasswordModalVisible, setIsResetPasswordModalVisible] =
+    useState(false);
+  const [currentUserRole, setCurrentUserRole] = useState(null);
   const [form] = Form.useForm();
+  const [resetPasswordForm] = Form.useForm();
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const fetchCurrentUser = async () => {
+    try {
+      const response = await api.get("http://localhost:8080/api/auth/me");
+      // Role trả về là String chứa số (ví dụ: "0")
+      setCurrentUserRole(parseInt(response.data.role)); // Chuyển thành số để kiểm tra
+    } catch (error) {
+      console.error("Error fetching current user:", error);
+      message.error("Không thể lấy thông tin người dùng!");
+    }
+  };
+
+  useEffect(() => {
+    fetchCurrentUser();
+    fetchAccounts();
   }, []);
 
   const fetchAccounts = async () => {
@@ -33,7 +53,7 @@ const Accounts = () => {
         username: account.userName,
         fullname: account.fullName,
         email: account.email,
-        role: mapRole(account.role),
+        role: mapRole(parseInt(account.role)), // Chuyển role thành số trước khi ánh xạ
         status: mapStatus(account.status),
         rawRole: account.role,
         rawStatus: account.status,
@@ -50,10 +70,6 @@ const Accounts = () => {
     }
   };
 
-  useEffect(() => {
-    fetchAccounts();
-  }, []);
-
   const mapRole = (role) => {
     switch (role) {
       case 1:
@@ -62,6 +78,8 @@ const Accounts = () => {
         return "Nhân viên xuất";
       case 3:
         return "Quản lý kho";
+      case 0:
+        return "Admin";
       default:
         return "Admin";
     }
@@ -81,7 +99,7 @@ const Accounts = () => {
       setSelectedRowKeys(newSelectedRowKeys);
       setSelectedRows(newSelectedRows);
     },
-    type: "checkbox", // Thay đổi từ "radio" sang "checkbox"
+    type: "checkbox",
   };
 
   const handleAdd = () => {
@@ -196,12 +214,55 @@ const Accounts = () => {
   };
 
   const handleReset = () => {
-    setSearchTerm("");
-    setFilterBy("username");
-    fetchAccounts();
-    setSelectedRowKeys([]);
-    setSelectedRows([]);
-    message.success("Đã đặt lại danh sách!");
+    // Kiểm tra vai trò người dùng hiện tại
+    if (currentUserRole !== 0) {
+      // currentUserRole giờ là số (0: Admin)
+      message.error("Chỉ admin mới có thể đặt lại mật khẩu!");
+      return;
+    }
+
+    // Kiểm tra xem có đúng 1 tài khoản được chọn không
+    if (selectedRows.length !== 1) {
+      message.warning("Vui lòng chọn đúng 1 tài khoản để đặt lại mật khẩu!");
+      return;
+    }
+
+    // Hiển thị modal đặt lại mật khẩu
+    resetPasswordForm.resetFields();
+    setIsResetPasswordModalVisible(true);
+  };
+
+  const handleResetPasswordOk = async () => {
+    try {
+      const values = await resetPasswordForm.validateFields();
+      const { newPassword, confirmPassword } = values;
+
+      // Kiểm tra mật khẩu mới và xác nhận mật khẩu có khớp không
+      if (newPassword !== confirmPassword) {
+        message.error("Mật khẩu xác nhận không khớp!");
+        return;
+      }
+
+      const username = selectedRows[0].username;
+      // Gửi yêu cầu cập nhật mật khẩu
+      await api.put(
+        `http://localhost:8080/api/accounts/${username}/reset-password`,
+        {
+          password: newPassword,
+        }
+      );
+
+      message.success(`Đặt lại mật khẩu cho tài khoản ${username} thành công!`);
+      setIsResetPasswordModalVisible(false);
+      setSelectedRowKeys([]);
+      setSelectedRows([]);
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      message.error(
+        "Đã có lỗi xảy ra khi đặt lại mật khẩu: " +
+          (error.response?.data?.error || error.message)
+      );
+    }
   };
 
   const handleImportExcel = async (importedData) => {
@@ -237,6 +298,8 @@ const Accounts = () => {
         return 2;
       case "Quản lý kho":
         return 3;
+      case "Admin":
+        return 0;
       default:
         return 0;
     }
@@ -418,6 +481,49 @@ const Accounts = () => {
               <Option value="Active">Active</Option>
               <Option value="Inactive">Inactive</Option>
             </Select>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal
+        title={`Đặt lại mật khẩu cho tài khoản ${
+          selectedRows[0]?.username || ""
+        }`}
+        visible={isResetPasswordModalVisible}
+        onOk={handleResetPasswordOk}
+        onCancel={() => setIsResetPasswordModalVisible(false)}
+        okText="Xác nhận"
+        cancelText="Hủy"
+      >
+        <Form form={resetPasswordForm} layout="vertical">
+          <Form.Item
+            name="newPassword"
+            label="Mật khẩu mới"
+            rules={[
+              { required: true, message: "Vui lòng nhập mật khẩu mới!" },
+              { min: 6, message: "Mật khẩu phải có ít nhất 6 ký tự!" },
+            ]}
+          >
+            <Input.Password />
+          </Form.Item>
+          <Form.Item
+            name="confirmPassword"
+            label="Xác nhận mật khẩu"
+            rules={[
+              { required: true, message: "Vui lòng xác nhận mật khẩu!" },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || getFieldValue("newPassword") === value) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(
+                    new Error("Mật khẩu xác nhận không khớp!")
+                  );
+                },
+              }),
+            ]}
+          >
+            <Input.Password />
           </Form.Item>
         </Form>
       </Modal>

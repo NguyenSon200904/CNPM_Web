@@ -10,6 +10,7 @@ com\example\warehouse\config\CorsConfig.class
 com\example\warehouse\model\Product.class
 com\example\warehouse\model\ExportReceipt.class
 com\example\warehouse\repository\ReceiptRepository.class
+com\example\warehouse\service\CustomUserDetailsService.class
 com\example\warehouse\repository\AccountRepository.class
 com\example\warehouse\service\ReceiptDetailService.class
 com\example\warehouse\controller\ChangeInfoController.class

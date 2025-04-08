@@ -25,7 +25,7 @@ public class SupplierController {
     private SupplierRepository supplierRepository;
 
     @GetMapping("/suppliers")
-    @PreAuthorize("hasAnyRole('ROLE_Admin', 'ROLE_Quản lý kho')")
+    @PreAuthorize("hasAnyRole('ROLE_Admin', 'ROLE_Manager')")
     public ResponseEntity<List<NhaCungCap>> getAllSuppliers() {
         try {
             List<NhaCungCap> suppliers = supplierRepository.findAll();
