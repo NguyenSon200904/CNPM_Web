@@ -26,7 +26,7 @@ const { Option } = Select;
 const ExportReceipts = () => {
   const fileInputRef = useRef(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false); // Thêm state cho modal chi tiết
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [dateRange, setDateRange] = useState([]);
   const [priceFrom, setPriceFrom] = useState(0);
   const [priceTo, setPriceTo] = useState(1000000000);
@@ -35,8 +35,37 @@ const ExportReceipts = () => {
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [selectedReceipt, setSelectedReceipt] = useState(null);
   const [editForm] = Form.useForm();
-  const [products, setProducts] = useState([]);
+  const [_products, setProducts] = useState([]);
   const [editDetails, setEditDetails] = useState([]);
+  const [roleToUserNameMap, setRoleToUserNameMap] = useState({}); // Ánh xạ role -> userName
+  const [userNameToRoleMap, setUserNameToRoleMap] = useState({}); // Ánh xạ userName -> role
+
+  // Lấy danh sách tài khoản và tạo ánh xạ role -> userName và userName -> role
+  useEffect(() => {
+    const fetchAccounts = async () => {
+      try {
+        const response = await api.get("http://localhost:8080/api/accounts");
+        const accounts = response.data;
+
+        // Tạo ánh xạ role -> userName (chọn userName đầu tiên cho mỗi role)
+        const roleMap = {};
+        // Tạo ánh xạ userName -> role
+        const userNameMap = {};
+        accounts.forEach((account) => {
+          if (!roleMap[account.role]) {
+            roleMap[account.role] = account.userName;
+          }
+          userNameMap[account.userName] = account.role;
+        });
+        setRoleToUserNameMap(roleMap);
+        setUserNameToRoleMap(userNameMap);
+      } catch (error) {
+        console.error("Lỗi khi lấy danh sách tài khoản:", error);
+        message.error("Không thể tải danh sách tài khoản!");
+      }
+    };
+    fetchAccounts();
+  }, []);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -62,7 +91,8 @@ const ExportReceipts = () => {
         const formattedReceipts = response.data.map((receipt) => ({
           key: receipt.maPhieuXuat,
           id: receipt.maPhieuXuat,
-          creator: receipt.nguoiTao?.userName || "Không xác định",
+          creator:
+            userNameToRoleMap[receipt.nguoiTao?.userName] || "Không xác định", // Hiển thị role thay vì userName
           total: receipt.tongTien,
           date: moment(receipt.ngayXuat).format("YYYY-MM-DD HH:mm"),
           details: (receipt.chiTietPhieuXuats || []).map((detail) => ({
@@ -82,7 +112,7 @@ const ExportReceipts = () => {
       }
     };
     fetchReceipts();
-  }, []);
+  }, [userNameToRoleMap]); // Thêm userNameToRoleMap vào dependency để cập nhật lại khi ánh xạ thay đổi
 
   const filteredReceipts = receipts.filter((r) => {
     const receiptDate = new Date(r.date);
@@ -144,29 +174,7 @@ const ExportReceipts = () => {
       title: "Mã sản phẩm",
       dataIndex: "maSanPham",
       key: "maSanPham",
-      render: (text, record, index) => (
-        <Select
-          value={record.maSanPham}
-          onChange={(value) => {
-            const newDetails = [...editDetails];
-            const product = products.find((p) => p.maSanPham === value);
-            newDetails[index] = {
-              ...newDetails[index],
-              maSanPham: value,
-              tenSanPham: product?.tenSanPham || "Không xác định",
-              donGia: product?.gia || 0,
-            };
-            setEditDetails(newDetails);
-          }}
-          style={{ width: 120 }}
-        >
-          {products.map((product) => (
-            <Option key={product.maSanPham} value={product.maSanPham}>
-              {product.maSanPham}
-            </Option>
-          ))}
-        </Select>
-      ),
+      render: (text) => <span>{text}</span>,
     },
     {
       title: "Tên sản phẩm",
@@ -177,15 +185,12 @@ const ExportReceipts = () => {
       title: "Số lượng",
       dataIndex: "soLuong",
       key: "soLuong",
-      render: (text, record, index) => (
+      render: (text, record) => (
         <InputNumber
           min={1}
           value={record.soLuong}
-          onChange={(value) => {
-            const newDetails = [...editDetails];
-            newDetails[index] = { ...newDetails[index], soLuong: value };
-            setEditDetails(newDetails);
-          }}
+          disabled
+          style={{ width: 100 }}
         />
       ),
     },
@@ -201,22 +206,6 @@ const ExportReceipts = () => {
       key: "thanhTien",
       render: (_, record) =>
         `${(record.soLuong * record.donGia).toLocaleString()}đ`,
-    },
-    {
-      title: "Hành động",
-      key: "action",
-      render: (_, __, index) => (
-        <Button
-          type="link"
-          danger
-          onClick={() => {
-            const newDetails = editDetails.filter((_, i) => i !== index);
-            setEditDetails(newDetails);
-          }}
-        >
-          Xóa
-        </Button>
-      ),
     },
   ];
 
@@ -247,7 +236,9 @@ const ExportReceipts = () => {
             response.data.map((receipt) => ({
               key: receipt.maPhieuXuat,
               id: receipt.maPhieuXuat,
-              creator: receipt.nguoiTao?.userName || "Không xác định",
+              creator:
+                userNameToRoleMap[receipt.nguoiTao?.userName] ||
+                "Không xác định",
               total: receipt.tongTien,
               date: moment(receipt.ngayXuat).format("YYYY-MM-DD HH:mm"),
               details: (receipt.chiTietPhieuXuats || []).map((detail) => ({
@@ -282,15 +273,16 @@ const ExportReceipts = () => {
         `http://localhost:8080/api/export-receipts/${receiptId}`
       );
       const receipt = response.data;
-      console.log("Dữ liệu chi tiết phiếu xuất từ API:", receipt); // Thêm log
+      console.log("Dữ liệu chi tiết phiếu xuất từ API:", receipt);
       setSelectedReceipt({
         key: receipt.maPhieuXuat,
         id: receipt.maPhieuXuat,
-        creator: receipt.nguoiTao?.userName || "Không xác định",
+        creator:
+          userNameToRoleMap[receipt.nguoiTao?.userName] || "Không xác định",
         total: receipt.tongTien,
         date: moment(receipt.ngayXuat).format("YYYY-MM-DD HH:mm"),
         details: (receipt.chiTietPhieuXuats || []).map((detail) => {
-          console.log("Chi tiết sản phẩm:", detail); // Thêm log
+          console.log("Chi tiết sản phẩm:", detail);
           return {
             maSanPham: detail.id?.maSanPham || "Không xác định",
             tenSanPham: detail.sanPham?.tenSanPham || "Không xác định",
@@ -316,7 +308,7 @@ const ExportReceipts = () => {
 
     editForm.setFieldsValue({
       ngayXuat: moment(selected.date, "YYYY-MM-DD HH:mm"),
-      nguoiTao: selected.creator,
+      nguoiTao: selected.creator, // Hiển thị role trong dropdown
     });
 
     const details = (selected.details || []).map((detail) => ({
@@ -331,33 +323,15 @@ const ExportReceipts = () => {
     setIsEditModalOpen(true);
   };
 
-  const handleAddDetail = () => {
-    if (products.length === 0) {
-      message.warning("Không có sản phẩm nào để thêm!");
-      return;
-    }
-    setEditDetails([
-      ...editDetails,
-      {
-        maSanPham: products[0]?.maSanPham || "",
-        tenSanPham: products[0]?.tenSanPham || "Không xác định",
-        soLuong: 1,
-        donGia: products[0]?.gia || 0,
-      },
-    ]);
-  };
-
   const handleSaveEdit = async () => {
     try {
       const values = await editForm.validateFields();
 
-      // Kiểm tra danh sách chi tiết không rỗng
       if (editDetails.length === 0) {
         message.error("Danh sách chi tiết phiếu xuất không được rỗng!");
         return;
       }
 
-      // Kiểm tra dữ liệu chi tiết
       const invalidDetails = editDetails.filter(
         (detail) =>
           !detail.maSanPham ||
@@ -375,36 +349,28 @@ const ExportReceipts = () => {
       const inventoryResponse = await api.get(
         "http://localhost:8080/api/inventory"
       );
-      const inventory = inventoryResponse.data.reduce((acc, item) => {
-        acc[item.maSanPham] = item.soLuongTonKho;
-        return acc;
-      }, {});
+      const inventory = inventoryResponse.data;
 
-      const originalDetails = selectedReceipt.details.reduce((acc, detail) => {
-        acc[detail.maSanPham] = detail.soLuong;
-        return acc;
-      }, {});
-
-      const errors = [];
-      editDetails.forEach((detail) => {
-        const originalSoLuong = originalDetails[detail.maSanPham] || 0;
-        const soLuongTonKho = inventory[detail.maSanPham] || 0;
-        const soLuongThayDoi = detail.soLuong - originalSoLuong;
-        if (soLuongThayDoi > soLuongTonKho) {
-          errors.push(
-            `Số lượng xuất (${detail.soLuong}) vượt quá số lượng tồn kho (${soLuongTonKho}) cho sản phẩm ${detail.maSanPham}.`
-          );
+      for (const detail of editDetails) {
+        const product = inventory.find((p) => p.maSanPham === detail.maSanPham);
+        if (!product) {
+          message.error(`Sản phẩm ${detail.maSanPham} không tồn tại!`);
+          return;
         }
-      });
+      }
 
-      if (errors.length > 0) {
-        message.error(errors.join("\n"));
+      // Lấy userName tương ứng với role được chọn
+      const selectedRole = values.nguoiTao;
+      const selectedUserName = roleToUserNameMap[selectedRole];
+
+      if (!selectedUserName) {
+        message.error("Không tìm thấy tài khoản phù hợp cho vai trò đã chọn!");
         return;
       }
 
       const updatedReceipt = {
         ngayXuat: values.ngayXuat.format("YYYY-MM-DDTHH:mm:ss"),
-        nguoiTao: { userName: values.nguoiTao },
+        nguoiTao: { userName: selectedUserName },
         tongTien: editDetails.reduce(
           (total, detail) => total + detail.soLuong * detail.donGia,
           0
@@ -434,7 +400,8 @@ const ExportReceipts = () => {
         response.data.map((receipt) => ({
           key: receipt.maPhieuXuat,
           id: receipt.maPhieuXuat,
-          creator: receipt.nguoiTao?.userName || "Không xác định",
+          creator:
+            userNameToRoleMap[receipt.nguoiTao?.userName] || "Không xác định",
           total: receipt.tongTien,
           date: moment(receipt.ngayXuat).format("YYYY-MM-DD HH:mm"),
           details: (receipt.chiTietPhieuXuats || []).map((detail) => ({
@@ -590,6 +557,17 @@ const ExportReceipts = () => {
             continue;
           }
 
+          // Kiểm tra xem nguoiTao có tồn tại trong bảng account không
+          const userExists = Object.values(roleToUserNameMap).includes(
+            receipt.nguoiTao
+          );
+          if (!userExists) {
+            errors.push(
+              `Phiếu xuất ${maPhieuXuat}: Người tạo "${receipt.nguoiTao}" không tồn tại.`
+            );
+            continue;
+          }
+
           receiptsToImport.push({
             ngayXuat: moment(receipt.ngayXuat).format("YYYY-MM-DDTHH:mm:ss"),
             tongTien: receipt.tongTien,
@@ -628,7 +606,8 @@ const ExportReceipts = () => {
           response.data.map((receipt) => ({
             key: receipt.maPhieuXuat,
             id: receipt.maPhieuXuat,
-            creator: receipt.nguoiTao?.userName || "Không xác định",
+            creator:
+              userNameToRoleMap[receipt.nguoiTao?.userName] || "Không xác định",
             total: receipt.tongTien,
             date: moment(receipt.ngayXuat).format("YYYY-MM-DD HH:mm"),
             details: (receipt.chiTietPhieuXuats || []).map((detail) => ({
@@ -770,16 +749,17 @@ const ExportReceipts = () => {
           <Form.Item
             name="nguoiTao"
             label="Người tạo"
-            rules={[{ required: true, message: "Vui lòng nhập người tạo!" }]}
+            rules={[{ required: true, message: "Vui lòng chọn người tạo!" }]}
           >
-            <Input />
+            <Select placeholder="Chọn người tạo">
+              {Object.keys(roleToUserNameMap).map((role) => (
+                <Option key={role} value={role}>
+                  {role}
+                </Option>
+              ))}
+            </Select>
           </Form.Item>
         </Form>
-        <div className="mb-4">
-          <Button type="primary" onClick={handleAddDetail}>
-            Thêm sản phẩm
-          </Button>
-        </div>
         <Table
           dataSource={editDetails}
           columns={editDetailColumns}

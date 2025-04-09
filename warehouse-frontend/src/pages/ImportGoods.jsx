@@ -23,18 +23,43 @@ const ImportGoods = () => {
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [receiptCode, setReceiptCode] = useState("");
-  const [creator, setCreator] = useState("admin");
+  const [creatorRole, setCreatorRole] = useState(""); // Lưu role được chọn
   const [products, setProducts] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [loadingSuppliers, setLoadingSuppliers] = useState(false);
+  const [roleToUserNameMap, setRoleToUserNameMap] = useState({}); // Ánh xạ role -> userName
 
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const user = localStorage.getItem("username") || "admin";
-    setCreator(user);
+    // Lấy danh sách tài khoản và tạo ánh xạ role -> userName
+    const fetchAccounts = async () => {
+      try {
+        const response = await api.get("http://localhost:8080/api/accounts");
+        const accounts = response.data;
+
+        // Nhóm tài khoản theo role và chọn userName đầu tiên cho mỗi role
+        const roleMap = {};
+        accounts.forEach((account) => {
+          if (!roleMap[account.role]) {
+            roleMap[account.role] = account.userName;
+          }
+        });
+        setRoleToUserNameMap(roleMap);
+
+        // Lấy userName từ localStorage và tìm role tương ứng
+        const userName = localStorage.getItem("username") || "admin";
+        const userRole = Object.keys(roleMap).find(
+          (role) => roleMap[role] === userName
+        );
+        setCreatorRole(userRole || ""); // Đặt role mặc định
+      } catch (error) {
+        console.error("Lỗi khi lấy danh sách tài khoản:", error);
+        messageApi.error("Không thể tải danh sách tài khoản!");
+      }
+    };
 
     const fetchProducts = async () => {
       setLoadingProducts(true);
@@ -51,7 +76,7 @@ const ImportGoods = () => {
       } catch (error) {
         messageApi.error(
           "Không thể tải danh sách sản phẩm: " +
-            (error.response?.data?.error || error.messageApi)
+            (error.response?.data?.error || error.message)
         );
       } finally {
         setLoadingProducts(false);
@@ -72,13 +97,14 @@ const ImportGoods = () => {
       } catch (error) {
         messageApi.error(
           "Không thể tải danh sách nhà cung cấp: " +
-            (error.response?.data?.error || error.messageApi)
+            (error.response?.data?.error || error.message)
         );
       } finally {
         setLoadingSuppliers(false);
       }
     };
 
+    fetchAccounts();
     fetchProducts();
     fetchSuppliers();
   }, []);
@@ -88,8 +114,8 @@ const ImportGoods = () => {
     const matchesSearch = value?.includes(searchTerm.toLowerCase());
     const matchesType =
       productType === "all" ||
-      (productType === "computer" && product.loaiSanPham === "Computer") || // Thay đổi từ "MAY_TINH" thành "Computer"
-      (productType === "phone" && product.loaiSanPham === "Phone"); // Thay đổi từ "DIEN_THOAI" thành "Phone"
+      (productType === "computer" && product.loaiSanPham === "Computer") ||
+      (productType === "phone" && product.loaiSanPham === "Phone");
     return matchesSearch && matchesType;
   });
 
@@ -179,6 +205,10 @@ const ImportGoods = () => {
       messageApi.error("Vui lòng chọn ít nhất một sản phẩm!");
       return;
     }
+    if (!creatorRole) {
+      messageApi.error("Vui lòng chọn người tạo!");
+      return;
+    }
 
     const invalidProducts = selectedProducts.filter(
       (product) =>
@@ -200,10 +230,17 @@ const ImportGoods = () => {
       0
     );
 
+    // Lấy userName tương ứng với role được chọn
+    const selectedUserName = roleToUserNameMap[creatorRole];
+    if (!selectedUserName) {
+      messageApi.error("Không tìm thấy tài khoản phù hợp cho vai trò đã chọn!");
+      return;
+    }
+
     const receiptData = {
       ngayNhap: moment().format("YYYY-MM-DDTHH:mm:ss"),
       tongTien: totalAmount,
-      nguoiTao: { userName: creator },
+      nguoiTao: { userName: selectedUserName }, // Gửi userName lên backend
       nhaCungCap: { maNhaCungCap: selectedSupplier },
       chiTietPhieuNhaps: selectedProducts.map((product) => ({
         id: {
@@ -211,7 +248,7 @@ const ImportGoods = () => {
           maSanPham: product.maSanPham,
         },
         loaiSanPham: product.loaiSanPham,
-        soLuong: product.quantity, // Sửa từ soLuongCoTheNhap thành soLuong
+        soLuong: product.quantity,
         donGia: product.price,
         sanPham: {
           maSanPham: product.maSanPham,
@@ -248,14 +285,13 @@ const ImportGoods = () => {
       setSelectedSupplier(null);
       setSelectedProducts([]);
       setQuantities({});
+      setCreatorRole(""); // Reset role sau khi nhập hàng thành công
       navigate("/phieu-nhap");
     } catch (error) {
-      console.error("Lỗi từ server:", error.response?.data || error.messageApi);
+      console.error("Lỗi từ server:", error.response?.data || error.message);
       messageApi.error(
         "Nhập hàng thất bại: " +
-          (error.response?.data?.error ||
-            error.response?.data ||
-            error.messageApi)
+          (error.response?.data?.error || error.response?.data || error.message)
       );
     }
   };
@@ -358,7 +394,7 @@ const ImportGoods = () => {
           );
         }
       } catch (error) {
-        messageApi.error("Lỗi khi đọc file Excel: " + error.messageApi);
+        messageApi.error("Lỗi khi đọc file Excel: " + error.message);
       }
     };
 
@@ -508,12 +544,18 @@ const ImportGoods = () => {
               className="border h-[50px] p-2 rounded-lg"
               disabled
             />
-            <Input
-              placeholder="Người tạo phiếu"
-              value={creator}
-              disabled
-              className="border h-[50px] p-2 rounded-lg bg-gray-100"
-            />
+            <Select
+              value={creatorRole}
+              onChange={setCreatorRole}
+              className="border h-[50px] rounded-lg"
+              placeholder="Chọn người tạo"
+            >
+              {Object.keys(roleToUserNameMap).map((role) => (
+                <Option key={role} value={role}>
+                  {role}
+                </Option>
+              ))}
+            </Select>
             <Select
               value={selectedSupplier}
               onChange={setSelectedSupplier}

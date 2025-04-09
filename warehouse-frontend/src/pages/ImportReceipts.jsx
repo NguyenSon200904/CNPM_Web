@@ -29,19 +29,49 @@ const ImportReceipts = () => {
   const [priceFrom, setPriceFrom] = useState(0);
   const [priceTo, setPriceTo] = useState(100000000000);
   const [receipts, setReceipts] = useState([]);
-  const [suppliers, setSuppliers] = useState([]); // Thêm state để lưu danh sách nhà cung cấp
+  const [suppliers, setSuppliers] = useState([]);
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState(null);
   const [form] = Form.useForm();
+  const [userNameToRoleMap, setUserNameToRoleMap] = useState({});
+  const [roleToUserNameMap, setRoleToUserNameMap] = useState({});
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    fetchReceipts();
+    const fetchAccounts = async () => {
+      try {
+        const response = await api.get("http://localhost:8080/api/accounts", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        });
+        const accounts = response.data;
+        console.log("Dữ liệu từ API /api/accounts:", accounts);
+
+        const userNameMap = {};
+        const roleMap = {};
+        accounts.forEach((account) => {
+          if (!roleMap[account.role]) {
+            roleMap[account.role] = account.userName;
+          }
+          userNameMap[account.userName] = account.role;
+        });
+        setUserNameToRoleMap(userNameMap);
+        setRoleToUserNameMap(roleMap);
+      } catch (error) {
+        message.error("Không thể tải danh sách tài khoản: " + error.message);
+      }
+    };
+
+    fetchAccounts();
   }, []);
 
-  // Lấy danh sách nhà cung cấp khi mở modal chỉnh sửa
+  useEffect(() => {
+    fetchReceipts();
+  }, [userNameToRoleMap]);
+
   const fetchSuppliers = async () => {
     try {
       const response = await api.get("http://localhost:8080/api/suppliers", {
@@ -66,23 +96,24 @@ const ImportReceipts = () => {
           Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
       });
-      console.log("Dữ liệu từ API /api/receipts:", response.data); // Kiểm tra dữ liệu trả về
+      console.log("Dữ liệu từ API /api/receipts:", response.data);
 
       const formattedReceipts = response.data.map((receipt) => {
-        // Kiểm tra dữ liệu trong receipt.details
+        console.log("Dữ liệu nguoiTao:", receipt.nguoiTao);
         console.log("Chi tiết phiếu nhập:", receipt.details);
 
         return {
+          key: receipt.maPhieu,
           id: receipt.maPhieu,
           supplier: receipt.maNhaCungCap || "Không có thông tin",
-          creator: receipt.nguoiTao || "Không có thông tin",
+          creator: userNameToRoleMap[receipt.nguoiTao] || "Không có thông tin",
           total: receipt.tongTien,
           date: moment(receipt.thoiGianTao).format("YYYY-MM-DD HH:mm"),
           chiTietPhieuNhaps: (receipt.details || []).map((detail) => ({
             maSanPham: detail.maSanPham || "Không có thông tin",
             tenSanPham: detail.sanPham?.tenSanPham || "Không có thông tin",
             loaiSanPham: detail.loaiSanPham || "Không có thông tin",
-            soLuongCoTheNhap: detail.soLuong || 0, // Ánh xạ đúng trường số lượng từ API
+            soLuongCoTheNhap: detail.soLuong || 0,
             donGia: detail.donGia || 0,
           })),
         };
@@ -156,15 +187,16 @@ const ImportReceipts = () => {
     }
 
     const receiptToEdit = receipts.find((r) => r.id === selectedRowKeys[0]);
-    console.log("Dữ liệu phiếu nhập được chọn:", receiptToEdit); // Kiểm tra dữ liệu phiếu nhập
+    console.log("Dữ liệu phiếu nhập được chọn:", receiptToEdit);
     console.log(
       "Chi tiết phiếu nhập trong handleEdit:",
       receiptToEdit.chiTietPhieuNhaps
-    ); // Kiểm tra chi tiết phiếu nhập
+    );
 
     setSelectedReceipt(receiptToEdit);
     form.setFieldsValue({
       maNhaCungCap: receiptToEdit.supplier,
+      nguoiTao: receiptToEdit.creator,
       chiTietPhieuNhaps: receiptToEdit.chiTietPhieuNhaps.map((item) => ({
         maSanPham: item.maSanPham,
         tenSanPham: item.tenSanPham || "Không có thông tin",
@@ -172,7 +204,7 @@ const ImportReceipts = () => {
         donGia: item.donGia,
       })),
     });
-    fetchSuppliers(); // Lấy danh sách nhà cung cấp khi mở modal
+    fetchSuppliers();
     setIsEditModalOpen(true);
   };
 
@@ -180,50 +212,21 @@ const ImportReceipts = () => {
     try {
       const values = await form.validateFields();
 
-      // Lấy danh sách sản phẩm từ API để kiểm tra số lượng
-      const productsResponse = await api.get(
-        "http://localhost:8080/api/products",
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          },
-        }
-      );
-      const products = productsResponse.data;
-
-      // Kiểm tra số lượng trước khi gửi yêu cầu
-      for (let i = 0; i < values.chiTietPhieuNhaps.length; i++) {
-        const item = values.chiTietPhieuNhaps[i];
-        const oldItem = selectedReceipt.chiTietPhieuNhaps[i];
-        const delta = item.soLuongCoTheNhap - oldItem.soLuongCoTheNhap;
-
-        // Tìm sản phẩm trong danh sách
-        const product = products.find((p) => p.maSanPham === item.maSanPham);
-        if (!product) {
-          message.error(`Sản phẩm ${item.maSanPham} không tồn tại!`);
-          return;
-        }
-
-        // Kiểm tra số lượng trong kho
-        const currentSoLuongCoTheNhap = product.soLuongCoTheNhap;
-        if (currentSoLuongCoTheNhap + delta < 0) {
-          message.error(
-            `Số lượng trong kho không đủ! Sản phẩm ${item.maSanPham} chỉ còn ${currentSoLuongCoTheNhap} đơn vị.`
-          );
-          return;
-        }
+      const selectedRole = values.nguoiTao;
+      const selectedUserName = roleToUserNameMap[selectedRole];
+      if (!selectedUserName) {
+        message.error("Không tìm thấy tài khoản phù hợp cho vai trò đã chọn!");
+        return;
       }
 
-      // Nếu kiểm tra hợp lệ, gửi yêu cầu cập nhật
       const updatedReceipt = {
         maPhieu: selectedReceipt.id,
         maNhaCungCap: values.maNhaCungCap,
-        details: values.chiTietPhieuNhaps.map((item, index) => ({
-          maSanPham: selectedReceipt.chiTietPhieuNhaps[index].maSanPham,
-          soLuongCoTheNhap: item.soLuongCoTheNhap,
-          donGia: selectedReceipt.chiTietPhieuNhaps[index].donGia,
-        })),
+        nguoiTao: selectedUserName,
+        // Không gửi chiTietPhieuNhaps vì không cho phép chỉnh sửa
       };
+
+      console.log("Dữ liệu gửi lên server:", updatedReceipt);
 
       await api.put(
         `http://localhost:8080/api/receipts/${selectedReceipt.id}`,
@@ -234,9 +237,7 @@ const ImportReceipts = () => {
           },
         }
       );
-      message.success(
-        "Cập nhật phiếu nhập thành công! Vui lòng làm mới trang sản phẩm để thấy thay đổi."
-      );
+      message.success("Cập nhật phiếu nhập thành công!");
       setIsEditModalOpen(false);
       fetchReceipts();
       setSelectedRowKeys([]);
@@ -256,7 +257,7 @@ const ImportReceipts = () => {
 
     const receipt = receipts.find((r) => r.id === selectedRowKeys[0]);
     Modal.info({
-      title: `Chi tiết phiếu nhập PN${receipt.id}`,
+      title: `Chi tiết phiếu nhập #${receipt.id}`,
       content: (
         <div>
           <p>
@@ -329,7 +330,7 @@ const ImportReceipts = () => {
     }
 
     const exportData = filteredReceipts.map((receipt) => ({
-      "Mã phiếu nhập": `PN${receipt.id}`,
+      "Mã phiếu nhập": receipt.id,
       "Nhà cung cấp": receipt.supplier,
       "Người tạo": receipt.creator,
       "Thời gian tạo": receipt.date,
@@ -387,8 +388,8 @@ const ImportReceipts = () => {
               "YYYY-MM-DDTHH:mm:ss"
             ),
             tongTien,
-            nguoiTao: { userName },
-            nhaCungCap: { maNhaCungCap },
+            nguoiTao: userName,
+            maNhaCungCap,
             chiTietPhieuNhaps: [],
           };
 
@@ -439,7 +440,6 @@ const ImportReceipts = () => {
       dataIndex: "id",
       key: "id",
       align: "center",
-      render: (value) => `PN${value}`,
     },
     {
       title: "Nhà cung cấp",
@@ -564,9 +564,8 @@ const ImportReceipts = () => {
         />
       </div>
 
-      {/* Modal chỉnh sửa phiếu nhập */}
       <Modal
-        title={`Sửa phiếu nhập PN${selectedReceipt?.id}`}
+        title={`Sửa phiếu nhập ${selectedReceipt?.id}`}
         open={isEditModalOpen}
         onOk={handleEditOk}
         onCancel={() => setIsEditModalOpen(false)}
@@ -587,6 +586,26 @@ const ImportReceipts = () => {
                   {`${supplier.maNhaCungCap} - ${supplier.tenNhaCungCap}`}
                 </Option>
               ))}
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            name="nguoiTao"
+            label="Người tạo"
+            rules={[{ required: true, message: "Vui lòng chọn người tạo!" }]}
+          >
+            <Select placeholder="Chọn người tạo">
+              {Object.keys(roleToUserNameMap).length > 0 ? (
+                Object.keys(roleToUserNameMap).map((role) => (
+                  <Option key={role} value={role}>
+                    {role}
+                  </Option>
+                ))
+              ) : (
+                <Option disabled value="">
+                  Không có vai trò nào
+                </Option>
+              )}
             </Select>
           </Form.Item>
 
@@ -614,11 +633,8 @@ const ImportReceipts = () => {
                       {...restField}
                       name={[name, "soLuongCoTheNhap"]}
                       label="Số lượng"
-                      rules={[
-                        { required: true, message: "Vui lòng nhập số lượng!" },
-                      ]}
                     >
-                      <InputNumber min={1} style={{ width: "100%" }} />
+                      <InputNumber disabled style={{ width: "100%" }} />
                     </Form.Item>
                     <Form.Item
                       {...restField}

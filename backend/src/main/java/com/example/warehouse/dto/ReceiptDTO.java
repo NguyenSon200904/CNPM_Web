@@ -2,7 +2,6 @@ package com.example.warehouse.dto;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -29,6 +28,5 @@ public class ReceiptDTO {
     @Min(value = 0, message = "Total amount must be greater than or equal to 0")
     private double tongTien;
 
-    @NotEmpty(message = "Receipt details cannot be empty")
-    private List<ReceiptDetailDTO> details;
+    private List<ReceiptDetailDTO> details; // Bỏ @NotEmpty
 }

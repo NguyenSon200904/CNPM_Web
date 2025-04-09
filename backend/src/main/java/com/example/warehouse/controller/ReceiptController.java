@@ -4,9 +4,11 @@ import com.example.warehouse.dto.ReceiptDTO;
 import com.example.warehouse.dto.ReceiptDetailDTO;
 import com.example.warehouse.entity.NhaCungCap;
 import com.example.warehouse.dto.ProductDTO;
+import com.example.warehouse.model.Account;
 import com.example.warehouse.model.Product;
 import com.example.warehouse.model.Receipt;
 import com.example.warehouse.model.ReceiptDetail;
+import com.example.warehouse.repository.AccountRepository;
 import com.example.warehouse.repository.ExportReceiptDetailRepository;
 import com.example.warehouse.repository.ProductRepository;
 import com.example.warehouse.repository.ReceiptDetailRepository;
@@ -21,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -56,6 +59,9 @@ public class ReceiptController {
 
     @Autowired
     private ExportReceiptDetailRepository exportReceiptDetailRepository;
+
+    @Autowired
+    private AccountRepository accountRepository;
 
     // GET: Lấy danh sách phiếu nhập
     @GetMapping("/receipts")
@@ -268,6 +274,7 @@ public class ReceiptController {
     // PUT: Cập nhật phiếu nhập
     @PutMapping("/receipts/{maPhieu}")
     @PreAuthorize("hasAnyRole('ROLE_Admin', 'ROLE_Manager')")
+    @Transactional
     public ResponseEntity<String> updateReceipt(
             @PathVariable("maPhieu") int maPhieu,
             @RequestBody ReceiptDTO receiptDTO) {
@@ -290,95 +297,19 @@ public class ReceiptController {
             }
             receipt.setNhaCungCap(nhaCungCapOpt.get());
 
-            // Cập nhật chi tiết phiếu nhập
-            List<ReceiptDetail> existingDetails = receipt.getChiTietPhieuNhaps();
-            List<ReceiptDetailDTO> updatedDetails = receiptDTO.getDetails();
+            // Cập nhật người tạo
+            Optional<Account> nguoiTaoOpt = accountRepository.findByUserName(receiptDTO.getNguoiTao());
+            Account nguoiTao = nguoiTaoOpt.orElseThrow(() -> {
+                logger.error("Người tạo không tồn tại: {}", receiptDTO.getNguoiTao());
+                return new RuntimeException("Người tạo không tồn tại: " + receiptDTO.getNguoiTao());
+            });
+            receipt.setNguoiTao(nguoiTao);
 
-            if (existingDetails.size() != updatedDetails.size()) {
-                logger.error("Danh sách chi tiết không hợp lệ: Số lượng không khớp");
-                return new ResponseEntity<>("Danh sách chi tiết không hợp lệ!", HttpStatus.BAD_REQUEST);
-            }
+            // Không cần xử lý chiTietPhieuNhaps vì frontend không gửi dữ liệu này
+            // Tổng tiền và số lượng có thể nhập không thay đổi, vì danh sách sản phẩm không
+            // được chỉnh sửa
 
-            // Kiểm tra số lượng trước khi cập nhật
-            for (int i = 0; i < existingDetails.size(); i++) {
-                ReceiptDetail detail = existingDetails.get(i);
-                ReceiptDetailDTO detailDTO = updatedDetails.get(i);
-
-                // Kiểm tra maSanPham có khớp không
-                if (!detail.getId().getMaSanPham().equals(detailDTO.getMaSanPham())) {
-                    logger.error("Mã sản phẩm không khớp tại vị trí {}: {} != {}", i, detail.getId().getMaSanPham(),
-                            detailDTO.getMaSanPham());
-                    return new ResponseEntity<>("Mã sản phẩm không khớp!", HttpStatus.BAD_REQUEST);
-                }
-
-                // Tính sự thay đổi số lượng (delta)
-                int oldSoLuong = detail.getSoLuong();
-                int newSoLuong = detailDTO.getSoLuong();
-                int delta = newSoLuong - oldSoLuong;
-                logger.info("Sản phẩm {}: Số lượng cũ = {}, Số lượng mới = {}, Delta = {}",
-                        detail.getId().getMaSanPham(), oldSoLuong, newSoLuong, delta);
-
-                // Lấy sản phẩm từ bảng sanpham
-                Product product = productService.findByMaSanPham(detail.getId().getMaSanPham());
-                if (product == null) {
-                    logger.error("Sản phẩm không tồn tại: {}", detail.getId().getMaSanPham());
-                    return new ResponseEntity<>("Sản phẩm không tồn tại!", HttpStatus.NOT_FOUND);
-                }
-
-                // Kiểm tra số lượng có thể nhập
-                long soLuongCoTheNhap = product.getSoLuongCoTheNhap();
-                if (delta > 0 && delta > soLuongCoTheNhap) {
-                    logger.error("Số lượng nhập tăng thêm vượt quá số lượng có thể nhập cho sản phẩm: {}",
-                            product.getMaSanPham());
-                    return new ResponseEntity<>(
-                            "Số lượng nhập tăng thêm (" + delta + ") vượt quá số lượng có thể nhập (" + soLuongCoTheNhap
-                                    + ") cho sản phẩm " + product.getMaSanPham(),
-                            HttpStatus.BAD_REQUEST);
-                }
-
-                // Kiểm tra số lượng tồn kho nếu giảm số lượng nhập
-                int totalImported = receiptDetailRepository
-                        .getTotalImportedQuantityByMaSanPham(detail.getId().getMaSanPham());
-                int totalExported = exportReceiptDetailRepository
-                        .getTotalExportedQuantityByMaSanPham(detail.getId().getMaSanPham());
-                int currentSoLuongTonKho = totalImported - totalExported - oldSoLuong;
-                if (delta < 0 && Math.abs(delta) > currentSoLuongTonKho) {
-                    logger.error("Số lượng tồn kho không đủ để giảm cho sản phẩm: {}", product.getMaSanPham());
-                    return new ResponseEntity<>(
-                            "Số lượng tồn kho không đủ để giảm! Sản phẩm " + product.getMaSanPham() + " chỉ còn "
-                                    + currentSoLuongTonKho + " đơn vị.",
-                            HttpStatus.BAD_REQUEST);
-                }
-            }
-
-            // Cập nhật chi tiết phiếu nhập và số lượng có thể nhập
-            double tongTien = 0;
-            for (int i = 0; i < existingDetails.size(); i++) {
-                ReceiptDetail detail = existingDetails.get(i);
-                ReceiptDetailDTO detailDTO = updatedDetails.get(i);
-
-                // Tính lại delta
-                int oldSoLuong = detail.getSoLuong();
-                int newSoLuong = detailDTO.getSoLuong();
-                int delta = newSoLuong - oldSoLuong;
-
-                // Cập nhật số lượng trong ReceiptDetail
-                detail.setSoLuong(newSoLuong);
-
-                // Tính lại thành tiền
-                double thanhTien = detail.getSoLuong() * detail.getDonGia();
-                tongTien += thanhTien;
-
-                // Cập nhật số lượng có thể nhập trong bảng sanpham
-                String maSanPham = detail.getId().getMaSanPham();
-                productService.updateSoLuongCoTheNhap(maSanPham, delta);
-
-                // Lưu lại chi tiết phiếu nhập
-                receiptDetailRepository.save(detail);
-            }
-
-            // Cập nhật tổng tiền của phiếu nhập
-            receipt.setTongTien(tongTien);
+            // Lưu phiếu nhập
             receiptRepository.save(receipt);
 
             logger.info("Cập nhật phiếu nhập thành công: {}", maPhieu);
