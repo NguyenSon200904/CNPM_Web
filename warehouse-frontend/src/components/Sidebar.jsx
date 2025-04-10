@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
+import axios from "axios";
 import LogoutModal from "../pages/LogoutModal";
 import "../assets/Sidebar.css";
 import {
@@ -19,10 +20,85 @@ import {
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(true);
   const [isLogoutModalVisible, setIsLogoutModalOpen] = useState(false);
+  const [userRole, setUserRole] = useState(null); // Lưu vai trò của người dùng
+  const [loading, setLoading] = useState(true); // Trạng thái tải thông tin người dùng
   const location = useLocation();
+
+  // Lấy thông tin người dùng khi component mount
+  useEffect(() => {
+    const fetchUser = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setLoading(false);
+        window.location.href = "/login"; // Chuyển hướng về login nếu không có token
+        return;
+      }
+
+      try {
+        const response = await axios.get("http://localhost:8080/api/auth/me", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setUserRole(response.data.role); // Lưu vai trò của người dùng
+      } catch (error) {
+        console.error("Error fetching user:", error);
+        localStorage.removeItem("token");
+        window.location.href = "/login";
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUser();
+  }, []);
 
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
+  };
+
+  // Định nghĩa quyền truy cập cho từng vai trò
+  const importerAllowedPaths = [
+    "/san-pham",
+    "/nha-cung-cap",
+    "/nhap-hang",
+    "/phieu-nhap",
+  ];
+
+  const exporterAllowedPaths = [
+    "/san-pham",
+    "/nha-cung-cap",
+    "/xuat-hang",
+    "/phieu-xuat",
+  ];
+
+  const _adminManagerOnlyPaths = [
+    "/tai-khoan",
+    "/ton-kho",
+    "/thong-ke",
+  ];
+
+  // Kiểm tra xem một đường dẫn có được phép truy cập hay không
+  const isPathAllowed = (path) => {
+    // Trang "/doi-thong-tin" luôn được phép truy cập
+    if (path === "/doi-thong-tin") {
+      return true;
+    }
+
+    if (!userRole) return false; // Nếu chưa có vai trò, vô hiệu hóa tất cả
+
+    if (userRole === "Admin" || userRole === "Manager") {
+      return true; // Admin và Manager có thể truy cập tất cả
+    }
+
+    if (userRole === "Importer") {
+      return importerAllowedPaths.includes(path);
+    }
+
+    if (userRole === "Exporter") {
+      return exporterAllowedPaths.includes(path);
+    }
+
+    return false; // Vai trò không hợp lệ
   };
 
   const menuItems = [
@@ -37,33 +113,32 @@ const Sidebar = () => {
     { path: "/thong-ke", name: "THỐNG KẾ", icon: <ChartPie size={24} /> },
   ];
 
-  // Thêm mảng accountItems cho các mục ở phần dưới (Đổi thông tin & Đăng xuất)
   const accountItems = [
     {
       path: "/doi-thong-tin",
       name: "ĐỔI THÔNG TIN",
       icon: <Settings size={24} />,
     },
-    // Không cần thêm "ĐĂNG XUẤT" vào đây vì nó không thay đổi route mà chỉ mở modal
   ];
 
   // Cập nhật tiêu đề dựa trên route
   useEffect(() => {
-    // Kiểm tra trong menuItems
     const currentMenuItem = menuItems.find(
       (item) => item.path === location.pathname
     );
-    // Kiểm tra trong accountItems
     const currentAccountItem = accountItems.find(
       (item) => item.path === location.pathname
     );
-    // Nếu tìm thấy trong menuItems, dùng name của menuItems; nếu không, kiểm tra accountItems
     document.title = currentMenuItem
       ? currentMenuItem.name
       : currentAccountItem
       ? currentAccountItem.name
       : "Quản lý kho";
   }, [location.pathname]);
+
+  if (loading) {
+    return <div className="h-screen bg-green-600 text-white p-4">Đang tải...</div>;
+  }
 
   return (
     <div
@@ -88,23 +163,28 @@ const Sidebar = () => {
 
       {/* Menu Items */}
       <ul className="mt-2 flex-1">
-        {menuItems.map((item) => (
-          <li key={item.name} className="mt-1.5">
-            <NavLink
-              to={item.path}
-              className={({ isActive }) =>
-                `block p-3 flex items-center gap-3 rounded-md font-bold cursor-pointer text-white ${
-                  isActive ? "bg-green-800" : "hover:bg-green-800"
-                } ${isOpen ? "justify-start" : "justify-center p-2"}`
-              }
-            >
-              {React.cloneElement(item.icon, { color: "white" })}
-              {isOpen && (
-                <span className="text-sm text-white">{item.name}</span>
-              )}
-            </NavLink>
-          </li>
-        ))}
+        {menuItems.map((item) => {
+          const isAllowed = isPathAllowed(item.path);
+          return (
+            <li key={item.name} className="mt-1.5">
+              <NavLink
+                to={item.path}
+                className={({ isActive }) =>
+                  `block p-3 flex items-center gap-3 rounded-md font-bold cursor-pointer text-white ${
+                    isActive ? "bg-green-800" : "hover:bg-green-800"
+                  } ${isOpen ? "justify-start" : "justify-center p-2"} ${
+                    !isAllowed ? "opacity-50 pointer-events-none" : ""
+                  }`
+                }
+              >
+                {React.cloneElement(item.icon, { color: "white" })}
+                {isOpen && (
+                  <span className="text-sm text-white">{item.name}</span>
+                )}
+              </NavLink>
+            </li>
+          );
+        })}
       </ul>
 
       {/* Đổi thông tin & Đăng xuất */}

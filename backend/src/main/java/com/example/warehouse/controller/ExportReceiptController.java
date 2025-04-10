@@ -38,7 +38,7 @@ public class ExportReceiptController {
     private ExportReceiptDetailRepository exportReceiptDetailRepository;
 
     @GetMapping("/export-receipts")
-    @PreAuthorize("hasAnyRole('ROLE_Admin', 'ROLE_Manager')")
+    @PreAuthorize("hasAnyRole('ROLE_Admin', 'ROLE_Manager', 'ROLE_Exporter')")
     public ResponseEntity<List<ExportReceipt>> getAllExportReceipts() {
         try {
             logger.info("Lấy danh sách phiếu xuất");
@@ -55,7 +55,7 @@ public class ExportReceiptController {
     }
 
     @GetMapping("export-receipts/{id}")
-    @PreAuthorize("hasAnyRole('ROLE_Admin', 'ROLE_Manager')")
+    @PreAuthorize("hasAnyRole('ROLE_Admin', 'ROLE_Manager', 'ROLE_Exporter')")
     public ResponseEntity<ExportReceipt> getExportReceiptById(@PathVariable Integer id) {
         try {
             logger.info("Lấy phiếu xuất với ID: {}", id);
@@ -72,7 +72,7 @@ public class ExportReceiptController {
     }
 
     @PostMapping("/export-receipts")
-    @PreAuthorize("hasAnyRole('ROLE_Admin', 'ROLE_Manager')")
+    @PreAuthorize("hasAnyRole('ROLE_Admin', 'ROLE_Manager', 'ROLE_Exporter')")
     @Transactional
     public ResponseEntity<?> createExportReceipt(@RequestBody ExportReceipt receipt) {
         logger.info("Nhận request tạo phiếu xuất: {}", receipt);

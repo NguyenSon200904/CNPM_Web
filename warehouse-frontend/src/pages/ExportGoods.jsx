@@ -20,13 +20,23 @@ const ExportGoods = () => {
   const [productType, setProductType] = useState("all");
   const [quantities, setQuantities] = useState({});
   const [selectedProducts, setSelectedProducts] = useState([]);
-  const [receiptCode, setReceiptCode] = useState(""); // Mã phiếu xuất do người dùng nhập
+  const [_autoReceiptCode, setAutoReceiptCode] = useState(""); // Mã phiếu xuất tự động sinh
   const [creator, setCreator] = useState("admin");
   const [inventory, setInventory] = useState([]);
   const [loadingInventory, setLoadingInventory] = useState(false);
 
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
+
+  // Sinh mã phiếu xuất tự động khi component được tải
+  useEffect(() => {
+    const generateReceiptCode = () => {
+      // Sử dụng timestamp để tạo mã duy nhất (có thể tùy chỉnh định dạng)
+      const timestamp = Date.now();
+      return `PX-${timestamp}`; // Ví dụ: PX-1698765432100
+    };
+    setAutoReceiptCode(generateReceiptCode());
+  }, []);
 
   useEffect(() => {
     const user = localStorage.getItem("username") || "admin";
@@ -40,12 +50,12 @@ const ExportGoods = () => {
             Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },
         });
-        console.log("Dữ liệu từ API /api/inventory:", response.data); // Kiểm tra dữ liệu từ API
+        console.log("Dữ liệu từ API /api/inventory:", response.data);
 
         const formattedInventory = response.data.map((item) => ({
           maSanPham: item.maSanPham,
           tenSanPham: item.tenSanPham,
-          soLuong: item.soLuongTonKho || 0, // Sửa ánh xạ từ soLuong thành soLuongTonKho
+          soLuong: item.soLuongTonKho || 0,
           gia: item.gia,
           loaiSanPham: item.loaiSanPham,
         }));
@@ -55,7 +65,7 @@ const ExportGoods = () => {
           );
         }
         setInventory(formattedInventory);
-        console.log("Dữ liệu kho sau khi ánh xạ:", formattedInventory); // Kiểm tra dữ liệu sau ánh xạ
+        console.log("Dữ liệu kho sau khi ánh xạ:", formattedInventory);
       } catch (error) {
         message.error(
           "Không thể tải danh sách hàng hóa trong kho: " +
@@ -174,24 +184,18 @@ const ExportGoods = () => {
       return;
     }
 
-    if (!receiptCode || isNaN(receiptCode) || Number(receiptCode) <= 0) {
-      message.error("Mã phiếu xuất phải là một số lớn hơn 0!");
-      return;
-    }
-
     const totalAmount = selectedProducts.reduce(
       (sum, item) => sum + item.quantity * item.price,
       0
     );
 
+    // Tạo receiptData mà không cần maPhieuXuat
     const receiptData = {
-      maPhieuXuat: Number(receiptCode), // Chuyển receiptCode thành số
       ngayXuat: moment().format("YYYY-MM-DDTHH:mm:ss"),
       tongTien: totalAmount,
       nguoiTao: { userName: creator },
       chiTietPhieuXuats: selectedProducts.map((product) => ({
         id: {
-          maPhieuXuat: Number(receiptCode), // Chuyển thành số
           maSanPham: product.maSanPham,
         },
         soLuong: product.quantity,
@@ -208,7 +212,12 @@ const ExportGoods = () => {
       message.success("Xuất hàng thành công!");
       setSelectedProducts([]);
       setQuantities({});
-      setReceiptCode(""); // Reset mã phiếu xuất sau khi xuất hàng
+      // Sinh lại mã phiếu xuất mới sau khi xuất hàng thành công
+      const generateReceiptCode = () => {
+        const timestamp = Date.now();
+        return `PX-${timestamp}`;
+      };
+      setAutoReceiptCode(generateReceiptCode());
       navigate("/phieu-xuat");
     } catch (error) {
       message.error(
@@ -470,12 +479,11 @@ const ExportGoods = () => {
           <div className="flex flex-col gap-2 flex-grow overflow-hidden">
             <div className="flex flex-col gap-1">
               <label className="text-black font-medium">Mã phiếu xuất</label>
-              <Input
-                placeholder="Nhập mã phiếu xuất"
-                value={receiptCode}
-                onChange={(e) => setReceiptCode(e.target.value)}
-                className="border h-[50px] p-2 rounded-lg"
-              />
+              <div className="border h-[50px] p-2 rounded-lg bg-gray-100 flex items-center">
+                <span className="text-gray-500">
+                  Mã phiếu xuất (tự động sinh)
+                </span>
+              </div>
             </div>
             <Input
               placeholder="Người tạo phiếu"

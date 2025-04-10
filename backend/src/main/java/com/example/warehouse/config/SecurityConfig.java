@@ -55,7 +55,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/export-receipts/**").hasAnyRole("Admin", "Manager", "Exporter")
 
                         // Endpoints chỉ dành cho Admin và Manager
-                        .requestMatchers("/api/inventory/**").hasAnyRole("Admin", "Manager")
+                        .requestMatchers("/api/inventory/**").hasAnyRole("Admin", "Manager", "Exporter")
                         .requestMatchers("/api/accounts/**").hasAnyRole("Admin", "Manager")
 
                         // Endpoints chỉ dành cho Admin

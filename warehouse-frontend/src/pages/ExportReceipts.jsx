@@ -44,7 +44,7 @@ const ExportReceipts = () => {
   useEffect(() => {
     const fetchAccounts = async () => {
       try {
-        const response = await api.get("http://localhost:8080/api/accounts");
+        const response = await api.get("http://localhost:8080/api/users/list");
         const accounts = response.data;
 
         // Tạo ánh xạ role -> userName (chọn userName đầu tiên cho mỗi role)
