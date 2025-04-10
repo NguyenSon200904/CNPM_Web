@@ -37,7 +37,7 @@ const ImportGoods = () => {
     // Lấy danh sách tài khoản và tạo ánh xạ role -> userName
     const fetchAccounts = async () => {
       try {
-        const response = await api.get("http://localhost:8080/api/accounts");
+        const response = await api.get("http://localhost:8080/api/users/list");
         const accounts = response.data;
 
         // Nhóm tài khoản theo role và chọn userName đầu tiên cho mỗi role

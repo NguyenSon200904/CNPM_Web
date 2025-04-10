@@ -42,7 +42,7 @@ const ImportReceipts = () => {
   useEffect(() => {
     const fetchAccounts = async () => {
       try {
-        const response = await api.get("http://localhost:8080/api/accounts", {
+        const response = await api.get("http://localhost:8080/api/users/list", {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },

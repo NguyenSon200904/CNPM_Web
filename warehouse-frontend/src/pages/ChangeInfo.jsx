@@ -6,25 +6,29 @@ const { TabPane } = Tabs;
 
 const ChangeInfo = () => {
   const [activeTab, setActiveTab] = useState("info");
-  const [user, setUser] = useState(null); // Lưu thông tin người dùng
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [infoForm] = Form.useForm();
   const [passwordForm] = Form.useForm();
 
-  // Lấy thông tin người dùng hiện tại
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          message.error("Không tìm thấy token. Vui lòng đăng nhập lại!");
+          return;
+        }
+
         const response = await axios.get(
           "http://localhost:8080/api/current-user",
           {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`, // Giả sử token được lưu trong localStorage
+              Authorization: `Bearer ${token}`,
             },
           }
         );
         setUser(response.data);
-        // Cập nhật giá trị ban đầu cho form
         infoForm.setFieldsValue({
           fullName: response.data.fullName,
           email: response.data.email,
@@ -40,7 +44,6 @@ const ChangeInfo = () => {
     fetchCurrentUser();
   }, [infoForm]);
 
-  // Xử lý lưu thay đổi thông tin
   const handleSaveInfo = async (values) => {
     if (!user) {
       message.error("Không tìm thấy thông tin người dùng!");
@@ -49,7 +52,13 @@ const ChangeInfo = () => {
 
     setLoading(true);
     try {
-      await axios.put(
+      const token = localStorage.getItem("token");
+      if (!token) {
+        message.error("Không tìm thấy token. Vui lòng đăng nhập lại!");
+        return;
+      }
+
+      const response = await axios.put(
         `http://localhost:8080/api/users/${user.userName}`,
         {
           fullName: values.fullName,
@@ -58,24 +67,38 @@ const ChangeInfo = () => {
         },
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
-      message.success("Cập nhật thông tin thành công!");
-      setUser({ ...user, fullName: values.fullName, email: values.email });
+
+      // Hiển thị thông báo thành công và reload trang
+      message.success(response.data.message);
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000); // Reload sau 1 giây để người dùng thấy thông báo
     } catch (error) {
       console.error("Error updating user info:", error);
-      message.error(
-        "Cập nhật thông tin thất bại: " +
-          (error.response?.data?.error || error.message)
-      );
+      if (error.response?.status === 403) {
+        message.error("Bạn không có quyền thực hiện hành động này!");
+      } else if (error.response?.status === 401) {
+        message.error("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại!");
+      } else if (
+        error.response?.status === 400 &&
+        error.response?.data?.error === "Mật khẩu hiện tại không đúng!"
+      ) {
+        message.error("Mật khẩu sai!");
+      } else {
+        message.error(
+          "Cập nhật thông tin thất bại: " +
+            (error.response?.data?.error || error.message)
+        );
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  // Xử lý đổi mật khẩu
   const handleChangePassword = async (values) => {
     if (!user) {
       message.error("Không tìm thấy thông tin người dùng!");
@@ -89,7 +112,13 @@ const ChangeInfo = () => {
 
     setLoading(true);
     try {
-      await axios.put(
+      const token = localStorage.getItem("token");
+      if (!token) {
+        message.error("Không tìm thấy token. Vui lòng đăng nhập lại!");
+        return;
+      }
+
+      const response = await axios.put(
         `http://localhost:8080/api/users/${user.userName}/change-password`,
         {
           currentPassword: values.currentPassword,
@@ -97,18 +126,33 @@ const ChangeInfo = () => {
         },
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
-      message.success("Đổi mật khẩu thành công!");
-      passwordForm.resetFields();
+
+      // Hiển thị thông báo thành công và reload trang
+      message.success(response.data.message);
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000); // Reload sau 1 giây để người dùng thấy thông báo
     } catch (error) {
       console.error("Error changing password:", error);
-      message.error(
-        "Đổi mật khẩu thất bại: " +
-          (error.response?.data?.error || error.message)
-      );
+      if (error.response?.status === 403) {
+        message.error("Bạn không có quyền thực hiện hành động này!");
+      } else if (error.response?.status === 401) {
+        message.error("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại!");
+      } else if (
+        error.response?.status === 400 &&
+        error.response?.data?.error === "Mật khẩu hiện tại không đúng!"
+      ) {
+        message.error("Mật khẩu sai!");
+      } else {
+        message.error(
+          "Đổi mật khẩu thất bại: " +
+            (error.response?.data?.error || error.message)
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -130,6 +174,10 @@ const ChangeInfo = () => {
                 label="Họ và tên"
                 rules={[
                   { required: true, message: "Vui lòng nhập họ và tên!" },
+                  {
+                    max: 50,
+                    message: "Họ và tên không được vượt quá 50 ký tự!",
+                  },
                 ]}
               >
                 <Input className="h-[50px]" />
@@ -140,6 +188,7 @@ const ChangeInfo = () => {
                 rules={[
                   { required: true, message: "Vui lòng nhập email!" },
                   { type: "email", message: "Email không hợp lệ!" },
+                  { max: 50, message: "Email không được vượt quá 50 ký tự!" },
                 ]}
               >
                 <Input className="h-[50px]" />
@@ -152,6 +201,7 @@ const ChangeInfo = () => {
                     required: true,
                     message: "Vui lòng nhập mật khẩu hiện tại!",
                   },
+                  { min: 6, message: "Mật khẩu phải có ít nhất 6 ký tự!" },
                 ]}
               >
                 <Input.Password className="h-[50px]" />
@@ -183,6 +233,7 @@ const ChangeInfo = () => {
                     required: true,
                     message: "Vui lòng nhập mật khẩu hiện tại!",
                   },
+                  { min: 6, message: "Mật khẩu phải có ít nhất 6 ký tự!" },
                 ]}
               >
                 <Input.Password className="h-[50px]" />
@@ -192,6 +243,7 @@ const ChangeInfo = () => {
                 label="Mật khẩu mới"
                 rules={[
                   { required: true, message: "Vui lòng nhập mật khẩu mới!" },
+                  { min: 6, message: "Mật khẩu mới phải có ít nhất 6 ký tự!" },
                 ]}
               >
                 <Input.Password className="h-[50px]" />
@@ -204,6 +256,18 @@ const ChangeInfo = () => {
                     required: true,
                     message: "Vui lòng nhập lại mật khẩu mới!",
                   },
+                  ({ getFieldValue }) => ({
+                    validator(_, value) {
+                      if (!value || getFieldValue("newPassword") === value) {
+                        return Promise.resolve();
+                      }
+                      return Promise.reject(
+                        new Error(
+                          "Mật khẩu mới và xác nhận mật khẩu không khớp!"
+                        )
+                      );
+                    },
+                  }),
                 ]}
               >
                 <Input.Password className="h-[50px]" />

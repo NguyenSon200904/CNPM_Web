@@ -3,6 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import { ConfigProvider, App as AntdApp } from "antd";
 import Main from "./pages/Main.jsx";
 import Login from "./pages/Login.jsx";
+import ResetPassword from "./pages/ResetPassword.jsx";
 import Products from "./pages/Products";
 import Suppliers from "./pages/Suppliers";
 import ImportGoods from "./pages/ImportGoods";
@@ -35,6 +36,7 @@ function App() {
             }
           />
           <Route path="/login" element={<Login />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route
             path="/san-pham"
             element={

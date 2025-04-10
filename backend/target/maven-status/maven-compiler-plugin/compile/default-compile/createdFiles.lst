@@ -13,7 +13,6 @@ com\example\warehouse\repository\ReceiptRepository.class
 com\example\warehouse\service\CustomUserDetailsService.class
 com\example\warehouse\repository\AccountRepository.class
 com\example\warehouse\service\ReceiptDetailService.class
-com\example\warehouse\controller\ChangeInfoController.class
 com\example\warehouse\model\Account.class
 com\example\warehouse\repository\MayTinhRepository.class
 com\example\warehouse\controller\ExportReceiptController.class
@@ -22,7 +21,6 @@ com\example\warehouse\util\JwtUtil.class
 com\example\warehouse\dto\LoginResponse.class
 com\example\warehouse\model\ReceiptDetail.class
 com\example\warehouse\controller\StatisticsController.class
-com\example\warehouse\controller\HelloController.class
 com\example\warehouse\dto\ExportReceiptDTO.class
 com\example\warehouse\controller\InventoryController.class
 com\example\warehouse\controller\ReceiptDetailController.class
@@ -39,6 +37,7 @@ com\example\warehouse\dto\DienThoaiDTO.class
 com\example\warehouse\repository\SanPhamRepository.class
 com\example\warehouse\model\ExportReceiptDetailId.class
 com\example\warehouse\service\ReceiptService.class
+com\example\warehouse\service\JwtService.class
 com\example\warehouse\dto\AccountDTO.class
 com\example\warehouse\dto\LoginRequest.class
 com\example\warehouse\model\Computer.class
@@ -65,4 +64,5 @@ com\example\warehouse\model\Phone.class
 com\example\warehouse\service\ProductService.class
 com\example\warehouse\service\ExportReceiptService.class
 com\example\warehouse\service\SupplierService.class
+com\example\warehouse\controller\UserController.class
 com\example\warehouse\controller\ProductController.class

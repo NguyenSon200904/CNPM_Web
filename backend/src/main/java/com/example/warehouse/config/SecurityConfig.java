@@ -36,14 +36,32 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // Public endpoints
                         .requestMatchers("/api/login").permitAll()
+                        .requestMatchers("/api/forgot-password").permitAll()
+                        .requestMatchers("/api/reset-password").permitAll()
+
+                        // Endpoints cho tất cả người dùng đã đăng nhập (không yêu cầu vai trò cụ thể)
                         .requestMatchers("/api/auth/me").authenticated()
-                        .requestMatchers("/api/products/**").hasAnyRole("Admin", "Manager")
-                        .requestMatchers("/api/export-receipts/**").hasAnyRole("Admin", "Manager")
-                        .requestMatchers("/api/suppliers/**").hasAnyRole("Admin", "Manager")
-                        .requestMatchers("/api/accounts/*/reset-password").hasRole("Admin")
-                        .requestMatchers("/api/accounts/**").hasAnyRole("Admin", "Manager")
+                        .requestMatchers("/api/current-user").authenticated()
+
+                        // API lấy danh sách tài khoản cho dropdown
+                        .requestMatchers("/api/users/list").hasAnyRole("Admin", "Manager", "Importer", "Exporter")
+
+                        // Endpoints cho Admin, Manager, Importer, Exporter
+                        .requestMatchers("/api/products/**").hasAnyRole("Admin", "Manager", "Importer", "Exporter")
+                        .requestMatchers("/api/suppliers/**").hasAnyRole("Admin", "Manager", "Importer", "Exporter")
+                        .requestMatchers("/api/receipts/**").hasAnyRole("Admin", "Manager", "Importer")
+                        .requestMatchers("/api/export-receipts/**").hasAnyRole("Admin", "Manager", "Exporter")
+
+                        // Endpoints chỉ dành cho Admin và Manager
                         .requestMatchers("/api/inventory/**").hasAnyRole("Admin", "Manager")
+                        .requestMatchers("/api/accounts/**").hasAnyRole("Admin", "Manager")
+
+                        // Endpoints chỉ dành cho Admin
+                        .requestMatchers("/api/accounts/*/reset-password").hasRole("Admin")
+
+                        // Tất cả các yêu cầu khác đều cần đăng nhập
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 

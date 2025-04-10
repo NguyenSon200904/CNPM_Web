@@ -16,7 +16,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/accounts")
+@RequestMapping("/api")
 public class AccountController {
 
     private static final Logger logger = LoggerFactory.getLogger(AccountController.class);
@@ -24,9 +24,31 @@ public class AccountController {
     @Autowired
     private AccountService accountService;
 
-    // Lấy tất cả tài khoản
-    @GetMapping
-    @PreAuthorize("hasAnyRole('ROLE_Admin', 'ROLE_Manager')") // Chỉ admin hoặc manager được xem danh sách tài khoản
+    // API mới để lấy danh sách tài khoản cho dropdown
+    @GetMapping("/users/list")
+    @PreAuthorize("hasAnyRole('ROLE_Admin', 'ROLE_Manager', 'ROLE_Importer', 'ROLE_Exporter')")
+    public ResponseEntity<List<Account>> getAccountsForDropdown() {
+        try {
+            logger.info("Lấy danh sách tài khoản cho dropdown");
+            List<Account> accounts = accountService.findAll();
+            if (accounts.isEmpty()) {
+                logger.info("Không có tài khoản nào được tìm thấy");
+                return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+            }
+            String accountSummary = accounts.stream()
+                    .map(account -> "userName=" + account.getUserName() + ", role=" + account.getRole())
+                    .collect(Collectors.joining("; "));
+            logger.info("Danh sách tài khoản trả về: [{}]", accountSummary);
+            return ResponseEntity.ok(accounts);
+        } catch (Exception e) {
+            logger.error("Lỗi khi lấy danh sách tài khoản: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // Lấy tất cả tài khoản (chỉ dành cho Admin và Manager)
+    @GetMapping("/accounts")
+    @PreAuthorize("hasAnyRole('ROLE_Admin', 'ROLE_Manager')")
     public ResponseEntity<List<Account>> getAllAccounts() {
         try {
             logger.info("Lấy danh sách tài khoản");
@@ -35,7 +57,6 @@ public class AccountController {
                 logger.info("Không có tài khoản nào được tìm thấy");
                 return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
             }
-
             String accountSummary = accounts.stream()
                     .map(account -> "userName=" + account.getUserName() + ", role=" + account.getRole())
                     .collect(Collectors.joining("; "));
@@ -48,7 +69,7 @@ public class AccountController {
     }
 
     // Lấy tài khoản theo userName
-    @GetMapping("/{userName}")
+    @GetMapping("/accounts/{userName}")
     @PreAuthorize("hasAnyRole('ROLE_Admin', 'ROLE_Manager')")
     public ResponseEntity<Account> getAccountByUserName(@PathVariable String userName) {
         try {
@@ -68,7 +89,7 @@ public class AccountController {
     }
 
     // Lấy danh sách tài khoản theo role
-    @GetMapping("/role/{role}")
+    @GetMapping("/accounts/role/{role}")
     @PreAuthorize("hasRole('ROLE_Admin')")
     public ResponseEntity<List<Account>> getAccountsByRole(@PathVariable String role) {
         try {
@@ -86,7 +107,7 @@ public class AccountController {
     }
 
     // Lấy danh sách tài khoản theo status
-    @GetMapping("/status/{status}")
+    @GetMapping("/accounts/status/{status}")
     @PreAuthorize("hasRole('ROLE_Admin')")
     public ResponseEntity<List<Account>> getAccountsByStatus(@PathVariable Integer status) {
         try {
@@ -104,7 +125,7 @@ public class AccountController {
     }
 
     // Tạo tài khoản mới
-    @PostMapping
+    @PostMapping("/accounts")
     @PreAuthorize("hasRole('ROLE_Admin')")
     public ResponseEntity<Account> createAccount(@RequestBody Account account) {
         try {
@@ -126,7 +147,7 @@ public class AccountController {
     }
 
     // Cập nhật tài khoản
-    @PutMapping("/{userName}")
+    @PutMapping("/accounts/{userName}")
     @PreAuthorize("hasRole('ROLE_Admin')")
     public ResponseEntity<Account> updateAccount(@PathVariable String userName, @RequestBody Account account) {
         try {
@@ -147,7 +168,7 @@ public class AccountController {
     }
 
     // Xóa tài khoản
-    @DeleteMapping("/{userName}")
+    @DeleteMapping("/accounts/{userName}")
     @PreAuthorize("hasRole('ROLE_Admin')")
     public ResponseEntity<Void> deleteAccount(@PathVariable String userName) {
         try {
@@ -166,8 +187,8 @@ public class AccountController {
     }
 
     // Đặt lại mật khẩu
-    @PutMapping("/{userName}/reset-password")
-    @PreAuthorize("hasRole('ROLE_Admin')") // Chỉ admin được phép đặt lại mật khẩu
+    @PutMapping("/accounts/{userName}/reset-password")
+    @PreAuthorize("hasRole('ROLE_Admin')")
     public ResponseEntity<String> resetPassword(@PathVariable String userName,
             @RequestBody Map<String, String> request) {
         try {

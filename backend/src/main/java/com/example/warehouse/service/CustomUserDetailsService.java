@@ -15,20 +15,20 @@ import java.util.Collections;
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
-  @Autowired
-  private AccountRepository accountRepository;
+    @Autowired
+    private AccountRepository accountRepository;
 
-  @Override
-  public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-    Account account = accountRepository.findByUserName(username)
-        .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        Account account = accountRepository.findByUserName(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
 
-    // Ánh xạ vai trò từ VARCHAR thành ROLE_<role>
-    String role = "ROLE_" + account.getRole(); // Ví dụ: "Admin" -> "ROLE_Admin"
+        // Sử dụng vai trò trực tiếp từ database (đã có tiền tố ROLE_)
+        String role = account.getRole(); // Ví dụ: "ROLE_IMPORTER"
 
-    return new User(
-        account.getUserName(),
-        account.getPassword(),
-        Collections.singletonList(new SimpleGrantedAuthority(role)));
-  }
+        return new User(
+                account.getUserName(),
+                account.getPassword(),
+                Collections.singletonList(new SimpleGrantedAuthority(role)));
+    }
 }

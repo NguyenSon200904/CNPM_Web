@@ -49,22 +49,14 @@ public class ReceiptController {
     private ReceiptRepository receiptRepository;
 
     @Autowired
-    private ReceiptDetailRepository receiptDetailRepository;
-
-    @Autowired
     private SupplierRepository supplierRepository;
-
-    @Autowired
-    private ProductRepository productRepository;
-
-    @Autowired
-    private ExportReceiptDetailRepository exportReceiptDetailRepository;
 
     @Autowired
     private AccountRepository accountRepository;
 
     // GET: Lấy danh sách phiếu nhập
     @GetMapping("/receipts")
+    @PreAuthorize("hasAnyRole('ROLE_Admin', 'ROLE_Manager', 'ROLE_Importer')")
     public ResponseEntity<List<ReceiptDTO>> getAllReceipts() {
         try {
             logger.info("Lấy danh sách phiếu nhập");

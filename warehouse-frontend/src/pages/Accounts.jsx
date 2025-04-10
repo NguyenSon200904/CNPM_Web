@@ -36,7 +36,7 @@ const Accounts = () => {
         case 0:
           return "Admin";
         case 1:
-          return "Nhân viên nhập kho";
+          return "Importer";
         case 2:
           return "Nhân viên xuất kho";
         case 3:
@@ -408,7 +408,7 @@ const Accounts = () => {
               <Select>
                 <Option value="Admin">Admin</Option>
                 <Option value="Manager">Quản lý kho</Option>
-                <Option value="Nhân viên nhập kho">Nhân viên nhập kho</Option>
+                <Option value="Importer">Importer</Option>
                 <Option value="Nhân viên xuất kho">Nhân viên xuất kho</Option>
               </Select>
             </Form.Item>
@@ -465,7 +465,7 @@ const Accounts = () => {
               <Select>
                 <Option value="Admin">Admin</Option>
                 <Option value="Manager">Quản lý kho</Option>
-                <Option value="Nhân viên nhập kho">Nhân viên nhập kho</Option>
+                <Option value="Importer">Importer</Option>
                 <Option value="Nhân viên xuất kho">Nhân viên xuất kho</Option>
               </Select>
             </Form.Item>

@@ -35,7 +35,7 @@ public class ProductController {
 
     // GET: Lấy danh sách sản phẩm
     @GetMapping("/products")
-    @PreAuthorize("hasAnyRole('ROLE_Admin', 'ROLE_Manager', 'ROLE_Nhân viên nhập kho', 'ROLE_Nhân viên xuất kho')")
+    @PreAuthorize("hasAnyRole('ROLE_Admin', 'ROLE_Manager', 'ROLE_Importer', 'ROLE_Exporter')")
     public ResponseEntity<List<ProductDTO>> getProducts(
             @RequestParam(value = "loaiSanPham", required = false) String loaiSanPham) {
         try {
@@ -140,7 +140,7 @@ public class ProductController {
 
     // POST: Thêm sản phẩm mới
     @PostMapping("/products")
-    @PreAuthorize("hasAnyRole('ROLE_Admin', 'ROLE_Manager', 'ROLE_Nhân viên nhập kho')")
+    @PreAuthorize("hasAnyRole('ROLE_Admin', 'ROLE_Manager')")
     public ResponseEntity<String> addProduct(@RequestBody ProductDTO productDTO) {
         try {
             SanPham sanPham = new SanPham();
