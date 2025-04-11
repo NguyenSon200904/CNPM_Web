@@ -71,9 +71,9 @@ const ResetPassword = () => {
             rules={[{ required: true, message: "Vui lòng nhập mật khẩu mới!" }]}
           >
             <div>
-              <label className="block text-gray-300">Mật khẩu mới</label>
+              <label className="block text-gray-300 mb-1">Mật khẩu mới</label>
               <Input.Password
-                className="w-full px-4 py-2 border-b bg-gray-900 border-gray-400 text-white focus:outline-none"
+                className="w-full px-4 py-2 rounded-md bg-gray-800 border border-gray-600 text-white focus:outline-none focus:border-green-500 focus:bg-gray-700 transition-colors duration-200 custom-input custom-password-input"
                 placeholder="Nhập mật khẩu mới"
               />
             </div>
@@ -97,9 +97,11 @@ const ResetPassword = () => {
             ]}
           >
             <div>
-              <label className="block text-gray-300">Xác nhận mật khẩu</label>
+              <label className="block text-gray-300 mb-1">
+                Xác nhận mật khẩu
+              </label>
               <Input.Password
-                className="w-full px-4 py-2 border-b bg-gray-900 border-gray-400 text-white focus:outline-none"
+                className="w-full px-4 py-2 rounded-md bg-gray-800 border border-gray-600 text-white focus:outline-none focus:border-green-500 focus:bg-gray-700 transition-colors duration-200 custom-input custom-password-input"
                 placeholder="Xác nhận mật khẩu"
               />
             </div>
@@ -117,6 +119,70 @@ const ResetPassword = () => {
           </Form.Item>
         </Form>
       </div>
+
+      <style jsx>{`
+        .custom-input {
+          background-color: #1f2937 !important; /* gray-800 */
+          color: #ffffff !important; /* white */
+          border: 1px solid #4b5563 !important; /* gray-600 */
+          border-radius: 6px !important;
+        }
+        .custom-input:hover {
+          background-color: #ffffff !important; /* white */
+        }
+        .custom-input:focus {
+          background-color: #374151 !important; /* gray-700 */
+          border-color: #10b981 !important; /* green-500 */
+        }
+        .custom-input::placeholder {
+          color: #ffffff !important; /* white */
+        }
+        .custom-input:hover::placeholder {
+          color: #000000 !important; /* black */
+        }
+
+        .custom-password-input .ant-input-affix-wrapper {
+          background-color: #1f2937 !important; /* gray-800 */
+          border: 1px solid #4b5563 !important; /* gray-600 */
+          border-radius: 6px !important;
+        }
+        .custom-password-input .ant-input-affix-wrapper:hover {
+          background-color: #ffffff !important; /* white */
+        }
+        .custom-password-input .ant-input-affix-wrapper:focus-within {
+          background-color: #374151 !important; /* gray-700 */
+          border-color: #10b981 !important; /* green-500 */
+        }
+        .custom-password-input .ant-input {
+          background-color: transparent !important; /* Make input background transparent to match wrapper */
+          color: #ffffff !important; /* white */
+          border: none !important; /* Remove inner input border */
+        }
+        .custom-password-input .ant-input:hover {
+          background-color: transparent !important; /* Keep transparent on hover */
+        }
+        .custom-password-input .ant-input:focus {
+          background-color: transparent !important; /* Keep transparent on focus */
+        }
+        .custom-password-input .ant-input::placeholder {
+          color: #ffffff !important; /* white */
+        }
+        .custom-password-input .ant-input:hover::placeholder {
+          color: #000000 !important; /* black */
+        }
+        .custom-password-input .ant-input-password-icon {
+          color: #ffffff !important; /* white */
+        }
+        .custom-password-input .ant-input-password-icon:hover {
+          color: #10b981 !important; /* green-500 */
+        }
+        .custom-password-input .ant-input-suffix {
+          background: transparent !important; /* Remove the line by making suffix background transparent */
+        }
+        .custom-password-input .ant-input-affix-wrapper {
+          padding-right: 12px !important; /* Adjust padding to align icon properly */
+        }
+      `}</style>
     </div>
   );
 };

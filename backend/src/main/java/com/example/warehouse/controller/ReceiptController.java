@@ -9,9 +9,6 @@ import com.example.warehouse.model.Product;
 import com.example.warehouse.model.Receipt;
 import com.example.warehouse.model.ReceiptDetail;
 import com.example.warehouse.repository.AccountRepository;
-import com.example.warehouse.repository.ExportReceiptDetailRepository;
-import com.example.warehouse.repository.ProductRepository;
-import com.example.warehouse.repository.ReceiptDetailRepository;
 import com.example.warehouse.repository.ReceiptRepository;
 import com.example.warehouse.repository.SupplierRepository;
 import com.example.warehouse.service.ProductService;
@@ -268,13 +265,13 @@ public class ReceiptController {
     @PreAuthorize("hasAnyRole('ROLE_Admin', 'ROLE_Manager')")
     @Transactional
     public ResponseEntity<String> updateReceipt(
-            @PathVariable("maPhieu") int maPhieu,
+            @PathVariable int maPhieu,
             @RequestBody ReceiptDTO receiptDTO) {
         try {
             logger.info("Cập nhật phiếu nhập với mã phiếu: {}", maPhieu);
             // Tìm phiếu nhập theo maPhieu
             Optional<Receipt> receiptOpt = receiptRepository.findById(maPhieu);
-            if (!receiptOpt.isPresent()) {
+            if (receiptOpt.isEmpty()) {
                 logger.warn("Phiếu nhập không tồn tại: {}", maPhieu);
                 return new ResponseEntity<>("Phiếu nhập không tồn tại!", HttpStatus.NOT_FOUND);
             }
@@ -283,7 +280,7 @@ public class ReceiptController {
 
             // Cập nhật nhà cung cấp
             Optional<NhaCungCap> nhaCungCapOpt = supplierRepository.findById(receiptDTO.getMaNhaCungCap());
-            if (!nhaCungCapOpt.isPresent()) {
+            if (nhaCungCapOpt.isEmpty()) {
                 logger.error("Nhà cung cấp không tồn tại: {}", receiptDTO.getMaNhaCungCap());
                 return new ResponseEntity<>("Nhà cung cấp không tồn tại!", HttpStatus.NOT_FOUND);
             }

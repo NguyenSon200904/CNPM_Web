@@ -66,12 +66,11 @@ const Login = () => {
         }
       );
 
-      // Sử dụng response để hiển thị thông báo
       message.success(
         response.data.message ||
           "Yêu cầu reset mật khẩu đã được gửi! Vui lòng kiểm tra email."
       );
-      console.log("Reset token (for testing):", response.data.resetToken); // Log token để kiểm tra
+      console.log("Reset token (for testing):", response.data.resetToken);
       setForgotPasswordModalVisible(false);
       forgotPasswordForm.resetFields();
     } catch (error) {
@@ -118,9 +117,9 @@ const Login = () => {
             ]}
           >
             <div>
-              <label className="block text-gray-300">Username</label>
+              <label className="block text-gray-300 mb-1">Username</label>
               <Input
-                className="w-full px-4 py-2 border-b bg-gray-900 border-gray-400 text-white focus:outline-none"
+                className="w-full px-4 py-2 rounded-md bg-gray-800 border border-gray-600 text-white focus:outline-none focus:border-green-500 focus:bg-gray-700 transition-colors duration-200 custom-input"
                 placeholder="Nhập tên đăng nhập"
               />
             </div>
@@ -131,9 +130,9 @@ const Login = () => {
             rules={[{ required: true, message: "Vui lòng nhập mật khẩu!" }]}
           >
             <div>
-              <label className="block text-gray-300">Password</label>
+              <label className="block text-gray-300 mb-1">Password</label>
               <Input.Password
-                className="w-full px-4 py-2 border-b bg-gray-900 border-gray-400 text-white focus:outline-none"
+                className="w-full px-4 py-2 rounded-md bg-gray-800 border border-gray-600 text-white focus:outline-none focus:border-green-500 focus:bg-gray-700 transition-colors duration-200 custom-input custom-password-input"
                 placeholder="Nhập mật khẩu"
               />
             </div>
@@ -186,9 +185,9 @@ const Login = () => {
             ]}
           >
             <div>
-              <label className="block text-gray-700">Tên đăng nhập</label>
+              <label className="block text-gray-700 mb-1">Tên đăng nhập</label>
               <Input
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none"
+                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-green-500"
                 placeholder="Nhập tên đăng nhập"
               />
             </div>
@@ -206,6 +205,70 @@ const Login = () => {
           </Form.Item>
         </Form>
       </Modal>
+
+      <style jsx>{`
+        .custom-input {
+          background-color: #1f2937 !important; /* gray-800 */
+          color: #ffffff !important; /* white */
+          border: 1px solid #4b5563 !important; /* gray-600 */
+          border-radius: 6px !important;
+        }
+        .custom-input:hover {
+          background-color: #ffffff !important; /* white */
+        }
+        .custom-input:focus {
+          background-color: #374151 !important; /* gray-700 */
+          border-color: #10b981 !important; /* green-500 */
+        }
+        .custom-input::placeholder {
+          color: #ffffff !important; /* white */
+        }
+        .custom-input:hover::placeholder {
+          color: #000000 !important; /* black */
+        }
+
+        .custom-password-input .ant-input-affix-wrapper {
+          background-color: #1f2937 !important; /* gray-800 */
+          border: 1px solid #4b5563 !important; /* gray-600 */
+          border-radius: 6px !important;
+        }
+        .custom-password-input .ant-input-affix-wrapper:hover {
+          background-color: #ffffff !important; /* white */
+        }
+        .custom-password-input .ant-input-affix-wrapper:focus-within {
+          background-color: #374151 !important; /* gray-700 */
+          border-color: #10b981 !important; /* green-500 */
+        }
+        .custom-password-input .ant-input {
+          background-color: transparent !important; /* Make input background transparent to match wrapper */
+          color: #ffffff !important; /* white */
+          border: none !important; /* Remove inner input border */
+        }
+        .custom-password-input .ant-input:hover {
+          background-color: transparent !important; /* Keep transparent on hover */
+        }
+        .custom-password-input .ant-input:focus {
+          background-color: transparent !important; /* Keep transparent on focus */
+        }
+        .custom-password-input .ant-input::placeholder {
+          color: #ffffff !important; /* white */
+        }
+        .custom-password-input .ant-input:hover::placeholder {
+          color: #000000 !important; /* black */
+        }
+        .custom-password-input .ant-input-password-icon {
+          color: #ffffff !important; /* white */
+        }
+        .custom-password-input .ant-input-password-icon:hover {
+          color: #10b981 !important; /* green-500 */
+        }
+        .custom-password-input .ant-input-suffix {
+          background: transparent !important; /* Remove the line by making suffix background transparent */
+        }
+        .custom-password-input .ant-input-affix-wrapper {
+          padding-right: 12px !important; /* Adjust padding to align icon properly */
+        }
+      `}</style>
     </div>
   );
 };

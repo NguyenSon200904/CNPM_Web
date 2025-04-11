@@ -1,7 +1,6 @@
 package com.example.warehouse.controller;
 
 import com.example.warehouse.model.ExportReceipt;
-import com.example.warehouse.model.Product;
 import com.example.warehouse.model.Receipt;
 import com.example.warehouse.service.ExportReceiptService;
 import com.example.warehouse.service.ProductService;

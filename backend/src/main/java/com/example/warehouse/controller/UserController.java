@@ -41,7 +41,7 @@ public class UserController {
 
       String username = authentication.getName();
       Optional<Account> accountOpt = accountRepository.findByUserName(username);
-      if (!accountOpt.isPresent()) {
+      if (accountOpt.isEmpty()) {
         logger.warn("Không tìm thấy người dùng: {}", username);
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
       }
@@ -56,7 +56,7 @@ public class UserController {
   @PutMapping("/users/{userName}")
   @Transactional
   public ResponseEntity<Map<String, String>> updateUser(
-      @PathVariable("userName") String userName,
+      @PathVariable String userName,
       @RequestBody Map<String, String> userData) {
     Map<String, String> response = new HashMap<>();
     try {
@@ -75,7 +75,7 @@ public class UserController {
       }
 
       Optional<Account> accountOpt = accountRepository.findByUserName(userName);
-      if (!accountOpt.isPresent()) {
+      if (accountOpt.isEmpty()) {
         logger.warn("Không tìm thấy người dùng: {}", userName);
         response.put("error", "Người dùng không tồn tại!");
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
@@ -115,7 +115,7 @@ public class UserController {
   @PutMapping("/users/{userName}/change-password")
   @Transactional
   public ResponseEntity<Map<String, String>> changePassword(
-      @PathVariable("userName") String userName,
+      @PathVariable String userName,
       @RequestBody Map<String, String> passwordData) {
     Map<String, String> response = new HashMap<>();
     try {
@@ -134,7 +134,7 @@ public class UserController {
       }
 
       Optional<Account> accountOpt = accountRepository.findByUserName(userName);
-      if (!accountOpt.isPresent()) {
+      if (accountOpt.isEmpty()) {
         logger.warn("Không tìm thấy người dùng: {}", userName);
         response.put("error", "Người dùng không tồn tại!");
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);

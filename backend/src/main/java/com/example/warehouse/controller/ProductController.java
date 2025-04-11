@@ -37,7 +37,7 @@ public class ProductController {
     @GetMapping("/products")
     @PreAuthorize("hasAnyRole('ROLE_Admin', 'ROLE_Manager', 'ROLE_Importer', 'ROLE_Exporter')")
     public ResponseEntity<List<ProductDTO>> getProducts(
-            @RequestParam(value = "loaiSanPham", required = false) String loaiSanPham) {
+            @RequestParam(required = false) String loaiSanPham) {
         try {
             List<ProductDTO> result = new ArrayList<>();
 
@@ -196,11 +196,11 @@ public class ProductController {
     @PutMapping("/products/{maSanPham}")
     @PreAuthorize("hasAnyRole('ROLE_Admin', 'ROLE_Manager')")
     public ResponseEntity<String> updateProduct(
-            @PathVariable("maSanPham") String maSanPham,
+            @PathVariable String maSanPham,
             @RequestBody ProductDTO productDTO) {
         try {
             Optional<SanPham> existingSanPhamOpt = sanPhamRepository.findById(maSanPham);
-            if (!existingSanPhamOpt.isPresent()) {
+            if (existingSanPhamOpt.isEmpty()) {
                 return new ResponseEntity<>("Sản phẩm không tồn tại!", HttpStatus.NOT_FOUND);
             }
 
@@ -260,10 +260,10 @@ public class ProductController {
     @DeleteMapping("/products/{maSanPham}")
     @PreAuthorize("hasAnyRole('ROLE_Admin', 'ROLE_Manager')")
     @Transactional // Thêm annotation này để đảm bảo giao dịch
-    public ResponseEntity<String> deleteProduct(@PathVariable("maSanPham") String maSanPham) {
+    public ResponseEntity<String> deleteProduct(@PathVariable String maSanPham) {
         try {
             Optional<SanPham> sanPhamOpt = sanPhamRepository.findById(maSanPham);
-            if (!sanPhamOpt.isPresent()) {
+            if (sanPhamOpt.isEmpty()) {
                 return new ResponseEntity<>("Sản phẩm không tồn tại!", HttpStatus.NOT_FOUND);
             }
 

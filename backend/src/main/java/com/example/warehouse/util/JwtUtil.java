@@ -2,9 +2,11 @@ package com.example.warehouse.util;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -16,6 +18,11 @@ public class JwtUtil {
 
     private String secret = "8J+5kPqWvXzY2mL9nR4tF7hC3sD6xA=="; // Khóa bí mật (giữ nguyên)
     private static final long RESET_TOKEN_VALIDITY = 15 * 60 * 1000; // 15 phút
+
+    // Tạo SecretKey từ secret string
+    private SecretKey getSigningKey() {
+        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+    }
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -36,9 +43,10 @@ public class JwtUtil {
 
     private Claims extractAllClaims(String token) {
         return Jwts.parser()
-                .setSigningKey(secret)
-                .parseClaimsJws(token)
-                .getBody();
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
     public boolean validateToken(String token) {
@@ -59,10 +67,10 @@ public class JwtUtil {
     // Tạo token reset mật khẩu
     public String generateResetToken(String username) {
         return Jwts.builder()
-                .setSubject(username)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + RESET_TOKEN_VALIDITY))
-                .signWith(SignatureAlgorithm.HS256, secret)
+                .subject(username)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + RESET_TOKEN_VALIDITY))
+                .signWith(getSigningKey())
                 .compact();
     }
 
@@ -70,9 +78,10 @@ public class JwtUtil {
     public String validateResetToken(String token) {
         try {
             return Jwts.parser()
-                    .setSigningKey(secret)
-                    .parseClaimsJws(token)
-                    .getBody()
+                    .verifyWith(getSigningKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload()
                     .getSubject();
         } catch (Exception e) {
             throw new RuntimeException("Token không hợp lệ hoặc đã hết hạn!");
@@ -81,11 +90,11 @@ public class JwtUtil {
 
     private String createToken(Map<String, Object> claims, String subject) {
         return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(subject)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) // 10 giờ
-                .signWith(SignatureAlgorithm.HS256, secret)
+                .claims(claims)
+                .subject(subject)
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) // 10 giờ
+                .signWith(getSigningKey())
                 .compact();
     }
 }
