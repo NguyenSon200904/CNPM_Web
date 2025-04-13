@@ -34,21 +34,16 @@ const Login = () => {
     } catch (error) {
       console.error("Login error:", error);
       if (error.response) {
-        console.log("Response data:", error.response.data);
-        console.log("Response status:", error.response.status);
-        console.log("Response headers:", error.response.headers);
         message.error(
           "Đăng nhập thất bại: " +
             (error.response.data.error ||
               "Tên đăng nhập hoặc mật khẩu không đúng")
         );
       } else if (error.request) {
-        console.log("Request:", error.request);
         message.error(
           "Không thể kết nối đến server. Vui lòng kiểm tra backend!"
         );
       } else {
-        console.log("Error message:", error.message);
         message.error("Đã có lỗi xảy ra: " + error.message);
       }
     } finally {
@@ -90,25 +85,29 @@ const Login = () => {
   };
 
   return (
-    <div className="fixed inset-0 flex w-screen h-screen">
-      <div className="w-1/2 flex flex-col items-center justify-center bg-green-500 text-white">
+    <div className="fixed inset-0 flex w-screen h-screen flex-col lg:flex-row">
+      <div className="w-full lg:w-1/2 flex flex-col items-center justify-center bg-green-500 text-white p-4 sm:p-6 md:p-8">
         <div className="flex flex-col items-center">
           <img
             src="https://cdn-icons-png.flaticon.com/512/456/456212.png"
             alt="User Icon"
-            className="w-28 h-28 mb-4"
+            className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 mb-4"
           />
-          <h2 className="text-4xl font-bold">LOGIN</h2>
+          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold">
+            LOGIN
+          </h2>
         </div>
       </div>
 
-      <div className="w-1/2 flex items-center justify-center bg-gray-900">
+      <div className="w-full lg:w-1/2 flex items-center justify-center bg-gray-900 p-4 sm:p-6 md:p-8">
         <Form
           form={form}
           onFinish={handleSubmit}
-          className="text-white w-96 p-8"
+          className="text-white w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-md p-4 sm:p-6 md:p-8"
         >
-          <h2 className="text-3xl font-semibold text-center mb-6">Đăng nhập</h2>
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-semibold text-center mb-6">
+            Đăng nhập
+          </h2>
 
           <Form.Item
             name="username"
@@ -117,7 +116,9 @@ const Login = () => {
             ]}
           >
             <div>
-              <label className="block text-gray-300 mb-1">Username</label>
+              <label className="block text-gray-300 mb-1 text-sm sm:text-base">
+                Username
+              </label>
               <Input
                 className="w-full px-4 py-2 rounded-md bg-gray-800 border border-gray-600 text-white focus:outline-none focus:border-green-500 focus:bg-gray-700 transition-colors duration-200 custom-input"
                 placeholder="Nhập tên đăng nhập"
@@ -130,7 +131,9 @@ const Login = () => {
             rules={[{ required: true, message: "Vui lòng nhập mật khẩu!" }]}
           >
             <div>
-              <label className="block text-gray-300 mb-1">Password</label>
+              <label className="block text-gray-300 mb-1 text-sm sm:text-base">
+                Password
+              </label>
               <Input.Password
                 className="w-full px-4 py-2 rounded-md bg-gray-800 border border-gray-600 text-white focus:outline-none focus:border-green-500 focus:bg-gray-700 transition-colors duration-200 custom-input custom-password-input"
                 placeholder="Nhập mật khẩu"
@@ -152,7 +155,7 @@ const Login = () => {
           <div className="text-center mt-4">
             <a
               href="#"
-              className="text-gray-300 hover:underline"
+              className="text-gray-300 hover:underline text-sm sm:text-base"
               onClick={(e) => {
                 e.preventDefault();
                 setForgotPasswordModalVisible(true);
@@ -172,6 +175,7 @@ const Login = () => {
           forgotPasswordForm.resetFields();
         }}
         footer={null}
+        className="custom-modal"
       >
         <Form
           form={forgotPasswordForm}
@@ -185,7 +189,9 @@ const Login = () => {
             ]}
           >
             <div>
-              <label className="block text-gray-700 mb-1">Tên đăng nhập</label>
+              <label className="block text-gray-700 mb-1 text-sm sm:text-base">
+                Tên đăng nhập
+              </label>
               <Input
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-green-500"
                 placeholder="Nhập tên đăng nhập"
@@ -240,33 +246,45 @@ const Login = () => {
           border-color: #10b981 !important; /* green-500 */
         }
         .custom-password-input .ant-input {
-          background-color: transparent !important; /* Make input background transparent to match wrapper */
-          color: #ffffff !important; /* white */
-          border: none !important; /* Remove inner input border */
+          background-color: transparent !important;
+          color: #ffffff !important;
+          border: none !important;
         }
         .custom-password-input .ant-input:hover {
-          background-color: transparent !important; /* Keep transparent on hover */
+          background-color: transparent !important;
         }
         .custom-password-input .ant-input:focus {
-          background-color: transparent !important; /* Keep transparent on focus */
+          background-color: transparent !important;
         }
         .custom-password-input .ant-input::placeholder {
-          color: #ffffff !important; /* white */
+          color: #ffffff !important;
         }
         .custom-password-input .ant-input:hover::placeholder {
-          color: #000000 !important; /* black */
+          color: #000000 !important;
         }
         .custom-password-input .ant-input-password-icon {
-          color: #ffffff !important; /* white */
+          color: #ffffff !important;
         }
         .custom-password-input .ant-input-password-icon:hover {
-          color: #10b981 !important; /* green-500 */
+          color: #10b981 !important;
         }
         .custom-password-input .ant-input-suffix {
-          background: transparent !important; /* Remove the line by making suffix background transparent */
+          background: transparent !important;
         }
         .custom-password-input .ant-input-affix-wrapper {
-          padding-right: 12px !important; /* Adjust padding to align icon properly */
+          padding-right: 12px !important;
+        }
+
+        /* Responsive Modal */
+        .custom-modal .ant-modal {
+          width: 90% !important;
+          max-width: 400px !important;
+        }
+        @media (max-width: 640px) {
+          .custom-modal .ant-modal {
+            width: 95% !important;
+            margin: 0 auto;
+          }
         }
       `}</style>
     </div>

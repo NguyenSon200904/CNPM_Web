@@ -1,11 +1,23 @@
 import { useState, useEffect, useRef } from "react";
-import { Button, Input, Select, Table, message, Modal } from "antd";
+import {
+  Button,
+  Input,
+  Select,
+  Table,
+  message,
+  Modal,
+  Drawer,
+  Menu,
+  Dropdown,
+} from "antd";
 import {
   FileExcelOutlined,
   DeleteOutlined,
   EditOutlined,
   PlusOutlined,
   ImportOutlined,
+  MenuOutlined,
+  DownOutlined,
 } from "@ant-design/icons";
 import api from "../api";
 import * as XLSX from "xlsx";
@@ -23,24 +35,34 @@ const ImportGoods = () => {
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [receiptCode, setReceiptCode] = useState("");
-  const [creatorRole, setCreatorRole] = useState(""); // Lưu role được chọn
+  const [creatorRole, setCreatorRole] = useState("");
   const [products, setProducts] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [loadingSuppliers, setLoadingSuppliers] = useState(false);
-  const [roleToUserNameMap, setRoleToUserNameMap] = useState({}); // Ánh xạ role -> userName
+  const [roleToUserNameMap, setRoleToUserNameMap] = useState({});
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Lấy danh sách tài khoản và tạo ánh xạ role -> userName
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+      if (window.innerWidth >= 768) {
+        setIsSidebarOpen(false);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
     const fetchAccounts = async () => {
       try {
         const response = await api.get("http://localhost:8080/api/users/list");
         const accounts = response.data;
-
-        // Nhóm tài khoản theo role và chọn userName đầu tiên cho mỗi role
         const roleMap = {};
         accounts.forEach((account) => {
           if (!roleMap[account.role]) {
@@ -48,13 +70,11 @@ const ImportGoods = () => {
           }
         });
         setRoleToUserNameMap(roleMap);
-
-        // Lấy userName từ localStorage và tìm role tương ứng
         const userName = localStorage.getItem("username") || "admin";
         const userRole = Object.keys(roleMap).find(
           (role) => roleMap[role] === userName
         );
-        setCreatorRole(userRole || ""); // Đặt role mặc định
+        setCreatorRole(userRole || "");
       } catch (error) {
         console.error("Lỗi khi lấy danh sách tài khoản:", error);
         messageApi.error("Không thể tải danh sách tài khoản!");
@@ -107,7 +127,7 @@ const ImportGoods = () => {
     fetchAccounts();
     fetchProducts();
     fetchSuppliers();
-  }, []);
+  }, [messageApi]);
 
   const filteredData = products.filter((product) => {
     const value = product[filterBy]?.toString().toLowerCase();
@@ -230,7 +250,6 @@ const ImportGoods = () => {
       0
     );
 
-    // Lấy userName tương ứng với role được chọn
     const selectedUserName = roleToUserNameMap[creatorRole];
     if (!selectedUserName) {
       messageApi.error("Không tìm thấy tài khoản phù hợp cho vai trò đã chọn!");
@@ -240,7 +259,7 @@ const ImportGoods = () => {
     const receiptData = {
       ngayNhap: moment().format("YYYY-MM-DDTHH:mm:ss"),
       tongTien: totalAmount,
-      nguoiTao: { userName: selectedUserName }, // Gửi userName lên backend
+      nguoiTao: { userName: selectedUserName },
       nhaCungCap: { maNhaCungCap: selectedSupplier },
       chiTietPhieuNhaps: selectedProducts.map((product) => ({
         id: {
@@ -277,15 +296,12 @@ const ImportGoods = () => {
       );
       console.log("Response từ server:", response.data);
       messageApi.success("Nhập hàng thành công!");
-
-      // Thông báo cho trang "Quản lý sản phẩm" làm mới dữ liệu
       localStorage.setItem("refreshProducts", Date.now().toString());
-
       setReceiptCode("");
       setSelectedSupplier(null);
       setSelectedProducts([]);
       setQuantities({});
-      setCreatorRole(""); // Reset role sau khi nhập hàng thành công
+      setCreatorRole("");
       navigate("/phieu-nhap");
     } catch (error) {
       console.error("Lỗi từ server:", error.response?.data || error.message);
@@ -399,7 +415,9 @@ const ImportGoods = () => {
     };
 
     reader.readAsArrayBuffer(file);
-    event.target.value = null;
+    if (fileInputRef.current) {
+      fileInputRef.current.value = null;
+    }
   };
 
   const totalAmount = selectedProducts.reduce(
@@ -409,17 +427,24 @@ const ImportGoods = () => {
 
   const columns = [
     { title: "Mã sản phẩm", dataIndex: "maSanPham", key: "maSanPham" },
-    { title: "Tên sản phẩm", dataIndex: "tenSanPham", key: "tenSanPham" },
+    {
+      title: "Tên sản phẩm",
+      dataIndex: "tenSanPham",
+      key: "tenSanPham",
+      ellipsis: true,
+    },
     {
       title: "Số lượng có thể nhập",
       dataIndex: "soLuongCoTheNhap",
       key: "soLuongCoTheNhap",
+      responsive: ["sm"],
     },
     {
       title: "Đơn giá",
       dataIndex: "gia",
       key: "gia",
       render: (gia) => gia.toLocaleString() + " VND",
+      responsive: ["md"],
     },
     {
       title: "Thêm",
@@ -433,12 +458,12 @@ const ImportGoods = () => {
             onChange={(e) =>
               handleQuantityChange(record.maSanPham, e.target.value)
             }
-            className="w-24 rounded-lg"
+            className="w-24 h-12 text-base rounded-lg"
           />
           <Button
             type="primary"
             icon={<PlusOutlined />}
-            className="w-20"
+            className="w-20 h-12 text-base"
             onClick={() => handleAddProduct(record)}
           >
             Thêm
@@ -456,13 +481,14 @@ const ImportGoods = () => {
       render: (_, __, index) => index + 1,
     },
     { title: "Mã sản phẩm", dataIndex: "maSanPham", key: "maSanPham" },
-    { title: "Tên sản phẩm", dataIndex: "name", key: "name" },
+    { title: "Tên sản phẩm", dataIndex: "name", key: "name", ellipsis: true },
     { title: "Số lượng", dataIndex: "quantity", key: "quantity" },
     {
       title: "Đơn giá",
       dataIndex: "price",
       key: "price",
       render: (price) => price.toLocaleString() + " VND",
+      responsive: ["sm"],
     },
     {
       title: "Thao tác",
@@ -471,6 +497,7 @@ const ImportGoods = () => {
         <div className="flex gap-2">
           <Button
             icon={<EditOutlined />}
+            className="h-10 text-base"
             onClick={() =>
               handleEditQuantity(
                 record.maSanPham,
@@ -481,6 +508,7 @@ const ImportGoods = () => {
           <Button
             icon={<DeleteOutlined />}
             danger
+            className="h-10 text-base"
             onClick={() => handleDeleteProduct(record.maSanPham)}
           />
         </div>
@@ -488,133 +516,275 @@ const ImportGoods = () => {
     },
   ];
 
-  return (
-    <div className="p-4 h-full flex flex-col">
-      {contextHolder}
-      <h2 className="text-2xl font-bold mb-4">Nhập hàng</h2>
-      <div className="grid grid-cols-2 gap-4 flex-grow min-h-[500px]">
-        <div className="bg-white p-4 shadow rounded flex flex-col flex-grow overflow-y-auto">
-          <h3 className="font-bold mb-2 text-black">Chọn sản phẩm</h3>
-          <div className="flex gap-2 w-full mb-4">
-            <Input
-              placeholder="Nhập từ khóa..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="flex-1 h-[50px] rounded-lg"
-            />
-            <Select
-              value={filterBy}
-              onChange={setFilterBy}
-              className="w-40 h-[50px] rounded-lg"
-            >
-              <Select.Option value="maSanPham">Mã sản phẩm</Select.Option>
-              <Select.Option value="tenSanPham">Tên sản phẩm</Select.Option>
-              <Select.Option value="soLuongCoTheNhap">
-                Số lượng có thể nhập
-              </Select.Option>
-              <Select.Option value="gia">Đơn giá</Select.Option>
-            </Select>
-            <Select
-              value={productType}
-              onChange={setProductType}
-              className="w-40 h-[50px] rounded-lg"
-            >
-              <Select.Option value="all">Tất cả</Select.Option>
-              <Select.Option value="computer">Máy tính</Select.Option>
-              <Select.Option value="phone">Điện thoại</Select.Option>
-            </Select>
-          </div>
-          <Table
-            dataSource={filteredData}
-            columns={columns}
-            rowKey="maSanPham"
-            pagination={{ pageSize: 5 }}
-            className="mt-2"
-            loading={loadingProducts}
-          />
-        </div>
+  const expandedRowRender = (record) => (
+    <div className="p-2">
+      <p>
+        <strong>Mã sản phẩm:</strong> {record.maSanPham}
+      </p>
+      <p>
+        <strong>Tên sản phẩm:</strong> {record.tenSanPham}
+      </p>
+      <p>
+        <strong>Số lượng có thể nhập:</strong> {record.soLuongCoTheNhap}
+      </p>
+      <p>
+        <strong>Đơn giá:</strong> {record.gia.toLocaleString()} VND
+      </p>
+    </div>
+  );
 
-        <div className="bg-white p-4 shadow rounded flex flex-col flex-grow overflow-y-auto">
-          <h3 className="font-bold mb-2 text-black">Thông tin nhập hàng</h3>
-          <div className="flex flex-col gap-2 flex-grow overflow-hidden">
-            <Input
-              placeholder="Mã phiếu nhập (tự động sinh)"
-              value={receiptCode}
-              onChange={(e) => setReceiptCode(e.target.value)}
-              className="border h-[50px] p-2 rounded-lg"
-              disabled
-            />
-            <Select
-              value={creatorRole}
-              onChange={setCreatorRole}
-              className="border h-[50px] rounded-lg"
-              placeholder="Chọn người tạo"
+  const selectedExpandedRowRender = (record) => (
+    <div className="p-2">
+      <p>
+        <strong>Mã sản phẩm:</strong> {record.maSanPham}
+      </p>
+      <p>
+        <strong>Tên sản phẩm:</strong> {record.name}
+      </p>
+      <p>
+        <strong>Số lượng:</strong> {record.quantity}
+      </p>
+      <p>
+        <strong>Đơn giá:</strong> {record.price.toLocaleString()} VND
+      </p>
+    </div>
+  );
+
+  const menu = (
+    <Menu>
+      <Menu.Item key="import" onClick={() => fileInputRef.current.click()}>
+        <FileExcelOutlined /> Nhập Excel
+      </Menu.Item>
+    </Menu>
+  );
+
+  return (
+    <div className="relative">
+      {contextHolder}
+
+      {/* Nút mở sidebar trên mobile */}
+      {isMobile && (
+        <Button
+          icon={<MenuOutlined />}
+          onClick={() => setIsSidebarOpen(true)}
+          className="fixed top-4 left-4 z-10 h-12 w-12 text-base bg-blue-500 text-white"
+        />
+      )}
+
+      {/* Sidebar dưới dạng Drawer trên mobile */}
+      <Drawer
+        title="Menu"
+        placement="left"
+        onClose={() => setIsSidebarOpen(false)}
+        open={isSidebarOpen}
+        width={200}
+      >
+        <Menu mode="vertical">
+          <Menu.Item key="sanpham">SẢN PHẨM</Menu.Item>
+          <Menu.Item key="nhacungcap">NHÀ CUNG CẤP</Menu.Item>
+          <Menu.Item key="nhaphang">NHẬP HÀNG</Menu.Item>
+          <Menu.Item key="phieunhap">PHIẾU NHẬP</Menu.Item>
+          <Menu.Item key="xuathang">XUẤT HÀNG</Menu.Item>
+          <Menu.Item key="phieuxuat">PHIẾU XUẤT</Menu.Item>
+          <Menu.Item key="tonkho">TỒN KHO</Menu.Item>
+          <Menu.Item key="taikhoan">TÀI KHOẢN</Menu.Item>
+          <Menu.Item key="thongke">THỐNG KÊ</Menu.Item>
+          <Menu.Item key="doithongtin">ĐỔI THÔNG TIN</Menu.Item>
+        </Menu>
+      </Drawer>
+
+      <div className="p-4 sm:p-6 md:p-8">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-6 sm:mb-8 text-left">
+          NHẬP HÀNG
+        </h2>
+
+        <div
+          className={`grid ${
+            isMobile ? "grid-cols-1" : "grid-cols-2"
+          } gap-6 mb-6 sm:mb-8`}
+        >
+          <div className="bg-white p-4 shadow rounded flex flex-col flex-grow">
+            <h3 className="font-bold mb-2 text-black text-base sm:text-lg">
+              Chọn sản phẩm
+            </h3>
+            <div
+              className={`flex ${
+                isMobile ? "flex-col" : "flex-row"
+              } gap-3 mb-6 sm:mb-8`}
             >
-              {Object.keys(roleToUserNameMap).map((role) => (
-                <Option key={role} value={role}>
-                  {role}
-                </Option>
-              ))}
-            </Select>
-            <Select
-              value={selectedSupplier}
-              onChange={setSelectedSupplier}
-              className="border h-[50px] rounded-lg"
-              loading={loadingSuppliers}
-            >
-              <Select.Option value={null} disabled>
-                Chọn nhà cung cấp
-              </Select.Option>
-              {suppliers.map((supplier, index) => (
-                <Select.Option key={index} value={supplier.maNhaCungCap}>
-                  {supplier.tenNhaCungCap}
+              <Input
+                placeholder="Nhập từ khóa..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full h-12 text-base rounded-lg"
+              />
+              <Select
+                value={filterBy}
+                onChange={setFilterBy}
+                className="w-full sm:w-40 h-12 text-base rounded-lg"
+              >
+                <Select.Option value="maSanPham">Mã sản phẩm</Select.Option>
+                <Select.Option value="tenSanPham">Tên sản phẩm</Select.Option>
+                <Select.Option value="soLuongCoTheNhap">
+                  Số lượng có thể nhập
                 </Select.Option>
-              ))}
-            </Select>
-            <div className="flex-grow overflow-hidden">
-              {selectedProducts.length === 0 ? (
-                <div className="flex items-center justify-center h-full">
-                  <input
-                    type="file"
-                    accept=".xlsx, .xls"
-                    onChange={handleImportExcel}
-                    style={{ display: "none" }}
-                    ref={fileInputRef}
-                  />
-                  <Button
-                    type="primary"
-                    icon={<FileExcelOutlined />}
-                    onClick={() => fileInputRef.current.click()}
-                  >
-                    Nhập Excel
-                  </Button>
-                </div>
-              ) : (
-                <Table
-                  dataSource={selectedProducts}
-                  columns={selectedColumns}
-                  rowKey="maSanPham"
-                  pagination={false}
-                  scroll={{ y: 240 }}
-                />
-              )}
+                <Select.Option value="gia">Đơn giá</Select.Option>
+              </Select>
+              <Select
+                value={productType}
+                onChange={setProductType}
+                className="w-full sm:w-40 h-12 text-base rounded-lg"
+              >
+                <Select.Option value="all">Tất cả</Select.Option>
+                <Select.Option value="computer">Máy tính</Select.Option>
+                <Select.Option value="phone">Điện thoại</Select.Option>
+              </Select>
             </div>
+            <Table
+              dataSource={filteredData}
+              columns={columns}
+              rowKey="maSanPham"
+              expandable={{
+                expandedRowRender,
+                expandRowByClick: true,
+              }}
+              pagination={{ pageSize: 5 }}
+              className="custom-table mt-2"
+              loading={loadingProducts}
+              scroll={{ x: isMobile ? 300 : "max-content" }}
+            />
           </div>
-          <div className="border-t mt-4 pt-2 flex justify-between items-center font-bold bg-white p-4 shadow-md sticky bottom-0 w-full">
-            <p className="text-lg text-red-500">
-              Tổng tiền: {totalAmount.toLocaleString()} VND
-            </p>
-            <Button
-              type="primary"
-              icon={<ImportOutlined />}
-              className="bg-blue-500 hover:bg-blue-600"
-              onClick={handleImportGoods}
-            >
-              Nhập hàng
-            </Button>
+
+          <div className="bg-white p-4 shadow rounded flex flex-col flex-grow">
+            <h3 className="font-bold mb-2 text-black text-base sm:text-lg">
+              Thông tin nhập hàng
+            </h3>
+            <div className="flex flex-col gap-3 flex-grow overflow-hidden">
+              <Input
+                placeholder="Mã phiếu nhập (tự động sinh)"
+                value={receiptCode}
+                onChange={(e) => setReceiptCode(e.target.value)}
+                className="w-full h-12 text-base rounded-lg"
+                disabled
+              />
+              <Select
+                value={creatorRole}
+                onChange={setCreatorRole}
+                className="w-full h-12 text-base rounded-lg"
+                placeholder="Chọn người tạo"
+              >
+                {Object.keys(roleToUserNameMap).map((role) => (
+                  <Option key={role} value={role}>
+                    {role}
+                  </Option>
+                ))}
+              </Select>
+              <Select
+                value={selectedSupplier}
+                onChange={setSelectedSupplier}
+                className="w-full h-12 text-base rounded-lg"
+                loading={loadingSuppliers}
+              >
+                <Select.Option value={null} disabled>
+                  Chọn nhà cung cấp
+                </Select.Option>
+                {suppliers.map((supplier, index) => (
+                  <Select.Option key={index} value={supplier.maNhaCungCap}>
+                    {supplier.tenNhaCungCap}
+                  </Select.Option>
+                ))}
+              </Select>
+              <div className="flex-grow overflow-hidden">
+                {selectedProducts.length === 0 ? (
+                  <div className="flex items-center justify-center h-full">
+                    <input
+                      type="file"
+                      accept=".xlsx, .xls"
+                      onChange={handleImportExcel}
+                      style={{ display: "none" }}
+                      ref={fileInputRef}
+                    />
+                    <Button
+                      type="primary"
+                      icon={<FileExcelOutlined />}
+                      className="h-12 text-base"
+                      onClick={() => fileInputRef.current.click()}
+                    >
+                      Nhập Excel
+                    </Button>
+                  </div>
+                ) : (
+                  <Table
+                    dataSource={selectedProducts}
+                    columns={selectedColumns}
+                    rowKey="maSanPham"
+                    expandable={{
+                      expandedRowRender: selectedExpandedRowRender,
+                      expandRowByClick: true,
+                    }}
+                    pagination={false}
+                    scroll={{ y: 240, x: isMobile ? 300 : "max-content" }}
+                    className="custom-table"
+                  />
+                )}
+              </div>
+            </div>
+            <div className="border-t mt-4 pt-2 flex flex-col sm:flex-row gap-3 justify-between items-center font-bold bg-white p-4 shadow-md sticky bottom-0 w-full">
+              <p className="text-base sm:text-lg text-red-500">
+                Tổng tiền: {totalAmount.toLocaleString()} VND
+              </p>
+              <div className="flex gap-3">
+                {isMobile && selectedProducts.length > 0 && (
+                  <Dropdown overlay={menu}>
+                    <Button className="min-w-[100px] h-12 text-base">
+                      Thêm <DownOutlined />
+                    </Button>
+                  </Dropdown>
+                )}
+                <Button
+                  type="primary"
+                  icon={<ImportOutlined />}
+                  className="min-w-[120px] h-12 text-base bg-blue-500 hover:bg-blue-600"
+                  onClick={handleImportGoods}
+                >
+                  Nhập hàng
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
+      <style jsx>{`
+        /* Điều chỉnh bảng */
+        .custom-table .ant-table {
+          font-size: 14px;
+        }
+        @media (max-width: 640px) {
+          .custom-table .ant-table {
+            font-size: 12px;
+          }
+          .custom-table .ant-table-thead > tr > th,
+          .custom-table .ant-table-tbody > tr > td {
+            padding: 8px !important;
+          }
+        }
+        @media (min-width: 1024px) {
+          .custom-table .ant-table {
+            font-size: 16px;
+          }
+        }
+
+        /* Ẩn sidebar trên mobile */
+        @media (max-width: 768px) {
+          .ant-layout-sider {
+            display: none !important;
+          }
+          .ant-layout-content {
+            margin-left: 0 !important;
+          }
+        }
+      `}</style>
     </div>
   );
 };

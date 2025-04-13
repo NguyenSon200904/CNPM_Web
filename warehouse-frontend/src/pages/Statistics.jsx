@@ -1,11 +1,23 @@
 import { useState, useEffect, useMemo } from "react";
-import { Card, Table, Input, Select, DatePicker, Tabs, message } from "antd";
+import {
+  Card,
+  Table,
+  Input,
+  Select,
+  DatePicker,
+  Tabs,
+  Drawer,
+  Menu,
+  Button,
+  Modal,
+} from "antd";
 import {
   ShoppingOutlined,
   TeamOutlined,
   UserOutlined,
+  MenuOutlined,
 } from "@ant-design/icons";
-import api from "../api"; // Import instance api từ api.jsx
+import api from "../api";
 import moment from "moment";
 
 const { Option } = Select;
@@ -29,11 +41,26 @@ const Statistics = () => {
     accountCount: 0,
   });
   const [loading, setLoading] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  // Cập nhật trạng thái isMobile khi thay đổi kích thước màn hình
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+      if (window.innerWidth >= 768) {
+        setIsSidebarOpen(false);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // Đặt lại các bộ lọc khi chuyển tab
   useEffect(() => {
     setSearchTerm("");
     setDateRange([]);
+    setCurrentPage(1);
     const defaultFilter = {
       products: "code",
       invoices: "key",
@@ -52,17 +79,26 @@ const Statistics = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Lấy dữ liệu sản phẩm
-        const inventoryResponse = await api.get("/inventory");
-        const receiptsResponse = await api.get("/receipts");
-        const exportReceiptsResponse = await api.get("/export-receipts");
+        const inventoryResponse = await api.get("/inventory", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        });
+        const receiptsResponse = await api.get("/receipts", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        });
+        const exportReceiptsResponse = await api.get("/export-receipts", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        });
 
-        // Tính số lượng nhập và xuất cho từng sản phẩm
         const importQuantities = {};
         const exportQuantities = {};
 
-        // Xử lý dữ liệu phiếu nhập
-        console.log("Dữ liệu từ /receipts:", receiptsResponse.data); // Thêm log để kiểm tra
+        console.log("Dữ liệu từ /receipts:", receiptsResponse.data);
         if (receiptsResponse?.data && Array.isArray(receiptsResponse.data)) {
           receiptsResponse.data.forEach((receipt) => {
             if (receipt?.details && Array.isArray(receipt.details)) {
@@ -79,11 +115,10 @@ const Statistics = () => {
           console.warn("Dữ liệu từ /receipts không hợp lệ:", receiptsResponse);
         }
 
-        // Xử lý dữ liệu phiếu xuất
         console.log(
           "Dữ liệu từ /export-receipts:",
           exportReceiptsResponse.data
-        ); // Thêm log để kiểm tra
+        );
         if (
           exportReceiptsResponse?.data &&
           Array.isArray(exportReceiptsResponse.data)
@@ -109,7 +144,6 @@ const Statistics = () => {
           );
         }
 
-        // Xử lý dữ liệu sản phẩm
         const productsData =
           inventoryResponse?.data && Array.isArray(inventoryResponse.data)
             ? inventoryResponse.data.map((item, index) => {
@@ -120,7 +154,7 @@ const Statistics = () => {
                   importQuantities[item.maSanPham],
                   "Xuất:",
                   exportQuantities[item.maSanPham]
-                ); // Thêm log để kiểm tra
+                );
                 return {
                   key: index + 1,
                   code: item.maSanPham || "N/A",
@@ -131,11 +165,10 @@ const Statistics = () => {
               })
             : [];
 
-        // Xử lý dữ liệu phiếu (kết hợp phiếu nhập và phiếu xuất)
         const invoicesData = [
           ...(receiptsResponse?.data && Array.isArray(receiptsResponse.data)
             ? receiptsResponse.data
-                .filter((receipt) => receipt.maPhieu) // Lọc bỏ các phiếu không có maPhieu
+                .filter((receipt) => receipt.maPhieu)
                 .map((receipt) => ({
                   key: `PN-${receipt.maPhieu}`,
                   type: "Phiếu nhập",
@@ -149,7 +182,7 @@ const Statistics = () => {
           ...(exportReceiptsResponse?.data &&
           Array.isArray(exportReceiptsResponse.data)
             ? exportReceiptsResponse.data
-                .filter((exportReceipt) => exportReceipt.maPhieuXuat) // Lọc bỏ các phiếu không có maPhieuXuat
+                .filter((exportReceipt) => exportReceipt.maPhieuXuat)
                 .map((exportReceipt) => ({
                   key: `PX-${exportReceipt.maPhieuXuat}`,
                   type: "Phiếu xuất",
@@ -164,11 +197,14 @@ const Statistics = () => {
           (a, b) =>
             moment(a.date, "DD/MM/YYYY HH:mm").unix() -
             moment(b.date, "DD/MM/YYYY HH:mm").unix()
-        ); // Sắp xếp từ cũ đến mới
+        );
 
-        // Lấy dữ liệu tài khoản
-        const accountsResponse = await api.get("/accounts");
-        console.log("Dữ liệu từ /accounts:", accountsResponse.data); // Thêm log để kiểm tra
+        const accountsResponse = await api.get("/accounts", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        });
+        console.log("Dữ liệu từ /accounts:", accountsResponse.data);
         const accountsData =
           accountsResponse?.data && Array.isArray(accountsResponse.data)
             ? accountsResponse.data.map((account, index) => ({
@@ -176,22 +212,23 @@ const Statistics = () => {
                 username: account.userName || "N/A",
                 fullname: account.fullName || "N/A",
                 email: account.email || "N/A",
-                role: account.role || "Không xác định", // Hiển thị trực tiếp role từ backend
+                role: account.role || "Không xác định",
                 status: account.status === 1 ? "Active" : "Inactive",
               }))
             : [];
 
-        // Lấy số lượng nhà cung cấp
-        const suppliersResponse = await api.get("/suppliers");
+        const suppliersResponse = await api.get("/suppliers", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        });
 
-        // Cập nhật dữ liệu
         setData({
           products: productsData,
           invoices: invoicesData,
           accounts: accountsData,
         });
 
-        // Cập nhật số liệu cho các Card
         setStats({
           productCount: inventoryResponse?.data
             ? inventoryResponse.data.filter((item) => item.soLuongTonKho > 0)
@@ -202,10 +239,12 @@ const Statistics = () => {
         });
       } catch (error) {
         console.error("Error fetching statistics data:", error);
-        message.error(
-          "Lỗi khi tải dữ liệu thống kê: " +
-            (error.response?.data?.error || error.message)
-        );
+        Modal.error({
+          title: "Lỗi",
+          content:
+            "Lỗi khi tải dữ liệu thống kê: " +
+            (error.response?.data?.error || error.message),
+        });
       } finally {
         setLoading(false);
       }
@@ -216,17 +255,37 @@ const Statistics = () => {
   // Cấu hình cột cho từng tab
   const columns = {
     products: [
-      { title: "STT", dataIndex: "key", key: "key" },
+      { title: "STT", dataIndex: "key", key: "key", responsive: ["sm"] },
       { title: "Mã máy", dataIndex: "code", key: "code" },
-      { title: "Tên máy", dataIndex: "name", key: "name" },
-      { title: "Số lượng nhập", dataIndex: "imported", key: "imported" },
-      { title: "Số lượng xuất", dataIndex: "exported", key: "exported" },
+      { title: "Tên máy", dataIndex: "name", key: "name", ellipsis: true },
+      {
+        title: "Số lượng nhập",
+        dataIndex: "imported",
+        key: "imported",
+        responsive: ["md"],
+      },
+      {
+        title: "Số lượng xuất",
+        dataIndex: "exported",
+        key: "exported",
+        responsive: ["md"],
+      },
     ],
     invoices: [
       { title: "Mã phiếu", dataIndex: "key", key: "key" },
       { title: "Loại phiếu", dataIndex: "type", key: "type" },
-      { title: "Người tạo", dataIndex: "creator", key: "creator" },
-      { title: "Thời gian tạo", dataIndex: "date", key: "date" },
+      {
+        title: "Người tạo",
+        dataIndex: "creator",
+        key: "creator",
+        responsive: ["sm"],
+      },
+      {
+        title: "Thời gian tạo",
+        dataIndex: "date",
+        key: "date",
+        responsive: ["md"],
+      },
       {
         title: "Tổng tiền",
         dataIndex: "total",
@@ -236,11 +295,87 @@ const Statistics = () => {
     ],
     accounts: [
       { title: "Họ và tên", dataIndex: "fullname", key: "fullname" },
-      { title: "Email", dataIndex: "email", key: "email" },
-      { title: "Tên người dùng", dataIndex: "username", key: "username" },
-      { title: "Vai trò", dataIndex: "role", key: "role" },
-      { title: "Tình trạng", dataIndex: "status", key: "status" },
+      { title: "Email", dataIndex: "email", key: "email", responsive: ["md"] },
+      {
+        title: "Tên người dùng",
+        dataIndex: "username",
+        key: "username",
+        responsive: ["sm"],
+      },
+      { title: "Vai trò", dataIndex: "role", key: "role", responsive: ["md"] },
+      {
+        title: "Tình trạng",
+        dataIndex: "status",
+        key: "status",
+        responsive: ["md"],
+      },
     ],
+  };
+
+  // Dữ liệu mở rộng cho mỗi dòng trong bảng
+  const expandedRowRender = (record) => {
+    if (activeTab === "products") {
+      return (
+        <div className="p-2">
+          <p>
+            <strong>STT:</strong> {record.key}
+          </p>
+          <p>
+            <strong>Mã máy:</strong> {record.code}
+          </p>
+          <p>
+            <strong>Tên máy:</strong> {record.name}
+          </p>
+          <p>
+            <strong>Số lượng nhập:</strong> {record.imported}
+          </p>
+          <p>
+            <strong>Số lượng xuất:</strong> {record.exported}
+          </p>
+        </div>
+      );
+    } else if (activeTab === "invoices") {
+      return (
+        <div className="p-2">
+          <p>
+            <strong>Mã phiếu:</strong> {record.key}
+          </p>
+          <p>
+            <strong>Loại phiếu:</strong> {record.type}
+          </p>
+          <p>
+            <strong>Người tạo:</strong> {record.creator}
+          </p>
+          <p>
+            <strong>Thời gian tạo:</strong> {record.date}
+          </p>
+          <p>
+            <strong>Tổng tiền:</strong> {record.total.toLocaleString()}đ
+          </p>
+        </div>
+      );
+    } else if (activeTab === "accounts") {
+      return (
+        <div className="p-2">
+          <p>
+            <strong>Họ và tên:</strong> {record.fullname}
+          </p>
+          <p>
+            <strong>Email:</strong> {record.email}
+          </p>
+          <p>
+            <strong>Tên người dùng:</strong> {record.username}
+          </p>
+          <p>
+            <strong>Vai trò:</strong> {record.role}
+          </p>
+          <p>
+            <strong>Tình trạng:</strong> {record.status}
+          </p>
+        </div>
+      );
+    }
+    return null;
   };
 
   // Cấu hình tiêu chí lọc cho từng tab
@@ -289,80 +424,191 @@ const Statistics = () => {
   }, [searchTerm, activeTab, filterKey, dateRange, data]);
 
   return (
-    <div className="p-4 -mt-6">
-      <div className="grid grid-cols-3 gap-4 mb-4">
-        <Card className="p-4 flex items-center bg-yellow-400 text-white h-32">
-          <div className="text-6xl flex-shrink-0 mr-4">
-            <ShoppingOutlined />
-          </div>
-          <div className="flex flex-col items-start text-lg font-bold">
-            <div className="text-3xl">{stats.productCount}</div>
-            <div>Sản phẩm trong kho</div>
-          </div>
-        </Card>
-        <Card className="p-4 flex items-center bg-orange-500 text-white h-32">
-          <div className="text-6xl flex-shrink-0 mr-4">
-            <TeamOutlined />
-          </div>
-          <div className="flex flex-col items-start text-lg font-bold">
-            <div className="text-3xl">{stats.supplierCount}</div>
-            <div>Nhà cung cấp</div>
-          </div>
-        </Card>
-        <Card className="p-4 flex items-center bg-teal-500 text-white h-32">
-          <div className="text-6xl flex-shrink-0 mr-4">
-            <UserOutlined />
-          </div>
-          <div className="flex flex-col items-start text-lg font-bold">
-            <div className="text-3xl">{stats.accountCount}</div>
-            <div>Tài khoản người dùng</div>
-          </div>
-        </Card>
-      </div>
-      <Tabs activeKey={activeTab} onChange={handleTabChange} className="mb-4">
-        <TabPane tab="Sản phẩm" key="products" />
-        <TabPane tab="Phiếu" key="invoices" />
-        <TabPane tab="Tài khoản" key="accounts" />
-      </Tabs>
-      <div className="flex gap-2 mb-4 items-center">
-        <Input
-          placeholder="Nhập từ khóa..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-60 md:w-80 h-[50px]"
+    <div className="relative">
+      {/* Nút mở sidebar trên mobile */}
+      {isMobile && (
+        <Button
+          icon={<MenuOutlined />}
+          onClick={() => setIsSidebarOpen(true)}
+          className="fixed top-4 left-4 z-10 h-12 w-12 text-base bg-blue-500 text-white rounded-lg"
         />
-        <Select
-          value={filterKey}
-          onChange={setFilterKey}
-          className="w-40 h-[50px]"
-        >
-          {filterOptions[activeTab].map((option) => (
-            <Option key={option.value} value={option.value}>
-              {option.label}
-            </Option>
-          ))}
-        </Select>
-        {activeTab === "invoices" && (
-          <div className="ml-auto flex items-center gap-2 text-black">
-            <span>Lọc theo ngày:</span>
-            <RangePicker
-              onChange={(dates) => setDateRange(dates)}
-              format="DD/MM/YYYY"
-            />
+      )}
+
+      {/* Sidebar dưới dạng Drawer trên mobile */}
+      <Drawer
+        title="Menu"
+        placement="left"
+        onClose={() => setIsSidebarOpen(false)}
+        open={isSidebarOpen}
+        width={200}
+      >
+        <Menu mode="vertical">
+          <Menu.Item key="sanpham">SẢN PHẨM</Menu.Item>
+          <Menu.Item key="nhacungcap">NHÀ CUNG CẤP</Menu.Item>
+          <Menu.Item key="nhaphang">NHẬP HÀNG</Menu.Item>
+          <Menu.Item key="phieunhap">PHIẾU NHẬP</Menu.Item>
+          <Menu.Item key="xuathang">XUẤT HÀNG</Menu.Item>
+          <Menu.Item key="phieuxuat">PHIẾU XUẤT</Menu.Item>
+          <Menu.Item key="tonkho">TỒN KHO</Menu.Item>
+          <Menu.Item key="taikhoan">TÀI KHOẢN</Menu.Item>
+          <Menu.Item key="thongke">THỐNG KÊ</Menu.Item>
+          <Menu.Item key="doithongtin">ĐỔI THÔNG TIN</Menu.Item>
+        </Menu>
+      </Drawer>
+
+      <div className="p-4 sm:p-6 md:p-8">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 sm:mb-6 text-left">
+          THỐNG KÊ
+        </h2>
+
+        <div className="flex flex-col gap-4 mb-4 sm:mb-6">
+          <div
+            className={`grid ${
+              isMobile ? "grid-cols-1" : "grid-cols-3"
+            } gap-3 sm:gap-4 mb-3 sm:mb-4`}
+          >
+            <Card className="p-3 sm:p-4 flex items-center bg-yellow-400 text-white h-24 sm:h-28">
+              <div className="text-4xl sm:text-5xl flex-shrink-0 mr-3 sm:mr-4">
+                <ShoppingOutlined />
+              </div>
+              <div className="flex flex-col items-start text-sm sm:text-base font-bold">
+                <div className="text-xl sm:text-2xl">{stats.productCount}</div>
+                <div>Sản phẩm trong kho</div>
+              </div>
+            </Card>
+            <Card className="p-3 sm:p-4 flex items-center bg-orange-500 text-white h-24 sm:h-28">
+              <div className="text-4xl sm:text-5xl flex-shrink-0 mr-3 sm:mr-4">
+                <TeamOutlined />
+              </div>
+              <div className="flex flex-col items-start text-sm sm:text-base font-bold">
+                <div className="text-xl sm:text-2xl">{stats.supplierCount}</div>
+                <div>Nhà cung cấp</div>
+              </div>
+            </Card>
+            <Card className="p-3 sm:p-4 flex items-center bg-teal-500 text-white h-24 sm:h-28">
+              <div className="text-4xl sm:text-5xl flex-shrink-0 mr-3 sm:mr-4">
+                <UserOutlined />
+              </div>
+              <div className="flex flex-col items-start text-sm sm:text-base font-bold">
+                <div className="text-xl sm:text-2xl">{stats.accountCount}</div>
+                <div>Tài khoản người dùng</div>
+              </div>
+            </Card>
           </div>
-        )}
+
+          <Tabs
+            activeKey={activeTab}
+            onChange={handleTabChange}
+            className="mb-3 sm:mb-4 custom-tabs"
+          >
+            <TabPane tab="Sản phẩm" key="products" />
+            <TabPane tab="Phiếu" key="invoices" />
+            <TabPane tab="Tài khoản" key="accounts" />
+          </Tabs>
+
+          <div className="flex flex-col gap-2 sm:gap-3">
+            <Input
+              placeholder="Nhập từ khóa..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full h-12 text-base rounded-lg"
+            />
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+              <Select
+                value={filterKey}
+                onChange={setFilterKey}
+                className="w-full sm:w-40 h-12 text-base rounded-lg"
+              >
+                {filterOptions[activeTab].map((option) => (
+                  <Option key={option.value} value={option.value}>
+                    {option.label}
+                  </Option>
+                ))}
+              </Select>
+              {activeTab === "invoices" && (
+                <div className="flex flex-col sm:flex-row sm:ml-auto items-start sm:items-center gap-2 sm:gap-3 text-black w-full sm:w-auto">
+                  <span className="w-full sm:w-auto">Lọc theo ngày:</span>
+                  <RangePicker
+                    onChange={(dates) => setDateRange(dates)}
+                    format="DD/MM/YYYY"
+                    className="w-full sm:w-auto h-12 text-base rounded-lg"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <Table
+          dataSource={filteredData}
+          columns={columns[activeTab]}
+          expandable={{
+            expandedRowRender,
+            expandRowByClick: true,
+          }}
+          pagination={{
+            pageSize: 2,
+            current: currentPage,
+            onChange: (page) => setCurrentPage(page),
+          }}
+          bordered
+          loading={loading}
+          scroll={{
+            x: isMobile ? 300 : "max-content",
+            y: isMobile ? 300 : 400,
+          }}
+          className="custom-table"
+        />
       </div>
-      <Table
-        dataSource={filteredData}
-        columns={columns[activeTab]}
-        pagination={{
-          pageSize: 5,
-          current: currentPage,
-          onChange: (page) => setCurrentPage(page),
-        }}
-        bordered
-        loading={loading}
-      />
+
+      <style jsx>{`
+        /* Điều chỉnh bảng */
+        .custom-table .ant-table {
+          font-size: 14px;
+        }
+        @media (max-width: 640px) {
+          .custom-table .ant-table {
+            font-size: 12px;
+          }
+          .custom-table .ant-table-thead > tr > th,
+          .custom-table .ant-table-tbody > tr > td {
+            padding: 8px !important;
+          }
+        }
+        @media (min-width: 1024px) {
+          .custom-table .ant-table {
+            font-size: 16px;
+          }
+        }
+
+        /* Điều chỉnh tabs */
+        .custom-tabs .ant-tabs-tab {
+          font-size: 14px;
+          padding: 8px 16px;
+        }
+        @media (max-width: 640px) {
+          .custom-tabs .ant-tabs-tab {
+            font-size: 12px;
+            padding: 6px 12px;
+          }
+        }
+        @media (min-width: 1024px) {
+          .custom-tabs .ant-tabs-tab {
+            font-size: 16px;
+            padding: 10px 20px;
+          }
+        }
+
+        /* Ẩn sidebar trên mobile */
+        @media (max-width: 768px) {
+          .ant-layout-sider {
+            display: none !important;
+          }
+          .ant-layout-content {
+            margin-left: 0 !important;
+          }
+        }
+      `}</style>
     </div>
   );
 };

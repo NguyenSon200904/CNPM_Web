@@ -9,12 +9,17 @@ import {
   InputNumber,
   Select,
   App,
+  Drawer,
+  Menu,
+  Dropdown,
 } from "antd";
 import {
   FileExcelOutlined,
   DeleteOutlined,
   EditOutlined,
   EyeOutlined,
+  MenuOutlined,
+  DownOutlined,
 } from "@ant-design/icons";
 import api from "../api";
 import * as XLSX from "xlsx";
@@ -37,7 +42,20 @@ const ImportReceipts = () => {
   const [form] = Form.useForm();
   const [userNameToRoleMap, setUserNameToRoleMap] = useState({});
   const [roleToUserNameMap, setRoleToUserNameMap] = useState({});
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+      if (window.innerWidth >= 768) {
+        setIsSidebarOpen(false);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     const fetchAccounts = async () => {
@@ -66,7 +84,7 @@ const ImportReceipts = () => {
     };
 
     fetchAccounts();
-  }, []);
+  }, [message]);
 
   useEffect(() => {
     fetchReceipts();
@@ -223,7 +241,6 @@ const ImportReceipts = () => {
         maPhieu: selectedReceipt.id,
         maNhaCungCap: values.maNhaCungCap,
         nguoiTao: selectedUserName,
-        // Không gửi chiTietPhieuNhaps vì không cho phép chỉnh sửa
       };
 
       console.log("Dữ liệu gửi lên server:", updatedReceipt);
@@ -259,7 +276,7 @@ const ImportReceipts = () => {
     Modal.info({
       title: `Chi tiết phiếu nhập #${receipt.id}`,
       content: (
-        <div>
+        <div className="max-h-[60vh] overflow-y-auto">
           <p>
             <strong>Nhà cung cấp:</strong> {receipt.supplier}
           </p>
@@ -293,11 +310,13 @@ const ImportReceipts = () => {
                   title: "Tên sản phẩm",
                   dataIndex: "tenSanPham",
                   key: "tenSanPham",
+                  ellipsis: true,
                 },
                 {
                   title: "Loại sản phẩm",
                   dataIndex: "loaiSanPham",
                   key: "loaiSanPham",
+                  responsive: ["sm"],
                 },
                 {
                   title: "Số lượng",
@@ -309,16 +328,19 @@ const ImportReceipts = () => {
                   dataIndex: "donGia",
                   key: "donGia",
                   render: (value) => `${value.toLocaleString()}đ`,
+                  responsive: ["sm"],
                 },
               ]}
               pagination={false}
+              scroll={{ x: isMobile ? 300 : "max-content" }}
+              className="custom-table"
             />
           ) : (
             <p>Không có sản phẩm nào trong phiếu nhập này.</p>
           )}
         </div>
       ),
-      width: 800,
+      width: isMobile ? "90%" : 800,
       onOk() {},
     });
   };
@@ -424,7 +446,9 @@ const ImportReceipts = () => {
     };
 
     reader.readAsArrayBuffer(file);
-    event.target.value = null;
+    if (fileInputRef.current) {
+      fileInputRef.current.value = null;
+    }
   };
 
   const columns = [
@@ -451,12 +475,14 @@ const ImportReceipts = () => {
       dataIndex: "creator",
       key: "creator",
       align: "center",
+      responsive: ["sm"],
     },
     {
       title: "Thời gian tạo",
       dataIndex: "date",
       key: "date",
       align: "center",
+      responsive: ["md"],
     },
     {
       title: "Tổng tiền",
@@ -467,189 +493,337 @@ const ImportReceipts = () => {
     },
   ];
 
+  const expandedRowRender = (record) => (
+    <div className="p-2">
+      <p>
+        <strong>Mã phiếu nhập:</strong> {record.id}
+      </p>
+      <p>
+        <strong>Nhà cung cấp:</strong> {record.supplier}
+      </p>
+      <p>
+        <strong>Người tạo:</strong> {record.creator}
+      </p>
+      <p>
+        <strong>Thời gian tạo:</strong> {record.date}
+      </p>
+      <p>
+        <strong>Tổng tiền:</strong> {record.total.toLocaleString()}đ
+      </p>
+    </div>
+  );
+
   const rowSelection = {
     selectedRowKeys,
     onChange: (selectedKeys) => setSelectedRowKeys(selectedKeys),
   };
 
-  return (
-    <div className="p-4">
-      <div className="flex gap-2 mb-4">
-        <Button
-          type="primary"
-          danger
-          icon={<DeleteOutlined />}
-          className="min-w-[100px] h-[50px]"
-          onClick={handleDelete}
-        >
-          Xóa
-        </Button>
-        <Button
-          type="primary"
-          icon={<EditOutlined />}
-          className="min-w-[100px] h-[50px]"
-          onClick={handleEdit}
-        >
-          Sửa
-        </Button>
-        <Button
-          type="primary"
-          icon={<EyeOutlined />}
-          className="min-w-[100px] h-[50px]"
-          onClick={handleViewDetails}
-        >
-          Xem chi tiết
-        </Button>
-        <Button
-          type="primary"
-          icon={<FileExcelOutlined />}
-          className="min-w-[100px] h-[50px]"
-          onClick={handleExportExcel}
-        >
-          Xuất Excel
-        </Button>
-        <input
-          type="file"
-          accept=".xlsx, .xls"
-          onChange={handleImportExcel}
-          style={{ display: "none" }}
-          ref={fileInputRef}
-        />
-        <Button
-          type="primary"
-          icon={<FileExcelOutlined />}
-          className="min-w-[100px] h-[50px]"
-          onClick={() => fileInputRef.current.click()}
-        >
-          Nhập Excel
-        </Button>
-      </div>
+  const menu = (
+    <Menu>
+      <Menu.Item key="delete" onClick={handleDelete}>
+        <DeleteOutlined /> Xóa
+      </Menu.Item>
+      <Menu.Item key="edit" onClick={handleEdit}>
+        <EditOutlined /> Sửa
+      </Menu.Item>
+      <Menu.Item key="view" onClick={handleViewDetails}>
+        <EyeOutlined /> Xem chi tiết
+      </Menu.Item>
+      <Menu.Item key="import" onClick={() => fileInputRef.current.click()}>
+        <FileExcelOutlined /> Nhập Excel
+      </Menu.Item>
+    </Menu>
+  );
 
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <div className="border p-4 rounded">
-          <h3 className="font-bold mb-2 text-black">Lọc theo ngày</h3>
-          <RangePicker
-            onChange={(dates) => setDateRange(dates)}
-            className="w-full"
-          />
+  return (
+    <div className="relative">
+      {/* Nút mở sidebar trên mobile */}
+      {isMobile && (
+        <Button
+          icon={<MenuOutlined />}
+          onClick={() => setIsSidebarOpen(true)}
+          className="fixed top-4 left-4 z-10 h-12 w-12 text-base bg-blue-500 text-white"
+        />
+      )}
+
+      {/* Sidebar dưới dạng Drawer trên mobile */}
+      <Drawer
+        title="Menu"
+        placement="left"
+        onClose={() => setIsSidebarOpen(false)}
+        open={isSidebarOpen}
+        width={200}
+      >
+        <Menu mode="vertical">
+          <Menu.Item key="sanpham">SẢN PHẨM</Menu.Item>
+          <Menu.Item key="nhacungcap">NHÀ CUNG CẤP</Menu.Item>
+          <Menu.Item key="nhaphang">NHẬP HÀNG</Menu.Item>
+          <Menu.Item key="phieunhap">PHIẾU NHẬP</Menu.Item>
+          <Menu.Item key="xuathang">XUẤT HÀNG</Menu.Item>
+          <Menu.Item key="phieuxuat">PHIẾU XUẤT</Menu.Item>
+          <Menu.Item key="tonkho">TỒN KHO</Menu.Item>
+          <Menu.Item key="taikhoan">TÀI KHOẢN</Menu.Item>
+          <Menu.Item key="thongke">THỐNG KÊ</Menu.Item>
+          <Menu.Item key="doithongtin">ĐỔI THÔNG TIN</Menu.Item>
+        </Menu>
+      </Drawer>
+
+      <div className="p-4 sm:p-6 md:p-8">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-6 sm:mb-8 text-left">
+          PHIẾU NHẬP
+        </h2>
+
+        <div className="flex flex-col sm:flex-row gap-3 mb-6 sm:mb-8">
+          {isMobile ? (
+            <Dropdown overlay={menu}>
+              <Button className="min-w-[100px] h-12 text-base">
+                Thao tác <DownOutlined />
+              </Button>
+            </Dropdown>
+          ) : (
+            <>
+              <Button
+                type="primary"
+                danger
+                icon={<DeleteOutlined />}
+                className="min-w-[100px] h-12 text-base"
+                onClick={handleDelete}
+              >
+                Xóa
+              </Button>
+              <Button
+                type="primary"
+                icon={<EditOutlined />}
+                className="min-w-[100px] h-12 text-base"
+                onClick={handleEdit}
+              >
+                Sửa
+              </Button>
+              <Button
+                type="primary"
+                icon={<EyeOutlined />}
+                className="min-w-[100px] h-12 text-base"
+                onClick={handleViewDetails}
+              >
+                Xem chi tiết
+              </Button>
+              <Button
+                type="primary"
+                icon={<FileExcelOutlined />}
+                className="min-w-[100px] h-12 text-base"
+                onClick={handleExportExcel}
+              >
+                Xuất Excel
+              </Button>
+              <input
+                type="file"
+                accept=".xlsx, .xls"
+                onChange={handleImportExcel}
+                style={{ display: "none" }}
+                ref={fileInputRef}
+              />
+              <Button
+                type="primary"
+                icon={<FileExcelOutlined />}
+                className="min-w-[100px] h-12 text-base"
+                onClick={() => fileInputRef.current.click()}
+              >
+                Nhập Excel
+              </Button>
+            </>
+          )}
         </div>
-        <div className="border p-4 rounded">
-          <h3 className="font-bold mb-2 text-black">Lọc theo giá</h3>
-          <div className="flex gap-2">
-            <Input
-              type="number"
-              value={priceFrom}
-              onChange={(e) => setPriceFrom(Number(e.target.value))}
-              placeholder="Giá từ"
-            />
-            <Input
-              type="number"
-              value={priceTo}
-              onChange={(e) => setPriceTo(Number(e.target.value))}
-              placeholder="Giá đến"
+
+        <div
+          className={`grid ${
+            isMobile ? "grid-cols-1" : "grid-cols-2"
+          } gap-6 mb-6 sm:mb-8`}
+        >
+          <div className="bg-white p-4 shadow rounded">
+            <h3 className="font-bold mb-2 text-black text-base sm:text-lg">
+              Lọc theo ngày
+            </h3>
+            <RangePicker
+              onChange={(dates) => setDateRange(dates)}
+              className="w-full h-12 text-base rounded-lg"
             />
           </div>
+          <div className="bg-white p-4 shadow rounded">
+            <h3 className="font-bold mb-2 text-black text-base sm:text-lg">
+              Lọc theo giá
+            </h3>
+            <div className={`flex ${isMobile ? "flex-col" : "flex-row"} gap-3`}>
+              <Input
+                type="number"
+                value={priceFrom}
+                onChange={(e) => setPriceFrom(Number(e.target.value))}
+                placeholder="Giá từ"
+                className="w-full h-12 text-base rounded-lg"
+              />
+              <Input
+                type="number"
+                value={priceTo}
+                onChange={(e) => setPriceTo(Number(e.target.value))}
+                placeholder="Giá đến"
+                className="w-full h-12 text-base rounded-lg"
+              />
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div className="bg-white p-4 shadow rounded">
-        <Table
-          rowSelection={rowSelection}
-          dataSource={filteredReceipts}
-          columns={columns}
-          rowKey="id"
-          pagination={{ pageSize: 5 }}
-          bordered
-          loading={loading}
-        />
-      </div>
+        <div className="bg-white p-4 shadow rounded">
+          <Table
+            rowSelection={rowSelection}
+            dataSource={filteredReceipts}
+            columns={columns}
+            rowKey="id"
+            expandable={{
+              expandedRowRender,
+              expandRowByClick: true,
+            }}
+            pagination={{ pageSize: 4 }}
+            bordered
+            loading={loading}
+            scroll={{ x: isMobile ? 300 : "max-content" }}
+            className="custom-table"
+          />
+        </div>
 
-      <Modal
-        title={`Sửa phiếu nhập ${selectedReceipt?.id}`}
-        open={isEditModalOpen}
-        onOk={handleEditOk}
-        onCancel={() => setIsEditModalOpen(false)}
-        width={800}
-      >
-        <Form form={form} layout="vertical">
-          <Form.Item
-            name="maNhaCungCap"
-            label="Nhà cung cấp"
-            rules={[{ required: true, message: "Vui lòng chọn nhà cung cấp!" }]}
-          >
-            <Select placeholder="Chọn nhà cung cấp">
-              {suppliers.map((supplier) => (
-                <Option
-                  key={supplier.maNhaCungCap}
-                  value={supplier.maNhaCungCap}
-                >
-                  {`${supplier.maNhaCungCap} - ${supplier.tenNhaCungCap}`}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            name="nguoiTao"
-            label="Người tạo"
-            rules={[{ required: true, message: "Vui lòng chọn người tạo!" }]}
-          >
-            <Select placeholder="Chọn người tạo">
-              {Object.keys(roleToUserNameMap).length > 0 ? (
-                Object.keys(roleToUserNameMap).map((role) => (
-                  <Option key={role} value={role}>
-                    {role}
+        <Modal
+          title={`Sửa phiếu nhập ${selectedReceipt?.id}`}
+          open={isEditModalOpen}
+          onOk={handleEditOk}
+          onCancel={() => setIsEditModalOpen(false)}
+          width={isMobile ? "90%" : 800}
+          bodyStyle={{ maxHeight: "60vh", overflowY: "auto" }}
+        >
+          <Form form={form} layout="vertical">
+            <Form.Item
+              name="maNhaCungCap"
+              label="Nhà cung cấp"
+              rules={[
+                { required: true, message: "Vui lòng chọn nhà cung cấp!" },
+              ]}
+            >
+              <Select
+                placeholder="Chọn nhà cung cấp"
+                className="h-12 text-base rounded-lg"
+              >
+                {suppliers.map((supplier) => (
+                  <Option
+                    key={supplier.maNhaCungCap}
+                    value={supplier.maNhaCungCap}
+                  >
+                    {`${supplier.maNhaCungCap} - ${supplier.tenNhaCungCap}`}
                   </Option>
-                ))
-              ) : (
-                <Option disabled value="">
-                  Không có vai trò nào
-                </Option>
-              )}
-            </Select>
-          </Form.Item>
-
-          <h4 className="font-bold mt-4">Danh sách sản phẩm</h4>
-          <Form.List name="chiTietPhieuNhaps">
-            {(fields) => (
-              <>
-                {fields.map(({ key, name, ...restField }) => (
-                  <div key={key} className="border p-2 mb-2 rounded">
-                    <Form.Item
-                      {...restField}
-                      name={[name, "maSanPham"]}
-                      label="Mã sản phẩm"
-                    >
-                      <Input disabled />
-                    </Form.Item>
-                    <Form.Item
-                      {...restField}
-                      name={[name, "tenSanPham"]}
-                      label="Tên sản phẩm"
-                    >
-                      <Input disabled />
-                    </Form.Item>
-                    <Form.Item
-                      {...restField}
-                      name={[name, "soLuongCoTheNhap"]}
-                      label="Số lượng"
-                    >
-                      <InputNumber disabled style={{ width: "100%" }} />
-                    </Form.Item>
-                    <Form.Item
-                      {...restField}
-                      name={[name, "donGia"]}
-                      label="Đơn giá"
-                    >
-                      <InputNumber disabled style={{ width: "100%" }} />
-                    </Form.Item>
-                  </div>
                 ))}
-              </>
-            )}
-          </Form.List>
-        </Form>
-      </Modal>
+              </Select>
+            </Form.Item>
+
+            <Form.Item
+              name="nguoiTao"
+              label="Người tạo"
+              rules={[{ required: true, message: "Vui lòng chọn người tạo!" }]}
+            >
+              <Select
+                placeholder="Chọn người tạo"
+                className="h-12 text-base rounded-lg"
+              >
+                {Object.keys(roleToUserNameMap).length > 0 ? (
+                  Object.keys(roleToUserNameMap).map((role) => (
+                    <Option key={role} value={role}>
+                      {role}
+                    </Option>
+                  ))
+                ) : (
+                  <Option disabled value="">
+                    Không có vai trò nào
+                  </Option>
+                )}
+              </Select>
+            </Form.Item>
+
+            <h4 className="font-bold mt-4">Danh sách sản phẩm</h4>
+            <Form.List name="chiTietPhieuNhaps">
+              {(fields) => (
+                <>
+                  {fields.map(({ key, name, ...restField }) => (
+                    <div key={key} className="border p-2 mb-2 rounded">
+                      <Form.Item
+                        {...restField}
+                        name={[name, "maSanPham"]}
+                        label="Mã sản phẩm"
+                      >
+                        <Input disabled className="h-12 text-base rounded-lg" />
+                      </Form.Item>
+                      <Form.Item
+                        {...restField}
+                        name={[name, "tenSanPham"]}
+                        label="Tên sản phẩm"
+                      >
+                        <Input disabled className="h-12 text-base rounded-lg" />
+                      </Form.Item>
+                      <Form.Item
+                        {...restField}
+                        name={[name, "soLuongCoTheNhap"]}
+                        label="Số lượng"
+                      >
+                        <InputNumber
+                          disabled
+                          style={{ width: "100%" }}
+                          className="h-12 text-base rounded-lg"
+                        />
+                      </Form.Item>
+                      <Form.Item
+                        {...restField}
+                        name={[name, "donGia"]}
+                        label="Đơn giá"
+                      >
+                        <InputNumber
+                          disabled
+                          style={{ width: "100%" }}
+                          className="h-12 text-base rounded-lg"
+                        />
+                      </Form.Item>
+                    </div>
+                  ))}
+                </>
+              )}
+            </Form.List>
+          </Form>
+        </Modal>
+      </div>
+
+      <style jsx>{`
+        /* Điều chỉnh bảng */
+        .custom-table .ant-table {
+          font-size: 14px;
+        }
+        @media (max-width: 640px) {
+          .custom-table .ant-table {
+            font-size: 12px;
+          }
+          .custom-table .ant-table-thead > tr > th,
+          .custom-table .ant-table-tbody > tr > td {
+            padding: 8px !important;
+          }
+        }
+        @media (min-width: 1024px) {
+          .custom-table .ant-table {
+            font-size: 16px;
+          }
+        }
+
+        /* Ẩn sidebar trên mobile */
+        @media (max-width: 768px) {
+          .ant-layout-sider {
+            display: none !important;
+          }
+          .ant-layout-content {
+            margin-left: 0 !important;
+          }
+        }
+      `}</style>
     </div>
   );
 };

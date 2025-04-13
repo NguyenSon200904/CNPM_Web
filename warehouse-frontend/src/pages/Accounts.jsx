@@ -1,5 +1,7 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
-import { Input, Select, Table, Modal, Form, App } from "antd"; // Thêm App từ antd
+import { Input, Select, Table, Modal, Form, Button, Drawer, Menu } from "antd";
+import { MenuOutlined } from "@ant-design/icons";
 import ActionButtons from "../components/ActionButtons";
 import api from "../api";
 
@@ -9,10 +11,11 @@ const Accounts = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterBy, setFilterBy] = useState("username");
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
-  const [selectedRows, setSelectedRows] = useState([]);
+  const [selectedRows, setSelectedRows] = useState([]); // Đảm bảo selectedRows được sử dụng
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isResetPasswordModalVisible, setIsResetPasswordModalVisible] =
@@ -21,16 +24,19 @@ const Accounts = () => {
   const [isFetchingUser, setIsFetchingUser] = useState(true);
   const [form] = Form.useForm();
   const [resetPasswordForm] = Form.useForm();
-  const { message } = App.useApp(); // Sử dụng message từ App để tránh cảnh báo
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+      if (window.innerWidth >= 768) {
+        setIsSidebarOpen(false);
+      }
+    };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   const mapRoleFromNumber = (role) => {
-    // Ánh xạ role từ số thành chuỗi nếu cần
     if (typeof role === "number" || !isNaN(parseInt(role))) {
       switch (parseInt(role)) {
         case 0:
@@ -45,19 +51,26 @@ const Accounts = () => {
           return role;
       }
     }
-    return role; // Nếu role đã là chuỗi, trả về nguyên bản
+    return role;
   };
 
   const fetchCurrentUser = async () => {
     try {
       setIsFetchingUser(true);
-      const response = await api.get("http://localhost:8080/api/auth/me");
-      const role = mapRoleFromNumber(response.data.role); // Ánh xạ role nếu cần
+      const response = await api.get("http://localhost:8080/api/auth/me", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+      });
+      const role = mapRoleFromNumber(response.data.role);
       setCurrentUserRole(role);
       console.log("Current user role:", role);
     } catch (error) {
       console.error("Error fetching current user:", error);
-      message.error("Không thể lấy thông tin người dùng!");
+      Modal.error({
+        title: "Lỗi",
+        content: "Không thể lấy thông tin người dùng!",
+      });
     } finally {
       setIsFetchingUser(false);
     }
@@ -71,7 +84,11 @@ const Accounts = () => {
   const fetchAccounts = async () => {
     setLoading(true);
     try {
-      const response = await api.get("http://localhost:8080/api/accounts");
+      const response = await api.get("http://localhost:8080/api/accounts", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+      });
       const accounts = response.data;
       console.log("Dữ liệu từ /accounts:", accounts);
       const formattedData = accounts.map((account, index) => ({
@@ -87,10 +104,12 @@ const Accounts = () => {
       setData(formattedData);
     } catch (error) {
       console.error("Error fetching accounts:", error);
-      message.error(
-        "Lỗi khi tải danh sách tài khoản: " +
-          (error.response?.data?.error || error.message)
-      );
+      Modal.error({
+        title: "Lỗi",
+        content:
+          "Lỗi khi tải danh sách tài khoản: " +
+          (error.response?.data?.error || error.message),
+      });
     } finally {
       setLoading(false);
     }
@@ -130,22 +149,34 @@ const Accounts = () => {
         status: values.status === "Active" ? 1 : 0,
       };
 
-      await api.post("http://localhost:8080/api/accounts", newAccount);
-      message.success("Thêm tài khoản thành công!");
+      await api.post("http://localhost:8080/api/accounts", newAccount, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+      });
+      Modal.success({
+        title: "Thành công",
+        content: "Thêm tài khoản thành công!",
+      });
       setIsAddModalVisible(false);
       fetchAccounts();
     } catch (error) {
       console.error("Error adding account:", error);
-      message.error(
-        "Đã có lỗi xảy ra khi thêm tài khoản: " +
-          (error.response?.data?.error || error.message)
-      );
+      Modal.error({
+        title: "Lỗi",
+        content:
+          "Đã có lỗi xảy ra khi thêm tài khoản: " +
+          (error.response?.data?.error || error.message),
+      });
     }
   };
 
   const handleEdit = () => {
     if (selectedRows.length !== 1) {
-      message.warning("Vui lòng chọn đúng 1 tài khoản để sửa!");
+      Modal.warning({
+        title: "Cảnh báo",
+        content: "Vui lòng chọn đúng 1 tài khoản để sửa!",
+      });
       return;
     }
     const record = selectedRows[0];
@@ -172,25 +203,38 @@ const Accounts = () => {
 
       await api.put(
         `http://localhost:8080/api/accounts/${values.username}`,
-        updatedAccount
+        updatedAccount,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        }
       );
-      message.success("Sửa tài khoản thành công!");
+      Modal.success({
+        title: "Thành công",
+        content: "Sửa tài khoản thành công!",
+      });
       setIsEditModalVisible(false);
       fetchAccounts();
       setSelectedRowKeys([]);
       setSelectedRows([]);
     } catch (error) {
       console.error("Error updating account:", error);
-      message.error(
-        "Đã có lỗi xảy ra khi sửa tài khoản: " +
-          (error.response?.data?.error || error.message)
-      );
+      Modal.error({
+        title: "Lỗi",
+        content:
+          "Đã có lỗi xảy ra khi sửa tài khoản: " +
+          (error.response?.data?.error || error.message),
+      });
     }
   };
 
   const handleDelete = async () => {
     if (selectedRows.length === 0) {
-      message.warning("Vui lòng chọn ít nhất 1 tài khoản để xóa!");
+      Modal.warning({
+        title: "Cảnh báo",
+        content: "Vui lòng chọn ít nhất 1 tài khoản để xóa!",
+      });
       return;
     }
 
@@ -205,20 +249,32 @@ const Accounts = () => {
           await Promise.all(
             selectedRows.map((record) =>
               api.delete(
-                `http://localhost:8080/api/accounts/${record.username}`
+                `http://localhost:8080/api/accounts/${record.username}`,
+                {
+                  headers: {
+                    Authorization: `Bearer ${localStorage.getItem(
+                      "accessToken"
+                    )}`,
+                  },
+                }
               )
             )
           );
-          message.success(`Xóa ${selectedRows.length} tài khoản thành công!`);
+          Modal.success({
+            title: "Thành công",
+            content: `Xóa ${selectedRows.length} tài khoản thành công!`,
+          });
           fetchAccounts();
           setSelectedRowKeys([]);
           setSelectedRows([]);
         } catch (error) {
           console.error("Error deleting accounts:", error);
-          message.error(
-            "Đã có lỗi xảy ra khi xóa tài khoản: " +
-              (error.response?.data?.error || error.message)
-          );
+          Modal.error({
+            title: "Lỗi",
+            content:
+              "Đã có lỗi xảy ra khi xóa tài khoản: " +
+              (error.response?.data?.error || error.message),
+          });
         }
       },
     });
@@ -227,15 +283,24 @@ const Accounts = () => {
   const handleReset = () => {
     console.log("Current user role in handleReset:", currentUserRole);
     if (isFetchingUser) {
-      message.warning("Đang tải thông tin người dùng, vui lòng chờ!");
+      Modal.warning({
+        title: "Cảnh báo",
+        content: "Đang tải thông tin người dùng, vui lòng chờ!",
+      });
       return;
     }
     if (currentUserRole !== "Admin") {
-      message.error("Chỉ admin mới có thể đặt lại mật khẩu!");
+      Modal.error({
+        title: "Lỗi",
+        content: "Chỉ admin mới có thể đặt lại mật khẩu!",
+      });
       return;
     }
     if (selectedRows.length !== 1) {
-      message.warning("Vui lòng chọn đúng 1 tài khoản để đặt lại mật khẩu!");
+      Modal.warning({
+        title: "Cảnh báo",
+        content: "Vui lòng chọn đúng 1 tài khoản để đặt lại mật khẩu!",
+      });
       return;
     }
     resetPasswordForm.resetFields();
@@ -248,7 +313,10 @@ const Accounts = () => {
       const { newPassword, confirmPassword } = values;
 
       if (newPassword !== confirmPassword) {
-        message.error("Mật khẩu xác nhận không khớp!");
+        Modal.error({
+          title: "Lỗi",
+          content: "Mật khẩu xác nhận không khớp!",
+        });
         return;
       }
 
@@ -257,19 +325,29 @@ const Accounts = () => {
         `http://localhost:8080/api/accounts/${username}/reset-password`,
         {
           password: newPassword,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
         }
       );
 
-      message.success(`Đặt lại mật khẩu cho tài khoản ${username} thành công!`);
+      Modal.success({
+        title: "Thành công",
+        content: `Đặt lại mật khẩu cho tài khoản ${username} thành công!`,
+      });
       setIsResetPasswordModalVisible(false);
       setSelectedRowKeys([]);
       setSelectedRows([]);
     } catch (error) {
       console.error("Error resetting password:", error);
-      message.error(
-        "Đã có lỗi xảy ra khi đặt lại mật khẩu: " +
-          (error.response?.data?.error || error.message)
-      );
+      Modal.error({
+        title: "Lỗi",
+        content:
+          "Đã có lỗi xảy ra khi đặt lại mật khẩu: " +
+          (error.response?.data?.error || error.message),
+      });
     }
   };
 
@@ -285,16 +363,25 @@ const Accounts = () => {
 
     try {
       for (const account of newAccounts) {
-        await api.post("http://localhost:8080/api/accounts", account);
+        await api.post("http://localhost:8080/api/accounts", account, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        });
       }
-      message.success("Nhập dữ liệu từ Excel thành công!");
+      Modal.success({
+        title: "Thành công",
+        content: "Nhập dữ liệu từ Excel thành công!",
+      });
       fetchAccounts();
     } catch (error) {
       console.error("Error importing accounts:", error);
-      message.error(
-        "Đã có lỗi xảy ra khi nhập dữ liệu từ Excel: " +
-          (error.response?.data?.error || error.message)
-      );
+      Modal.error({
+        title: "Lỗi",
+        content:
+          "Đã có lỗi xảy ra khi nhập dữ liệu từ Excel: " +
+          (error.response?.data?.error || error.message),
+      });
     }
   };
 
@@ -304,12 +391,43 @@ const Accounts = () => {
       dataIndex: "fullname",
       key: "fullname",
       responsive: ["sm"],
+      ellipsis: true,
     },
     { title: "Tên đăng nhập", dataIndex: "username", key: "username" },
     { title: "Email", dataIndex: "email", key: "email" },
-    { title: "Vai trò", dataIndex: "role", key: "role" },
-    { title: "Trạng thái", dataIndex: "status", key: "status" },
+    {
+      title: "Vai trò",
+      dataIndex: "role",
+      key: "role",
+      responsive: ["md"],
+    },
+    {
+      title: "Trạng thái",
+      dataIndex: "status",
+      key: "status",
+      responsive: ["md"],
+    },
   ];
+
+  const expandedRowRender = (record) => (
+    <div className="p-2">
+      <p>
+        <strong>Tên tài khoản:</strong> {record.fullname}
+      </p>
+      <p>
+        <strong>Tên đăng nhập:</strong> {record.username}
+      </p>
+      <p>
+        <strong>Email:</strong> {record.email}
+      </p>
+      <p>
+        <strong>Vai trò:</strong> {record.role}
+      </p>
+      <p>
+        <strong>Trạng thái:</strong> {record.status}
+      </p>
+    </div>
+  );
 
   const exportData = filteredData.map((item) => ({
     "Tên tài khoản": item.fullname,
@@ -320,59 +438,106 @@ const Accounts = () => {
   }));
 
   return (
-    <App>
-      {" "}
-      {/* Bọc component trong App để tránh cảnh báo từ antd */}
-      <div className="p-4">
-        <div className="flex flex-wrap justify-between gap-2 mb-4">
-          <div className="flex gap-2">
-            <Input
-              placeholder="Nhập từ khóa..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-60 md:w-80 h-[50px]"
-            />
-            <Select
-              value={filterBy}
-              onChange={setFilterBy}
-              className="w-40 h-[50px]"
-            >
-              <Option value="username">Tên đăng nhập</Option>
-              <Option value="fullname">Tên tài khoản</Option>
-              <Option value="email">Email</Option>
-              <Option value="role">Vai trò</Option>
-              <Option value="status">Trạng thái</Option>
-            </Select>
-          </div>
+    <div className="relative">
+      {/* Nút mở sidebar trên mobile */}
+      {isMobile && (
+        <Button
+          onClick={() => setIsSidebarOpen(true)}
+          className="fixed top-4 left-4 z-10 h-12 w-12 text-base bg-blue-500 text-white rounded-lg flex items-center justify-center"
+        >
+          <MenuOutlined />
+        </Button>
+      )}
 
-          <ActionButtons
-            onAdd={handleAdd}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onReset={handleReset}
-            onImport={handleImportExcel}
-            isMobile={isMobile}
-            selectedRows={selectedRows}
-            exportData={exportData}
-            isResetDisabled={isFetchingUser}
+      {/* Sidebar dưới dạng Drawer trên mobile */}
+      <Drawer
+        title="Menu"
+        placement="left"
+        onClose={() => setIsSidebarOpen(false)}
+        open={isSidebarOpen}
+        width={200}
+      >
+        <Menu mode="vertical">
+          <Menu.Item key="sanpham">SẢN PHẨM</Menu.Item>
+          <Menu.Item key="nhacungcap">NHÀ CUNG CẤP</Menu.Item>
+          <Menu.Item key="nhaphang">NHẬP HÀNG</Menu.Item>
+          <Menu.Item key="phieunhap">PHIẾU NHẬP</Menu.Item>
+          <Menu.Item key="xuathang">XUẤT HÀNG</Menu.Item>
+          <Menu.Item key="phieuxuat">PHIẾU XUẤT</Menu.Item>
+          <Menu.Item key="tonkho">TỒN KHO</Menu.Item>
+          <Menu.Item key="taikhoan">TÀI KHOẢN</Menu.Item>
+          <Menu.Item key="thongke">THỐNG KÊ</Menu.Item>
+          <Menu.Item key="doithongtin">ĐỔI THÔNG TIN</Menu.Item>
+        </Menu>
+      </Drawer>
+
+      <div className="p-4 sm:p-6 md:p-8">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-6 sm:mb-8 text-left">
+          TÀI KHOẢN
+        </h2>
+
+        <div
+          className={`flex ${
+            isMobile ? "flex-col" : "flex-row"
+          } gap-3 mb-6 sm:mb-8 items-center`}
+        >
+          <Input
+            placeholder="Nhập từ khóa..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full sm:w-60 md:w-80 h-12 text-base rounded-lg"
           />
+          <Select
+            value={filterBy}
+            onChange={setFilterBy}
+            className="w-full sm:w-40 h-12 text-base rounded-lg"
+          >
+            <Option value="username">Tên đăng nhập</Option>
+            <Option value="fullname">Tên tài khoản</Option>
+            <Option value="email">Email</Option>
+            <Option value="role">Vai trò</Option>
+            <Option value="status">Trạng thái</Option>
+          </Select>
+          <div className="w-full sm:w-auto">
+            <ActionButtons
+              onAdd={handleAdd}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onReset={handleReset}
+              onImport={handleImportExcel}
+              isMobile={isMobile}
+              selectedRows={selectedRows} // Đảm bảo selectedRows được truyền vào
+              exportData={exportData}
+              isResetDisabled={isFetchingUser}
+            />
+          </div>
         </div>
 
         <Table
           dataSource={filteredData}
           columns={columns}
-          pagination={{ pageSize: 7 }}
+          pagination={{ pageSize: 5 }}
           rowKey="id"
           bordered
           loading={loading}
           rowSelection={rowSelection}
+          expandable={{
+            expandedRowRender,
+            expandRowByClick: true,
+          }}
+          scroll={{ x: isMobile ? 300 : "max-content" }}
+          className="custom-table"
         />
 
         <Modal
           title="Thêm tài khoản"
-          visible={isAddModalVisible}
+          open={isAddModalVisible}
           onOk={handleAddOk}
           onCancel={() => setIsAddModalVisible(false)}
+          okText="Thêm"
+          cancelText="Hủy"
+          width={isMobile ? "90%" : 600}
+          bodyStyle={{ maxHeight: "60vh", overflowY: "auto" }}
         >
           <Form form={form} layout="vertical">
             <Form.Item
@@ -382,7 +547,7 @@ const Accounts = () => {
                 { required: true, message: "Vui lòng nhập tên đăng nhập!" },
               ]}
             >
-              <Input />
+              <Input className="h-12 text-base rounded-lg" />
             </Form.Item>
             <Form.Item
               name="fullname"
@@ -391,21 +556,21 @@ const Accounts = () => {
                 { required: true, message: "Vui lòng nhập tên tài khoản!" },
               ]}
             >
-              <Input />
+              <Input className="h-12 text-base rounded-lg" />
             </Form.Item>
             <Form.Item
               name="email"
               label="Email"
               rules={[{ required: true, message: "Vui lòng nhập email!" }]}
             >
-              <Input />
+              <Input className="h-12 text-base rounded-lg" />
             </Form.Item>
             <Form.Item
               name="role"
               label="Vai trò"
               rules={[{ required: true, message: "Vui lòng chọn vai trò!" }]}
             >
-              <Select>
+              <Select className="h-12 text-base rounded-lg">
                 <Option value="Admin">Admin</Option>
                 <Option value="Manager">Quản lý kho</Option>
                 <Option value="Importer">Importer</Option>
@@ -417,7 +582,7 @@ const Accounts = () => {
               label="Trạng thái"
               rules={[{ required: true, message: "Vui lòng chọn trạng thái!" }]}
             >
-              <Select>
+              <Select className="h-12 text-base rounded-lg">
                 <Option value="Active">Active</Option>
                 <Option value="Inactive">Inactive</Option>
               </Select>
@@ -427,9 +592,13 @@ const Accounts = () => {
 
         <Modal
           title="Sửa tài khoản"
-          visible={isEditModalVisible}
+          open={isEditModalVisible}
           onOk={handleEditOk}
           onCancel={() => setIsEditModalVisible(false)}
+          okText="Lưu"
+          cancelText="Hủy"
+          width={isMobile ? "90%" : 600}
+          bodyStyle={{ maxHeight: "60vh", overflowY: "auto" }}
         >
           <Form form={form} layout="vertical">
             <Form.Item
@@ -439,7 +608,7 @@ const Accounts = () => {
                 { required: true, message: "Vui lòng nhập tên đăng nhập!" },
               ]}
             >
-              <Input disabled />
+              <Input disabled className="h-12 text-base rounded-lg" />
             </Form.Item>
             <Form.Item
               name="fullname"
@@ -448,21 +617,21 @@ const Accounts = () => {
                 { required: true, message: "Vui lòng nhập tên tài khoản!" },
               ]}
             >
-              <Input />
+              <Input className="h-12 text-base rounded-lg" />
             </Form.Item>
             <Form.Item
               name="email"
               label="Email"
               rules={[{ required: true, message: "Vui lòng nhập email!" }]}
             >
-              <Input />
+              <Input className="h-12 text-base rounded-lg" />
             </Form.Item>
             <Form.Item
               name="role"
               label="Vai trò"
               rules={[{ required: true, message: "Vui lòng chọn vai trò!" }]}
             >
-              <Select>
+              <Select className="h-12 text-base rounded-lg">
                 <Option value="Admin">Admin</Option>
                 <Option value="Manager">Quản lý kho</Option>
                 <Option value="Importer">Importer</Option>
@@ -474,7 +643,7 @@ const Accounts = () => {
               label="Trạng thái"
               rules={[{ required: true, message: "Vui lòng chọn trạng thái!" }]}
             >
-              <Select>
+              <Select className="h-12 text-base rounded-lg">
                 <Option value="Active">Active</Option>
                 <Option value="Inactive">Inactive</Option>
               </Select>
@@ -486,11 +655,13 @@ const Accounts = () => {
           title={`Đặt lại mật khẩu cho tài khoản ${
             selectedRows[0]?.username || ""
           }`}
-          visible={isResetPasswordModalVisible}
+          open={isResetPasswordModalVisible}
           onOk={handleResetPasswordOk}
           onCancel={() => setIsResetPasswordModalVisible(false)}
           okText="Xác nhận"
           cancelText="Hủy"
+          width={isMobile ? "90%" : 500}
+          bodyStyle={{ maxHeight: "60vh", overflowY: "auto" }}
         >
           <Form form={resetPasswordForm} layout="vertical">
             <Form.Item
@@ -501,7 +672,7 @@ const Accounts = () => {
                 { min: 6, message: "Mật khẩu phải có ít nhất 6 ký tự!" },
               ]}
             >
-              <Input.Password />
+              <Input.Password className="h-12 text-base rounded-lg" />
             </Form.Item>
             <Form.Item
               name="confirmPassword"
@@ -520,12 +691,41 @@ const Accounts = () => {
                 }),
               ]}
             >
-              <Input.Password />
+              <Input.Password className="h-12 text-base rounded-lg" />
             </Form.Item>
           </Form>
         </Modal>
       </div>
-    </App>
+
+      <style jsx>{`
+        .custom-table .ant-table {
+          font-size: 14px;
+        }
+        @media (max-width: 640px) {
+          .custom-table .ant-table {
+            font-size: 12px;
+          }
+          .custom-table .ant-table-thead > tr > th,
+          .custom-table .ant-table-tbody > tr > td {
+            padding: 8px !important;
+          }
+        }
+        @media (min-width: 1024px) {
+          .custom-table .ant-table {
+            font-size: 16px;
+          }
+        }
+
+        @media (max-width: 768px) {
+          .ant-layout-sider {
+            display: none !important;
+          }
+          .ant-layout-content {
+            margin-left: 0 !important;
+          }
+        }
+      `}</style>
+    </div>
   );
 };
 

@@ -9,12 +9,17 @@ import {
   Form,
   Select,
   InputNumber,
+  Drawer,
+  Menu,
+  Dropdown,
 } from "antd";
 import {
   FileExcelOutlined,
   DeleteOutlined,
   EditOutlined,
   EyeOutlined,
+  MenuOutlined,
+  DownOutlined,
 } from "@ant-design/icons";
 import api from "../api";
 import * as XLSX from "xlsx";
@@ -37,19 +42,33 @@ const ExportReceipts = () => {
   const [editForm] = Form.useForm();
   const [_products, setProducts] = useState([]);
   const [editDetails, setEditDetails] = useState([]);
-  const [roleToUserNameMap, setRoleToUserNameMap] = useState({}); // Ánh xạ role -> userName
-  const [userNameToRoleMap, setUserNameToRoleMap] = useState({}); // Ánh xạ userName -> role
+  const [roleToUserNameMap, setRoleToUserNameMap] = useState({});
+  const [userNameToRoleMap, setUserNameToRoleMap] = useState({});
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // Lấy danh sách tài khoản và tạo ánh xạ role -> userName và userName -> role
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+      if (window.innerWidth >= 768) {
+        setIsSidebarOpen(false);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   useEffect(() => {
     const fetchAccounts = async () => {
       try {
-        const response = await api.get("http://localhost:8080/api/users/list");
+        const response = await api.get("http://localhost:8080/api/users/list", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        });
         const accounts = response.data;
 
-        // Tạo ánh xạ role -> userName (chọn userName đầu tiên cho mỗi role)
         const roleMap = {};
-        // Tạo ánh xạ userName -> role
         const userNameMap = {};
         accounts.forEach((account) => {
           if (!roleMap[account.role]) {
@@ -70,7 +89,11 @@ const ExportReceipts = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await api.get("http://localhost:8080/api/inventory");
+        const response = await api.get("http://localhost:8080/api/inventory", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        });
         setProducts(response.data);
       } catch (error) {
         console.error("Lỗi khi lấy danh sách sản phẩm:", error);
@@ -85,14 +108,19 @@ const ExportReceipts = () => {
       setLoading(true);
       try {
         const response = await api.get(
-          "http://localhost:8080/api/export-receipts"
+          "http://localhost:8080/api/export-receipts",
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            },
+          }
         );
         console.log("Dữ liệu phiếu xuất từ backend:", response.data);
         const formattedReceipts = response.data.map((receipt) => ({
           key: receipt.maPhieuXuat,
           id: receipt.maPhieuXuat,
           creator:
-            userNameToRoleMap[receipt.nguoiTao?.userName] || "Không xác định", // Hiển thị role thay vì userName
+            userNameToRoleMap[receipt.nguoiTao?.userName] || "Không xác định",
           total: receipt.tongTien,
           date: moment(receipt.ngayXuat).format("YYYY-MM-DD HH:mm"),
           details: (receipt.chiTietPhieuXuats || []).map((detail) => ({
@@ -112,7 +140,7 @@ const ExportReceipts = () => {
       }
     };
     fetchReceipts();
-  }, [userNameToRoleMap]); // Thêm userNameToRoleMap vào dependency để cập nhật lại khi ánh xạ thay đổi
+  }, [userNameToRoleMap]);
 
   const filteredReceipts = receipts.filter((r) => {
     const receiptDate = new Date(r.date);
@@ -153,12 +181,14 @@ const ExportReceipts = () => {
       dataIndex: "creator",
       key: "creator",
       align: "center",
+      responsive: ["sm"],
     },
     {
       title: "Thời gian tạo",
       dataIndex: "date",
       key: "date",
       align: "center",
+      responsive: ["md"],
     },
     {
       title: "Tổng tiền",
@@ -166,6 +196,40 @@ const ExportReceipts = () => {
       key: "total",
       align: "right",
       render: (value) => `${value.toLocaleString()}đ`,
+    },
+  ];
+
+  const detailColumns = [
+    {
+      title: "Mã sản phẩm",
+      dataIndex: "maSanPham",
+      key: "maSanPham",
+    },
+    {
+      title: "Tên sản phẩm",
+      dataIndex: "tenSanPham",
+      key: "tenSanPham",
+      ellipsis: true,
+    },
+    {
+      title: "Số lượng",
+      dataIndex: "soLuong",
+      key: "soLuong",
+    },
+    {
+      title: "Đơn giá",
+      dataIndex: "donGia",
+      key: "donGia",
+      render: (value) => `${value.toLocaleString()}đ`,
+      responsive: ["sm"],
+    },
+    {
+      title: "Thành tiền",
+      dataIndex: "thanhTien",
+      key: "thanhTien",
+      render: (_, record) =>
+        `${(record.soLuong * record.donGia).toLocaleString()}đ`,
+      responsive: ["sm"],
     },
   ];
 
@@ -180,6 +244,7 @@ const ExportReceipts = () => {
       title: "Tên sản phẩm",
       dataIndex: "tenSanPham",
       key: "tenSanPham",
+      ellipsis: true,
     },
     {
       title: "Số lượng",
@@ -190,7 +255,8 @@ const ExportReceipts = () => {
           min={1}
           value={record.soLuong}
           disabled
-          style={{ width: 100 }}
+          style={{ width: "100%" }}
+          className="h-12 text-base rounded-lg"
         />
       ),
     },
@@ -199,6 +265,7 @@ const ExportReceipts = () => {
       dataIndex: "donGia",
       key: "donGia",
       render: (value) => `${value.toLocaleString()}đ`,
+      responsive: ["sm"],
     },
     {
       title: "Thành tiền",
@@ -206,8 +273,47 @@ const ExportReceipts = () => {
       key: "thanhTien",
       render: (_, record) =>
         `${(record.soLuong * record.donGia).toLocaleString()}đ`,
+      responsive: ["sm"],
     },
   ];
+
+  const expandedRowRender = (record) => (
+    <div className="p-2">
+      <p>
+        <strong>Mã phiếu xuất:</strong> {record.id}
+      </p>
+      <p>
+        <strong>Người tạo:</strong> {record.creator}
+      </p>
+      <p>
+        <strong>Thời gian tạo:</strong> {record.date}
+      </p>
+      <p>
+        <strong>Tổng tiền:</strong> {record.total.toLocaleString()}đ
+      </p>
+    </div>
+  );
+
+  const expandedDetailRowRender = (record) => (
+    <div className="p-2">
+      <p>
+        <strong>Mã sản phẩm:</strong> {record.maSanPham}
+      </p>
+      <p>
+        <strong>Tên sản phẩm:</strong> {record.tenSanPham}
+      </p>
+      <p>
+        <strong>Số lượng:</strong> {record.soLuong}
+      </p>
+      <p>
+        <strong>Đơn giá:</strong> {record.donGia.toLocaleString()}đ
+      </p>
+      <p>
+        <strong>Thành tiền:</strong>{" "}
+        {(record.soLuong * record.donGia).toLocaleString()}đ
+      </p>
+    </div>
+  );
 
   const handleDelete = async () => {
     if (selectedRowKeys.length === 0) {
@@ -225,12 +331,23 @@ const ExportReceipts = () => {
         try {
           await Promise.all(
             selectedRowKeys.map((key) =>
-              api.delete(`http://localhost:8080/api/export-receipts/${key}`)
+              api.delete(`http://localhost:8080/api/export-receipts/${key}`, {
+                headers: {
+                  Authorization: `Bearer ${localStorage.getItem(
+                    "accessToken"
+                  )}`,
+                },
+              })
             )
           );
           message.success("Xóa phiếu xuất thành công!");
           const response = await api.get(
-            "http://localhost:8080/api/export-receipts"
+            "http://localhost:8080/api/export-receipts",
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+              },
+            }
           );
           setReceipts(
             response.data.map((receipt) => ({
@@ -270,7 +387,12 @@ const ExportReceipts = () => {
     const receiptId = selectedRowKeys[0];
     try {
       const response = await api.get(
-        `http://localhost:8080/api/export-receipts/${receiptId}`
+        `http://localhost:8080/api/export-receipts/${receiptId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        }
       );
       const receipt = response.data;
       console.log("Dữ liệu chi tiết phiếu xuất từ API:", receipt);
@@ -308,7 +430,7 @@ const ExportReceipts = () => {
 
     editForm.setFieldsValue({
       ngayXuat: moment(selected.date, "YYYY-MM-DD HH:mm"),
-      nguoiTao: selected.creator, // Hiển thị role trong dropdown
+      nguoiTao: selected.creator,
     });
 
     const details = (selected.details || []).map((detail) => ({
@@ -347,7 +469,12 @@ const ExportReceipts = () => {
       }
 
       const inventoryResponse = await api.get(
-        "http://localhost:8080/api/inventory"
+        "http://localhost:8080/api/inventory",
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        }
       );
       const inventory = inventoryResponse.data;
 
@@ -359,7 +486,6 @@ const ExportReceipts = () => {
         }
       }
 
-      // Lấy userName tương ứng với role được chọn
       const selectedRole = values.nguoiTao;
       const selectedUserName = roleToUserNameMap[selectedRole];
 
@@ -388,13 +514,23 @@ const ExportReceipts = () => {
       console.log("Dữ liệu gửi lên:", updatedReceipt);
       await api.put(
         `http://localhost:8080/api/export-receipts/${selectedReceipt.id}`,
-        updatedReceipt
+        updatedReceipt,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        }
       );
 
       message.success("Cập nhật phiếu xuất thành công!");
 
       const response = await api.get(
-        "http://localhost:8080/api/export-receipts"
+        "http://localhost:8080/api/export-receipts",
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        }
       );
       setReceipts(
         response.data.map((receipt) => ({
@@ -426,6 +562,11 @@ const ExportReceipts = () => {
   };
 
   const handleExportExcel = () => {
+    if (filteredReceipts.length === 0) {
+      message.warning("Không có dữ liệu để xuất!");
+      return;
+    }
+
     const exportData = filteredReceipts.map((receipt) => ({
       "Mã phiếu xuất": receipt.id,
       "Người tạo": receipt.creator,
@@ -462,7 +603,12 @@ const ExportReceipts = () => {
         }
 
         const inventoryResponse = await api.get(
-          "http://localhost:8080/api/inventory"
+          "http://localhost:8080/api/inventory",
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            },
+          }
         );
         const inventory = inventoryResponse.data.reduce((acc, item) => {
           acc[item.maSanPham] = item.soLuongTonKho;
@@ -557,7 +703,6 @@ const ExportReceipts = () => {
             continue;
           }
 
-          // Kiểm tra xem nguoiTao có tồn tại trong bảng account không
           const userExists = Object.values(roleToUserNameMap).includes(
             receipt.nguoiTao
           );
@@ -590,7 +735,14 @@ const ExportReceipts = () => {
           receiptsToImport.map(async (receiptData) => {
             await api.post(
               "http://localhost:8080/api/export-receipts",
-              receiptData
+              receiptData,
+              {
+                headers: {
+                  Authorization: `Bearer ${localStorage.getItem(
+                    "accessToken"
+                  )}`,
+                },
+              }
             );
           })
         );
@@ -600,7 +752,12 @@ const ExportReceipts = () => {
         );
 
         const response = await api.get(
-          "http://localhost:8080/api/export-receipts"
+          "http://localhost:8080/api/export-receipts",
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            },
+          }
         );
         setReceipts(
           response.data.map((receipt) => ({
@@ -628,215 +785,314 @@ const ExportReceipts = () => {
     };
 
     reader.readAsArrayBuffer(file);
-    event.target.value = null;
+    if (fileInputRef.current) {
+      fileInputRef.current.value = null;
+    }
   };
 
-  return (
-    <div className="p-4">
-      <div className="flex gap-2 mb-4">
-        <Button
-          type="primary"
-          danger
-          icon={<DeleteOutlined />}
-          className="min-w-[100px] h-[50px]"
-          onClick={handleDelete}
-        >
-          Xóa
-        </Button>
-        <Button
-          type="primary"
-          icon={<EditOutlined />}
-          className="min-w-[100px] h-[50px]"
-          onClick={handleEdit}
-        >
-          Sửa
-        </Button>
-        <Button
-          type="primary"
-          icon={<EyeOutlined />}
-          className="min-w-[100px] h-[50px]"
-          onClick={handleViewDetail}
-        >
-          Xem chi tiết
-        </Button>
-        <Button
-          type="primary"
-          icon={<FileExcelOutlined />}
-          className="min-w-[100px] h-[50px]"
-          onClick={handleExportExcel}
-        >
-          Xuất Excel
-        </Button>
-        <input
-          type="file"
-          accept=".xlsx, .xls"
-          onChange={handleImportExcel}
-          style={{ display: "none" }}
-          ref={fileInputRef}
-        />
-        <Button
-          type="primary"
-          icon={<FileExcelOutlined />}
-          className="min-w-[100px] h-[50px]"
-          onClick={() => fileInputRef.current.click()}
-        >
-          Nhập Excel
-        </Button>
-      </div>
+  const menu = (
+    <Menu>
+      <Menu.Item key="delete" onClick={handleDelete}>
+        <DeleteOutlined /> Xóa
+      </Menu.Item>
+      <Menu.Item key="edit" onClick={handleEdit}>
+        <EditOutlined /> Sửa
+      </Menu.Item>
+      <Menu.Item key="view" onClick={handleViewDetail}>
+        <EyeOutlined /> Xem chi tiết
+      </Menu.Item>
+      <Menu.Item key="import" onClick={() => fileInputRef.current.click()}>
+        <FileExcelOutlined /> Nhập Excel
+      </Menu.Item>
+    </Menu>
+  );
 
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <div className="border p-4 rounded">
-          <h3 className="font-bold mb-2 text-black">Lọc theo ngày</h3>
-          <RangePicker
-            onChange={(dates) => setDateRange(dates)}
-            className="w-full"
+  return (
+    <div className="relative">
+      {/* Nút mở sidebar trên mobile */}
+      {isMobile && (
+        <Button
+          icon={<MenuOutlined />}
+          onClick={() => setIsSidebarOpen(true)}
+          className="fixed top-4 left-4 z-10 h-12 w-12 text-base bg-blue-500 text-white"
+        />
+      )}
+
+      {/* Sidebar dưới dạng Drawer trên mobile */}
+      <Drawer
+        title="Menu"
+        placement="left"
+        onClose={() => setIsSidebarOpen(false)}
+        open={isSidebarOpen}
+        width={200}
+      >
+        <Menu mode="vertical">
+          <Menu.Item key="sanpham">SẢN PHẨM</Menu.Item>
+          <Menu.Item key="nhacungcap">NHÀ CUNG CẤP</Menu.Item>
+          <Menu.Item key="nhaphang">NHẬP HÀNG</Menu.Item>
+          <Menu.Item key="phieunhap">PHIẾU NHẬP</Menu.Item>
+          <Menu.Item key="xuathang">XUẤT HÀNG</Menu.Item>
+          <Menu.Item key="phieuxuat">PHIẾU XUẤT</Menu.Item>
+          <Menu.Item key="tonkho">TỒN KHO</Menu.Item>
+          <Menu.Item key="taikhoan">TÀI KHOẢN</Menu.Item>
+          <Menu.Item key="thongke">THỐNG KÊ</Menu.Item>
+          <Menu.Item key="doithongtin">ĐỔI THÔNG TIN</Menu.Item>
+        </Menu>
+      </Drawer>
+
+      <div className="p-4 sm:p-6 md:p-8">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-6 sm:mb-8 text-left">
+          PHIẾU XUẤT
+        </h2>
+
+        <div className="flex flex-col sm:flex-row gap-3 mb-6 sm:mb-8">
+          {isMobile ? (
+            <Dropdown overlay={menu}>
+              <Button className="min-w-[100px] h-12 text-base">
+                Thao tác <DownOutlined />
+              </Button>
+            </Dropdown>
+          ) : (
+            <>
+              <Button
+                type="primary"
+                danger
+                icon={<DeleteOutlined />}
+                className="min-w-[100px] h-12 text-base"
+                onClick={handleDelete}
+              >
+                Xóa
+              </Button>
+              <Button
+                type="primary"
+                icon={<EditOutlined />}
+                className="min-w-[100px] h-12 text-base"
+                onClick={handleEdit}
+              >
+                Sửa
+              </Button>
+              <Button
+                type="primary"
+                icon={<EyeOutlined />}
+                className="min-w-[100px] h-12 text-base"
+                onClick={handleViewDetail}
+              >
+                Xem chi tiết
+              </Button>
+              <Button
+                type="primary"
+                icon={<FileExcelOutlined />}
+                className="min-w-[100px] h-12 text-base"
+                onClick={handleExportExcel}
+              >
+                Xuất Excel
+              </Button>
+              <input
+                type="file"
+                accept=".xlsx, .xls"
+                onChange={handleImportExcel}
+                style={{ display: "none" }}
+                ref={fileInputRef}
+              />
+              <Button
+                type="primary"
+                icon={<FileExcelOutlined />}
+                className="min-w-[100px] h-12 text-base"
+                onClick={() => fileInputRef.current.click()}
+              >
+                Nhập Excel
+              </Button>
+            </>
+          )}
+        </div>
+
+        <div
+          className={`grid ${
+            isMobile ? "grid-cols-1" : "grid-cols-2"
+          } gap-6 mb-6 sm:mb-8`}
+        >
+          <div className="bg-white p-4 shadow rounded">
+            <h3 className="font-bold mb-2 text-black text-base sm:text-lg">
+              Lọc theo ngày
+            </h3>
+            <RangePicker
+              onChange={(dates) => setDateRange(dates)}
+              className="w-full h-12 text-base rounded-lg"
+            />
+          </div>
+          <div className="bg-white p-4 shadow rounded">
+            <h3 className="font-bold mb-2 text-black text-base sm:text-lg">
+              Lọc theo giá
+            </h3>
+            <div className={`flex ${isMobile ? "flex-col" : "flex-row"} gap-3`}>
+              <Input
+                type="number"
+                value={priceFrom}
+                onChange={(e) => setPriceFrom(Number(e.target.value))}
+                placeholder="Giá từ"
+                className="w-full h-12 text-base rounded-lg"
+              />
+              <Input
+                type="number"
+                value={priceTo}
+                onChange={(e) => setPriceTo(Number(e.target.value))}
+                placeholder="Giá đến"
+                className="w-full h-12 text-base rounded-lg"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 shadow rounded">
+          <Table
+            rowSelection={rowSelection}
+            dataSource={filteredReceipts}
+            columns={columns}
+            rowKey="id"
+            expandable={{
+              expandedRowRender,
+              expandRowByClick: true,
+            }}
+            pagination={{ pageSize: 4 }}
+            bordered
+            loading={loading}
+            scroll={{ x: isMobile ? 300 : "max-content" }}
+            className="custom-table"
           />
         </div>
-        <div className="border p-4 rounded">
-          <h3 className="font-bold mb-2 text-black">Lọc theo giá</h3>
-          <div className="flex gap-2">
-            <Input
-              type="number"
-              value={priceFrom}
-              onChange={(e) => setPriceFrom(Number(e.target.value))}
-              placeholder="Giá từ"
-            />
-            <Input
-              type="number"
-              value={priceTo}
-              onChange={(e) => setPriceTo(Number(e.target.value))}
-              placeholder="Giá đến"
-            />
-          </div>
-        </div>
-      </div>
 
-      <div className="bg-white p-4 shadow rounded">
-        <Table
-          rowSelection={rowSelection}
-          dataSource={filteredReceipts}
-          columns={columns}
-          rowKey="id"
-          pagination={{ pageSize: 5 }}
-          bordered
-          loading={loading}
-        />
-      </div>
-
-      <Modal
-        title={`Chỉnh sửa phiếu xuất #${selectedReceipt?.id}`}
-        open={isEditModalOpen}
-        onOk={handleSaveEdit}
-        onCancel={() => setIsEditModalOpen(false)}
-        okText="Lưu"
-        cancelText="Hủy"
-        width={1000}
-      >
-        <Form form={editForm} layout="vertical">
-          <Form.Item
-            name="ngayXuat"
-            label="Thời gian tạo"
-            rules={[
-              { required: true, message: "Vui lòng chọn thời gian tạo!" },
-            ]}
-          >
-            <DatePicker
-              showTime
-              format="YYYY-MM-DD HH:mm"
-              style={{ width: "100%" }}
-            />
-          </Form.Item>
-          <Form.Item
-            name="nguoiTao"
-            label="Người tạo"
-            rules={[{ required: true, message: "Vui lòng chọn người tạo!" }]}
-          >
-            <Select placeholder="Chọn người tạo">
-              {Object.keys(roleToUserNameMap).map((role) => (
-                <Option key={role} value={role}>
-                  {role}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-        </Form>
-        <Table
-          dataSource={editDetails}
-          columns={editDetailColumns}
-          rowKey={(record) => record.maSanPham || Math.random().toString()}
-          pagination={false}
-        />
-      </Modal>
-
-      <Modal
-        title={`Chi tiết phiếu xuất #${selectedReceipt?.id}`}
-        open={isDetailModalOpen}
-        onOk={() => setIsDetailModalOpen(false)}
-        onCancel={() => setIsDetailModalOpen(false)}
-        okText="OK"
-        cancelText="Hủy"
-        width={800}
-      >
-        {selectedReceipt && (
-          <div>
-            <p>
-              <strong>Người tạo:</strong> {selectedReceipt.creator}
-            </p>
-            <p>
-              <strong>Thời gian tạo:</strong> {selectedReceipt.date}
-            </p>
-            <p>
-              <strong>Tổng tiền:</strong>{" "}
-              {selectedReceipt.total.toLocaleString()}đ
-            </p>
-            <h4 className="font-bold mt-2">Danh sách sản phẩm:</h4>
-            {selectedReceipt.details.length > 0 ? (
-              <Table
-                dataSource={selectedReceipt.details.map((item, index) => ({
-                  key: index,
-                  maSanPham: item.maSanPham || "Không xác định",
-                  tenSanPham: item.tenSanPham || "Không xác định",
-                  soLuong: item.soLuong,
-                  donGia: item.donGia,
-                }))}
-                columns={[
-                  {
-                    title: "Mã sản phẩm",
-                    dataIndex: "maSanPham",
-                    key: "maSanPham",
-                  },
-                  {
-                    title: "Tên sản phẩm",
-                    dataIndex: "tenSanPham",
-                    key: "tenSanPham",
-                  },
-                  {
-                    title: "Số lượng",
-                    dataIndex: "soLuong",
-                    key: "soLuong",
-                  },
-                  {
-                    title: "Đơn giá",
-                    dataIndex: "donGia",
-                    key: "donGia",
-                    render: (value) => `${value.toLocaleString()}đ`,
-                  },
-                  {
-                    title: "Thành tiền",
-                    dataIndex: "thanhTien",
-                    key: "thanhTien",
-                    render: (_, record) =>
-                      `${(record.soLuong * record.donGia).toLocaleString()}đ`,
-                  },
-                ]}
-                pagination={false}
+        <Modal
+          title={`Chỉnh sửa phiếu xuất #${selectedReceipt?.id}`}
+          open={isEditModalOpen}
+          onOk={handleSaveEdit}
+          onCancel={() => setIsEditModalOpen(false)}
+          okText="Lưu"
+          cancelText="Hủy"
+          width={isMobile ? "90%" : 1000}
+          bodyStyle={{ maxHeight: "60vh", overflowY: "auto" }}
+        >
+          <Form form={editForm} layout="vertical">
+            <Form.Item
+              name="ngayXuat"
+              label="Thời gian tạo"
+              rules={[
+                { required: true, message: "Vui lòng chọn thời gian tạo!" },
+              ]}
+            >
+              <DatePicker
+                showTime
+                format="YYYY-MM-DD HH:mm"
+                className="w-full h-12 text-base rounded-lg"
               />
-            ) : (
-              <p>Không có sản phẩm nào trong phiếu xuất này.</p>
-            )}
-          </div>
-        )}
-      </Modal>
+            </Form.Item>
+            <Form.Item
+              name="nguoiTao"
+              label="Người tạo"
+              rules={[{ required: true, message: "Vui lòng chọn người tạo!" }]}
+            >
+              <Select
+                placeholder="Chọn người tạo"
+                className="h-12 text-base rounded-lg"
+              >
+                {Object.keys(roleToUserNameMap).map((role) => (
+                  <Option key={role} value={role}>
+                    {role}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Form>
+          <Table
+            dataSource={editDetails}
+            columns={editDetailColumns}
+            rowKey={(record) => record.maSanPham || Math.random().toString()}
+            pagination={false}
+            scroll={{ x: isMobile ? 300 : "max-content" }}
+            expandable={{
+              expandedRowRender: expandedDetailRowRender,
+              expandRowByClick: true,
+            }}
+            className="custom-table"
+          />
+        </Modal>
+
+        <Modal
+          title={`Chi tiết phiếu xuất #${selectedReceipt?.id}`}
+          open={isDetailModalOpen}
+          onOk={() => setIsDetailModalOpen(false)}
+          onCancel={() => setIsDetailModalOpen(false)}
+          okText="OK"
+          cancelText="Hủy"
+          width={isMobile ? "90%" : 800}
+          bodyStyle={{ maxHeight: "60vh", overflowY: "auto" }}
+        >
+          {selectedReceipt && (
+            <div>
+              <p>
+                <strong>Người tạo:</strong> {selectedReceipt.creator}
+              </p>
+              <p>
+                <strong>Thời gian tạo:</strong> {selectedReceipt.date}
+              </p>
+              <p>
+                <strong>Tổng tiền:</strong>{" "}
+                {selectedReceipt.total.toLocaleString()}đ
+              </p>
+              <h4 className="font-bold mt-2">Danh sách sản phẩm:</h4>
+              {selectedReceipt.details.length > 0 ? (
+                <Table
+                  dataSource={selectedReceipt.details.map((item, index) => ({
+                    key: index,
+                    maSanPham: item.maSanPham || "Không xác định",
+                    tenSanPham: item.tenSanPham || "Không xác định",
+                    soLuong: item.soLuong,
+                    donGia: item.donGia,
+                  }))}
+                  columns={detailColumns}
+                  pagination={false}
+                  scroll={{ x: isMobile ? 300 : "max-content" }}
+                  expandable={{
+                    expandedRowRender: expandedDetailRowRender,
+                    expandRowByClick: true,
+                  }}
+                  className="custom-table"
+                />
+              ) : (
+                <p>Không có sản phẩm nào trong phiếu xuất này.</p>
+              )}
+            </div>
+          )}
+        </Modal>
+      </div>
+
+      <style jsx>{`
+        .custom-table .ant-table {
+          font-size: 14px;
+        }
+        @media (max-width: 640px) {
+          .custom-table .ant-table {
+            font-size: 12px;
+          }
+          .custom-table .ant-table-thead > tr > th,
+          .custom-table .ant-table-tbody > tr > td {
+            padding: 8px !important;
+          }
+        }
+        @media (min-width: 1024px) {
+          .custom-table .ant-table {
+            font-size: 16px;
+          }
+        }
+
+        @media (max-width: 768px) {
+          .ant-layout-sider {
+            display: none !important;
+          }
+          .ant-layout-content {
+            margin-left: 0 !important;
+          }
+        }
+      `}</style>
     </div>
   );
 };

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import axios from "axios";
@@ -71,11 +72,7 @@ const Sidebar = () => {
     "/phieu-xuat",
   ];
 
-  const _adminManagerOnlyPaths = [
-    "/tai-khoan",
-    "/ton-kho",
-    "/thong-ke",
-  ];
+  const _adminManagerOnlyPaths = ["/tai-khoan", "/ton-kho", "/thong-ke"];
 
   // Kiểm tra xem một đường dẫn có được phép truy cập hay không
   const isPathAllowed = (path) => {
@@ -133,11 +130,13 @@ const Sidebar = () => {
       ? currentMenuItem.name
       : currentAccountItem
       ? currentAccountItem.name
-      : "Quản lý kho";
+      : "QUẢN LÝ KHO";
   }, [location.pathname]);
 
   if (loading) {
-    return <div className="h-screen bg-green-600 text-white p-4">Đang tải...</div>;
+    return (
+      <div className="h-screen bg-green-600 text-white p-4">Đang tải...</div>
+    );
   }
 
   return (

@@ -1,10 +1,23 @@
 import { useState, useEffect, useRef } from "react";
-import { Button, Input, Select, Table, message, Modal, Form } from "antd";
+import {
+  Button,
+  Input,
+  Select,
+  Table,
+  message,
+  Modal,
+  Form,
+  Drawer,
+  Menu,
+  Dropdown,
+} from "antd";
 import {
   PlusOutlined,
   FileExcelOutlined,
   DeleteOutlined,
   EditOutlined,
+  MenuOutlined,
+  DownOutlined,
 } from "@ant-design/icons";
 import api from "../api";
 import * as XLSX from "xlsx";
@@ -24,6 +37,7 @@ const Supplier = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [form] = Form.useForm();
   const [selectedSupplier, setSelectedSupplier] = useState(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -52,10 +66,15 @@ const Supplier = () => {
     };
     fetchData();
 
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+      if (window.innerWidth >= 768) {
+        setIsSidebarOpen(false);
+      }
+    };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  }, [messageApi]);
 
   const filteredData = data.filter((item) =>
     item[filterBy]?.toString().toLowerCase().includes(searchTerm.toLowerCase())
@@ -70,10 +89,42 @@ const Supplier = () => {
 
   const columns = [
     { title: "Mã NCC", dataIndex: "id", key: "id" },
-    { title: "Tên nhà cung cấp", dataIndex: "name", key: "name" },
-    { title: "Số điện thoại", dataIndex: "phone", key: "phone" },
-    { title: "Địa chỉ", dataIndex: "address", key: "address" },
+    {
+      title: "Tên nhà cung cấp",
+      dataIndex: "name",
+      key: "name",
+      ellipsis: true,
+    },
+    {
+      title: "Số điện thoại",
+      dataIndex: "phone",
+      key: "phone",
+      responsive: ["sm"],
+    },
+    {
+      title: "Địa chỉ",
+      dataIndex: "address",
+      key: "address",
+      responsive: ["md"],
+    },
   ];
+
+  const expandedRowRender = (record) => (
+    <div className="p-2">
+      <p>
+        <strong>Mã NCC:</strong> {record.id}
+      </p>
+      <p>
+        <strong>Tên nhà cung cấp:</strong> {record.name}
+      </p>
+      <p>
+        <strong>Số điện thoại:</strong> {record.phone}
+      </p>
+      <p>
+        <strong>Địa chỉ:</strong> {record.address}
+      </p>
+    </div>
+  );
 
   const handleAdd = () => {
     form.resetFields();
@@ -256,7 +307,7 @@ const Supplier = () => {
             errors.push(
               `Dòng ${index + 2}: Lỗi khi thêm nhà cung cấp (maNhaCungCap: ${
                 newSupplier.maNhaCungCap
-              }) - ${error.response?.data?.messageApi || error.messageApi}`
+              }) - ${error.response?.data?.message || error.message}`
             );
           }
         }
@@ -285,7 +336,7 @@ const Supplier = () => {
         }
       } catch (error) {
         console.error("Lỗi khi đọc file Excel:", error);
-        messageApi.error("Lỗi khi đọc file Excel: " + error.messageApi);
+        messageApi.error("Lỗi khi đọc file Excel: " + error.message);
       }
     };
 
@@ -295,175 +346,269 @@ const Supplier = () => {
     }
   };
 
+  const menu = (
+    <Menu>
+      <Menu.Item key="export" onClick={handleExportExcel}>
+        <FileExcelOutlined /> Xuất Excel
+      </Menu.Item>
+      <Menu.Item key="import" onClick={() => fileInputRef.current.click()}>
+        <FileExcelOutlined /> Nhập Excel
+      </Menu.Item>
+    </Menu>
+  );
+
   return (
-    <div className="p-4">
+    <div className="relative">
       {contextHolder}
-      <h2 className="text-2xl font-bold mb-4">Quản lý nhà cung cấp</h2>
 
-      <div className="flex flex-wrap justify-between gap-2 mb-4">
-        <div className="flex gap-2">
-          <Input
-            placeholder="Nhập từ khóa..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-60 md:w-80 h-[50px]"
-          />
-          <Select
-            value={filterBy}
-            onChange={setFilterBy}
-            className="w-40 h-[50px]"
-          >
-            <Option value="id">Mã NCC</Option>
-            <Option value="name">Tên nhà cung cấp</Option>
-            <Option value="phone">Số điện thoại</Option>
-            <Option value="address">Địa chỉ</Option>
-          </Select>
+      {/* Nút mở sidebar trên mobile */}
+      {isMobile && (
+        <Button
+          icon={<MenuOutlined />}
+          onClick={() => setIsSidebarOpen(true)}
+          className="fixed top-4 left-4 z-10 h-12 w-12 text-base bg-blue-500 text-white"
+        />
+      )}
+
+      {/* Sidebar dưới dạng Drawer trên mobile */}
+      <Drawer
+        title="Menu"
+        placement="left"
+        onClose={() => setIsSidebarOpen(false)}
+        open={isSidebarOpen}
+        width={200}
+      >
+        <Menu mode="vertical">
+          <Menu.Item key="sanpham">SẢN PHẨM</Menu.Item>
+          <Menu.Item key="nhacungcap">NHÀ CUNG CẤP</Menu.Item>
+          <Menu.Item key="nhaphang">NHẬP HÀNG</Menu.Item>
+          <Menu.Item key="phieunhap">PHIẾU NHẬP</Menu.Item>
+          <Menu.Item key="xuathang">XUẤT HÀNG</Menu.Item>
+          <Menu.Item key="phieuxuat">PHIẾU XUẤT</Menu.Item>
+          <Menu.Item key="tonkho">TỒN KHO</Menu.Item>
+          <Menu.Item key="taikhoan">TÀI KHOẢN</Menu.Item>
+          <Menu.Item key="thongke">THỐNG KÊ</Menu.Item>
+          <Menu.Item key="doithongtin">ĐỔI THÔNG TIN</Menu.Item>
+        </Menu>
+      </Drawer>
+
+      <div className="p-4 sm:p-6 md:p-8">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-6 sm:mb-8 text-left">
+          QUẢN LÝ NHÀ CUNG CẤP
+        </h2>
+
+        <div className="flex flex-col gap-6 mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Input
+              placeholder="Nhập từ khóa..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full h-12 text-base"
+            />
+            <Select
+              value={filterBy}
+              onChange={setFilterBy}
+              className="w-full sm:w-40 h-12 text-base"
+            >
+              <Option value="id">Mã NCC</Option>
+              <Option value="name">Tên nhà cung cấp</Option>
+              <Option value="phone">Số điện thoại</Option>
+              <Option value="address">Địa chỉ</Option>
+            </Select>
+          </div>
+
+          <div className="flex flex-wrap gap-3 justify-center sm:justify-end">
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              className="min-w-[100px] h-12 text-base"
+              onClick={handleAdd}
+            >
+              Thêm
+            </Button>
+            <Button
+              type="primary"
+              icon={<EditOutlined />}
+              className="min-w-[100px] h-12 text-base"
+              onClick={handleEdit}
+            >
+              Sửa
+            </Button>
+            <Button
+              type="primary"
+              danger
+              icon={<DeleteOutlined />}
+              className="min-w-[100px] h-12 text-base"
+              onClick={handleDelete}
+            >
+              Xóa
+            </Button>
+            {isMobile ? (
+              <Dropdown overlay={menu}>
+                <Button className="min-w-[100px] h-12 text-base">
+                  Thêm <DownOutlined />
+                </Button>
+              </Dropdown>
+            ) : (
+              <>
+                <Button
+                  type="primary"
+                  icon={<FileExcelOutlined />}
+                  className="min-w-[120px] h-12 text-base"
+                  onClick={handleExportExcel}
+                >
+                  Xuất Excel
+                </Button>
+                <input
+                  type="file"
+                  accept=".xlsx, .xls"
+                  onChange={handleImportExcel}
+                  style={{ display: "none" }}
+                  ref={fileInputRef}
+                />
+                <Button
+                  type="primary"
+                  icon={<FileExcelOutlined />}
+                  className="min-w-[120px] h-12 text-base"
+                  onClick={() => fileInputRef.current.click()}
+                >
+                  Nhập Excel
+                </Button>
+              </>
+            )}
+          </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            className="min-w-[100px] h-[50px]"
-            onClick={handleAdd}
-          >
-            Thêm
-          </Button>
-          <Button
-            type="primary"
-            icon={<EditOutlined />}
-            className="min-w-[100px] h-[50px]"
-            onClick={handleEdit}
-          >
-            Sửa
-          </Button>
-          <Button
-            type="primary"
-            danger
-            icon={<DeleteOutlined />}
-            className="min-w-[100px] h-[50px]"
-            onClick={handleDelete}
-          >
-            Xóa
-          </Button>
-          {!isMobile && (
-            <>
-              <Button
-                type="primary"
-                icon={<FileExcelOutlined />}
-                className="min-w-[120px] h-[50px]"
-                onClick={handleExportExcel}
-              >
-                Xuất Excel
-              </Button>
-              <input
-                type="file"
-                accept=".xlsx, .xls"
-                onChange={handleImportExcel}
-                style={{ display: "none" }}
-                ref={fileInputRef}
-              />
-              <Button
-                type="primary"
-                icon={<FileExcelOutlined />}
-                className="min-w-[120px] h-[50px]"
-                onClick={() => fileInputRef.current.click()}
-              >
-                Nhập Excel
-              </Button>
-            </>
-          )}
-        </div>
+        <Table
+          rowSelection={rowSelection}
+          dataSource={filteredData}
+          columns={columns}
+          expandable={{
+            expandedRowRender,
+            expandRowByClick: true,
+          }}
+          pagination={{ pageSize: 6 }}
+          rowKey="id"
+          bordered
+          loading={loading}
+          scroll={{ x: isMobile ? 300 : "max-content" }}
+          className="custom-table"
+        />
+
+        <Modal
+          title="Thêm nhà cung cấp mới"
+          open={isAddModalOpen}
+          onOk={handleAddOk}
+          onCancel={() => setIsAddModalOpen(false)}
+          okButtonProps={{ className: "h-12 text-base" }}
+          cancelButtonProps={{ className: "h-12 text-base" }}
+        >
+          <Form form={form} layout="vertical">
+            <Form.Item
+              name="id"
+              label="Mã nhà cung cấp"
+              rules={[
+                { required: true, message: "Vui lòng nhập mã nhà cung cấp!" },
+              ]}
+            >
+              <Input className="h-12 text-base" />
+            </Form.Item>
+            <Form.Item
+              name="name"
+              label="Tên nhà cung cấp"
+              rules={[
+                { required: true, message: "Vui lòng nhập tên nhà cung cấp!" },
+              ]}
+            >
+              <Input className="h-12 text-base" />
+            </Form.Item>
+            <Form.Item
+              name="phone"
+              label="Số điện thoại"
+              rules={[
+                { required: true, message: "Vui lòng nhập số điện thoại!" },
+              ]}
+            >
+              <Input className="h-12 text-base" />
+            </Form.Item>
+            <Form.Item
+              name="address"
+              label="Địa chỉ"
+              rules={[{ required: true, message: "Vui lòng nhập địa chỉ!" }]}
+            >
+              <Input className="h-12 text-base" />
+            </Form.Item>
+          </Form>
+        </Modal>
+
+        <Modal
+          title="Sửa nhà cung cấp"
+          open={isEditModalOpen}
+          onOk={handleEditOk}
+          onCancel={() => setIsEditModalOpen(false)}
+          okButtonProps={{ className: "h-12 text-base" }}
+          cancelButtonProps={{ className: "h-12 text-base" }}
+        >
+          <Form form={form} layout="vertical">
+            <Form.Item
+              name="name"
+              label="Tên nhà cung cấp"
+              rules={[
+                { required: true, message: "Vui lòng nhập tên nhà cung cấp!" },
+              ]}
+            >
+              <Input className="h-12 text-base" />
+            </Form.Item>
+            <Form.Item
+              name="phone"
+              label="Số điện thoại"
+              rules={[
+                { required: true, message: "Vui lòng nhập số điện thoại!" },
+              ]}
+            >
+              <Input className="h-12 text-base" />
+            </Form.Item>
+            <Form.Item
+              name="address"
+              label="Địa chỉ"
+              rules={[{ required: true, message: "Vui lòng nhập địa chỉ!" }]}
+            >
+              <Input className="h-12 text-base" />
+            </Form.Item>
+          </Form>
+        </Modal>
       </div>
 
-      <Table
-        rowSelection={rowSelection}
-        dataSource={filteredData}
-        columns={columns}
-        pagination={{ pageSize: 7 }}
-        rowKey="id"
-        bordered
-        loading={loading}
-      />
+      <style jsx>{`
+        /* Điều chỉnh bảng */
+        .custom-table .ant-table {
+          font-size: 14px;
+        }
+        @media (max-width: 640px) {
+          .custom-table .ant-table {
+            font-size: 12px;
+          }
+          .custom-table .ant-table-thead > tr > th,
+          .custom-table .ant-table-tbody > tr > td {
+            padding: 8px !important;
+          }
+        }
+        @media (min-width: 1024px) {
+          .custom-table .ant-table {
+            font-size: 16px;
+          }
+        }
 
-      <Modal
-        title="Thêm nhà cung cấp mới"
-        open={isAddModalOpen}
-        onOk={handleAddOk}
-        onCancel={() => setIsAddModalOpen(false)}
-      >
-        <Form form={form} layout="vertical">
-          <Form.Item
-            name="id"
-            label="Mã nhà cung cấp"
-            rules={[
-              { required: true, messageApi: "Vui lòng nhập mã nhà cung cấp!" },
-            ]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            name="name"
-            label="Tên nhà cung cấp"
-            rules={[
-              { required: true, messageApi: "Vui lòng nhập tên nhà cung cấp!" },
-            ]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            name="phone"
-            label="Số điện thoại"
-            rules={[
-              { required: true, messageApi: "Vui lòng nhập số điện thoại!" },
-            ]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            name="address"
-            label="Địa chỉ"
-            rules={[{ required: true, messageApi: "Vui lòng nhập địa chỉ!" }]}
-          >
-            <Input />
-          </Form.Item>
-        </Form>
-      </Modal>
-
-      <Modal
-        title="Sửa nhà cung cấp"
-        open={isEditModalOpen}
-        onOk={handleEditOk}
-        onCancel={() => setIsEditModalOpen(false)}
-      >
-        <Form form={form} layout="vertical">
-          <Form.Item
-            name="name"
-            label="Tên nhà cung cấp"
-            rules={[
-              { required: true, messageApi: "Vui lòng nhập tên nhà cung cấp!" },
-            ]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            name="phone"
-            label="Số điện thoại"
-            rules={[
-              { required: true, messageApi: "Vui lòng nhập số điện thoại!" },
-            ]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            name="address"
-            label="Địa chỉ"
-            rules={[{ required: true, messageApi: "Vui lòng nhập địa chỉ!" }]}
-          >
-            <Input />
-          </Form.Item>
-        </Form>
-      </Modal>
+        /* Ẩn sidebar trên mobile */
+        @media (max-width: 768px) {
+          .ant-layout-sider {
+            display: none !important;
+          }
+          .ant-layout-content {
+            margin-left: 0 !important;
+          }
+        }
+      `}</style>
     </div>
   );
 };
