@@ -29,5 +29,9 @@ export default [
         { allowConstantExport: true },
       ],
     },
+    env: {
+      'cypress/globals': true,
+    },
+    plugins: ['cypress'],
   },
 ]

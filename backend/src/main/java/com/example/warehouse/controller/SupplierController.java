@@ -1,7 +1,6 @@
 package com.example.warehouse.controller;
 
 import com.example.warehouse.entity.NhaCungCap;
-import com.example.warehouse.repository.SupplierRepository;
 import com.example.warehouse.service.SupplierService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -9,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collections; // Thêm import này để sử dụng Collections.emptyList()
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -21,17 +20,13 @@ public class SupplierController {
     @Autowired
     private SupplierService supplierService;
 
-    @Autowired
-    private SupplierRepository supplierRepository;
-
     @GetMapping("/suppliers")
     @PreAuthorize("hasAnyRole('ROLE_Admin', 'ROLE_Manager', 'ROLE_Importer', 'ROLE_Exporter')")
     public ResponseEntity<List<NhaCungCap>> getAllSuppliers() {
         try {
-            List<NhaCungCap> suppliers = supplierRepository.findAll();
+            List<NhaCungCap> suppliers = supplierService.findAll(); // Chỉ lấy các nhà cung cấp có trang_thai = 1
             return new ResponseEntity<>(suppliers, HttpStatus.OK);
         } catch (Exception e) {
-            // Trả về danh sách rỗng thay vì null để khớp với kiểu trả về
             return new ResponseEntity<>(Collections.emptyList(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -64,9 +59,9 @@ public class SupplierController {
     public ResponseEntity<Void> deleteSupplier(@PathVariable String maNhaCungCap) {
         Objects.requireNonNull(maNhaCungCap, "Mã nhà cung cấp không được null");
         if (!supplierService.existsByMaNhaCungCap(maNhaCungCap)) {
-            throw new RuntimeException("Nhà cung cấp không tồn tại!");
+            throw new RuntimeException("Nhà cung cấp không tồn tại hoặc đã bị xóa!");
         }
-        supplierService.deleteByMaNhaCungCap(maNhaCungCap);
+        supplierService.deleteByMaNhaCungCap(maNhaCungCap); // Sử dụng soft delete
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

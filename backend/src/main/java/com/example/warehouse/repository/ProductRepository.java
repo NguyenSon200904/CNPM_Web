@@ -15,6 +15,10 @@ public interface ProductRepository extends JpaRepository<Product, String> {
     @Query("SELECT p FROM Product p WHERE p.trangThai = :trangThai")
     List<Product> findByTrangThai(@Param("trangThai") int trangThai);
 
+    @Query("SELECT p FROM Product p WHERE p.loaiSanPham = :loaiSanPham AND p.trangThai = :trangThai")
+    List<Product> findByLoaiSanPhamAndTrangThai(@Param("loaiSanPham") String loaiSanPham,
+            @Param("trangThai") int trangThai);
+
     @Query("SELECT COUNT(p) FROM Product p")
     long countAll();
 

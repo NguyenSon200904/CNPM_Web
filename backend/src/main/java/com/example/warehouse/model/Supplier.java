@@ -24,6 +24,9 @@ public class Supplier {
     @Column(name = "sdt", length = 50)
     private String sdt;
 
+    @Column(name = "trang_thai") // Thêm cột trang_thai
+    private Integer trangThai = 1; // Mặc định là 1 (hoạt động)
+
     @OneToMany(mappedBy = "nhaCungCap")
     @JsonIgnore
     private List<Receipt> receipts;

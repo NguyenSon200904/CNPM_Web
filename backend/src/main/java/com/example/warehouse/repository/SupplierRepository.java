@@ -12,4 +12,7 @@ public interface SupplierRepository extends JpaRepository<NhaCungCap, String> {
 
   // Kiểm tra xem nhà cung cấp có tồn tại hay không theo maNhaCungCap
   boolean existsByMaNhaCungCap(String maNhaCungCap);
+
+  // Tìm danh sách nhà cung cấp theo trạng thái (trang_thai)
+  List<NhaCungCap> findByTrangThai(Integer trangThai);
 }

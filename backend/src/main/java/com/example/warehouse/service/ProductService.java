@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ProductService {
@@ -27,12 +28,14 @@ public class ProductService {
         return productRepository.findById(maSanPham).orElse(null);
     }
 
+    // Chỉ lấy các sản phẩm có trang_thai = 1 (Hoạt động)
     public List<Product> findAll() {
-        return productRepository.findAll();
+        return productRepository.findByTrangThai(1);
     }
 
+    // Chỉ lấy các sản phẩm có trang_thai = 1 và theo loại sản phẩm
     public List<Product> findByLoaiSanPham(String loaiSanPham) {
-        return productRepository.findByLoaiSanPham(loaiSanPham);
+        return productRepository.findByLoaiSanPhamAndTrangThai(loaiSanPham, 1);
     }
 
     public List<Product> findByTrangThai(int trangThai) {
@@ -44,11 +47,21 @@ public class ProductService {
     }
 
     public void deleteById(String id) {
-        productRepository.deleteById(id);
+        deleteByMaSanPham(id);
     }
 
+    // Soft delete: Cập nhật trạng thái thành 0 (Không hoạt động)
+    @Transactional
     public void deleteByMaSanPham(String maSanPham) {
-        productRepository.deleteById(maSanPham);
+        Optional<Product> productOptional = productRepository.findById(maSanPham);
+        if (productOptional.isEmpty()) {
+            throw new IllegalArgumentException("Sản phẩm không tồn tại: " + maSanPham);
+        }
+
+        Product product = productOptional.get();
+        product.setTrangThai(0); // Đặt trạng thái thành "Không hoạt động"
+        productRepository.save(product);
+        logger.info("Đã soft delete sản phẩm: {}", maSanPham);
     }
 
     public boolean existsByMaSanPham(String maSanPham) {

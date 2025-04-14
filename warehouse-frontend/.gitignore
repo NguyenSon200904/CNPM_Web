@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Bỏ qua thư mục build của Maven
+backend/target/

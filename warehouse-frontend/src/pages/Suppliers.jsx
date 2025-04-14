@@ -35,6 +35,7 @@ const Supplier = () => {
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false); // State cho modal xác nhận xóa
   const [form] = Form.useForm();
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -208,12 +209,15 @@ const Supplier = () => {
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (selectedRowKeys.length === 0) {
       messageApi.warning("Vui lòng chọn ít nhất 1 nhà cung cấp để xóa!");
       return;
     }
+    setIsDeleteModalOpen(true); // Hiển thị modal xác nhận
+  };
 
+  const handleConfirmDelete = async () => {
     try {
       await Promise.all(
         selectedRowKeys.map((key) =>
@@ -236,6 +240,8 @@ const Supplier = () => {
     } catch (error) {
       console.error("Lỗi khi xóa nhà cung cấp:", error);
       messageApi.error("Xóa nhà cung cấp thất bại!");
+    } finally {
+      setIsDeleteModalOpen(false); // Đóng modal sau khi xóa
     }
   };
 
@@ -599,6 +605,7 @@ const Supplier = () => {
           }
         }
 
+<<<<<<< HEAD
         /* Ẩn sidebar trên mobile */
         @media (max-width: 768px) {
           .ant-layout-sider {
@@ -609,6 +616,98 @@ const Supplier = () => {
           }
         }
       `}</style>
+=======
+      <Modal
+        title="Thêm nhà cung cấp mới"
+        open={isAddModalOpen}
+        onOk={handleAddOk}
+        onCancel={() => setIsAddModalOpen(false)}
+      >
+        <Form form={form} layout="vertical">
+          <Form.Item
+            name="id"
+            label="Mã nhà cung cấp"
+            rules={[
+              { required: true, messageApi: "Vui lòng nhập mã nhà cung cấp!" },
+            ]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="name"
+            label="Tên nhà cung cấp"
+            rules={[
+              { required: true, messageApi: "Vui lòng nhập tên nhà cung cấp!" },
+            ]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="phone"
+            label="Số điện thoại"
+            rules={[
+              { required: true, messageApi: "Vui lòng nhập số điện thoại!" },
+            ]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="address"
+            label="Địa chỉ"
+            rules={[{ required: true, messageApi: "Vui lòng nhập địa chỉ!" }]}
+          >
+            <Input />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal
+        title="Sửa nhà cung cấp"
+        open={isEditModalOpen}
+        onOk={handleEditOk}
+        onCancel={() => setIsEditModalOpen(false)}
+      >
+        <Form form={form} layout="vertical">
+          <Form.Item
+            name="name"
+            label="Tên nhà cung cấp"
+            rules={[
+              { required: true, messageApi: "Vui lòng nhập tên nhà cung cấp!" },
+            ]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="phone"
+            label="Số điện thoại"
+            rules={[
+              { required: true, messageApi: "Vui lòng nhập số điện thoại!" },
+            ]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="address"
+            label="Địa chỉ"
+            rules={[{ required: true, messageApi: "Vui lòng nhập địa chỉ!" }]}
+          >
+            <Input />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal
+        title="Xác nhận xóa"
+        open={isDeleteModalOpen}
+        onOk={handleConfirmDelete} // Xác nhận xóa
+        onCancel={() => setIsDeleteModalOpen(false)} // Hủy xóa
+        okText="Xóa"
+        cancelText="Hủy"
+        okButtonProps={{ danger: true }}
+      >
+        <p>Bạn có chắc chắn muốn xóa nhà cung cấp đã chọn không?</p>
+      </Modal>
+>>>>>>> revert-to-giaodienLogin
     </div>
   );
 };

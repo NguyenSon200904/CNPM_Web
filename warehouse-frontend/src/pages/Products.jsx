@@ -30,8 +30,13 @@ const Product = () => {
   const fileInputRef = useRef(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterBy, setFilterBy] = useState("maSanPham");
+<<<<<<< HEAD
   const [loaiSanPham, setLoaiSanPham] = useState("TẤT_CẢ");
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+=======
+  const [loaiSanPham, setLoaiSanPham] = useState(null); // Mặc định là null (Tất cả)
+  const [isMobile, _setIsMobile] = useState(window.innerWidth < 768);
+>>>>>>> revert-to-giaodienLogin
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState([]);
@@ -40,7 +45,11 @@ const Product = () => {
   const [selectedProductType, setSelectedProductType] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+<<<<<<< HEAD
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Trạng thái sidebar
+=======
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+>>>>>>> revert-to-giaodienLogin
   const [form] = Form.useForm();
   const [selectedProduct, setSelectedProduct] = useState(null);
 
@@ -60,13 +69,17 @@ const Product = () => {
     const fetchProducts = async () => {
       setLoading(true);
       try {
-        const params = { loaiSanPham };
+        const params = {};
+        if (loaiSanPham) {
+          params.loai_san_pham = loaiSanPham;
+        }
         const response = await api.get("http://localhost:8080/api/products", {
           params,
           headers: {
             Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },
         });
+        console.log("Dữ liệu trả về từ API:", response.data);
         if (Array.isArray(response.data)) {
           const formattedProducts = response.data.map((item, index) => ({
             key: item.maSanPham || index,
@@ -75,6 +88,8 @@ const Product = () => {
             soLuongCoTheNhap: item.soLuongCoTheNhap,
             gia: item.gia,
             loaiSanPham: item.loaiSanPham,
+            xuatXu: item.xuatXu || "N/A",
+            // Chỉ ánh xạ các trường từ bảng maytinh hoặc dienthoai nếu tồn tại
             tenCpu: item.tenCpu || "N/A",
             heDieuHanh: item.heDieuHanh || "N/A",
             doPhanGiaiCamera: item.doPhanGiaiCamera || "N/A",
@@ -123,9 +138,15 @@ const Product = () => {
     };
   }, [loaiSanPham, messageApi]);
 
-  const filteredProducts = products.filter((item) =>
-    item[filterBy]?.toString().toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Lọc dữ liệu dựa trên searchTerm và loaiSanPham
+  const filteredProducts = products.filter((item) => {
+    const matchesSearchTerm = item[filterBy]
+      ?.toString()
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesLoaiSanPham = !loaiSanPham || item.loaiSanPham === loaiSanPham;
+    return matchesSearchTerm && matchesLoaiSanPham;
+  });
 
   const rowSelection = {
     selectedRowKeys: selectedProducts,
@@ -134,6 +155,7 @@ const Product = () => {
     },
   };
 
+  // Chỉ hiển thị các cột có trong bảng sanpham
   const baseColumns = [
     {
       title: "Mã sản phẩm",
@@ -165,6 +187,15 @@ const Product = () => {
       key: "rom",
       responsive: ["lg"],
     },
+<<<<<<< HEAD
+=======
+    {
+      title: "Xuất xứ",
+      dataIndex: "xuatXu",
+      key: "xuatXu",
+      responsive: ["lg"],
+    },
+>>>>>>> revert-to-giaodienLogin
   ];
 
   const loaiSanPhamColumn = {
@@ -172,13 +203,20 @@ const Product = () => {
     dataIndex: "loaiSanPham",
     key: "loaiSanPham",
     responsive: ["lg"],
+    render: (text) =>
+      text === "MAYTINH"
+        ? "Máy tính"
+        : text === "DIENTHOAI"
+        ? "Điện thoại"
+        : text,
   };
 
   const additionalColumns = {
-    MAY_TINH: [
+    MAYTINH: [
       { title: "RAM", dataIndex: "ram", key: "ram", responsive: ["lg"] },
+      { title: "CPU", dataIndex: "tenCpu", key: "tenCpu", responsive: ["lg"] },
     ],
-    DIEN_THOAI: [
+    DIENTHOAI: [
       {
         title: "Hệ điều hành",
         dataIndex: "heDieuHanh",
@@ -252,7 +290,7 @@ const Product = () => {
     setIsTypeModalOpen(false);
     setIsAddModalOpen(true);
     form.setFieldsValue({
-      loaiSanPham: selectedProductType === "MAY_TINH" ? "Computer" : "Phone",
+      loaiSanPham: selectedProductType,
     });
   };
 
@@ -266,7 +304,7 @@ const Product = () => {
       const values = await form.validateFields();
       const newProduct = {
         ...values,
-        loaiSanPham: selectedProductType === "MAY_TINH" ? "Computer" : "Phone",
+        loaiSanPham: selectedProductType,
         gia:
           values.gia === "N/A" || !values.gia || isNaN(parseFloat(values.gia))
             ? 0
@@ -275,7 +313,7 @@ const Product = () => {
           values.trangThai === "N/A" ||
           !values.trangThai ||
           isNaN(parseInt(values.trangThai))
-            ? 0
+            ? 1
             : parseInt(values.trangThai),
         soLuongCoTheNhap:
           values.soLuongCoTheNhap === "N/A" ||
@@ -283,39 +321,8 @@ const Product = () => {
           isNaN(parseInt(values.soLuongCoTheNhap))
             ? 0
             : parseInt(values.soLuongCoTheNhap),
-        dungLuongPin:
-          values.dungLuongPin === "N/A" || !values.dungLuongPin
-            ? "0"
-            : values.dungLuongPin,
-        kichThuocMan:
-          values.kichThuocMan === "N/A" ||
-          !values.kichThuocMan ||
-          isNaN(parseFloat(values.kichThuocMan))
-            ? 0
-            : parseFloat(values.kichThuocMan),
-        ram: values.ram === "N/A" || !values.ram ? null : values.ram,
-        rom: values.rom === "N/A" || !values.rom ? null : values.rom,
-        heDieuHanh:
-          values.heDieuHanh === "N/A" || !values.heDieuHanh
-            ? null
-            : values.heDieuHanh,
-        doPhanGiaiCamera:
-          values.doPhanGiaiCamera === "N/A" || !values.doPhanGiaiCamera
-            ? null
-            : values.doPhanGiaiCamera,
-        tenCpu:
-          values.tenCpu === "N/A" || !values.tenCpu ? null : values.tenCpu,
-        congSuatNguon:
-          values.congSuatNguon === "N/A" ||
-          !values.congSuatNguon ||
-          isNaN(parseInt(values.congSuatNguon))
-            ? 0
-            : parseInt(values.congSuatNguon),
-        maBoard:
-          values.maBoard === "N/A" || !values.maBoard ? null : values.maBoard,
+        xuatXu: values.xuatXu || "N/A",
       };
-
-      console.log("Dữ liệu gửi đi:", newProduct);
 
       await api.post("http://localhost:8080/api/products", newProduct, {
         headers: {
@@ -327,7 +334,10 @@ const Product = () => {
       setSelectedProductType(null);
       form.resetFields();
 
-      const params = { loaiSanPham };
+      const params = {};
+      if (loaiSanPham) {
+        params.loai_san_pham = loaiSanPham;
+      }
       const response = await api.get("http://localhost:8080/api/products", {
         params,
         headers: {
@@ -342,6 +352,7 @@ const Product = () => {
           soLuongCoTheNhap: item.soLuongCoTheNhap,
           gia: item.gia,
           loaiSanPham: item.loaiSanPham,
+          xuatXu: item.xuatXu || "N/A",
           tenCpu: item.tenCpu || "N/A",
           heDieuHanh: item.heDieuHanh || "N/A",
           doPhanGiaiCamera: item.doPhanGiaiCamera || "N/A",
@@ -395,7 +406,7 @@ const Product = () => {
           values.trangThai === "N/A" ||
           !values.trangThai ||
           isNaN(parseInt(values.trangThai))
-            ? 0
+            ? 1
             : parseInt(values.trangThai),
         soLuongCoTheNhap:
           values.soLuongCoTheNhap === "N/A" ||
@@ -403,39 +414,8 @@ const Product = () => {
           isNaN(parseInt(values.soLuongCoTheNhap))
             ? 0
             : parseInt(values.soLuongCoTheNhap),
-        dungLuongPin:
-          values.dungLuongPin === "N/A" || !values.dungLuongPin
-            ? "0"
-            : values.dungLuongPin,
-        kichThuocMan:
-          values.kichThuocMan === "N/A" ||
-          !values.kichThuocMan ||
-          isNaN(parseFloat(values.kichThuocMan))
-            ? 0
-            : parseFloat(values.kichThuocMan),
-        ram: values.ram === "N/A" || !values.ram ? null : values.ram,
-        rom: values.rom === "N/A" || !values.rom ? null : values.rom,
-        heDieuHanh:
-          values.heDieuHanh === "N/A" || !values.heDieuHanh
-            ? null
-            : values.heDieuHanh,
-        doPhanGiaiCamera:
-          values.doPhanGiaiCamera === "N/A" || !values.doPhanGiaiCamera
-            ? null
-            : values.doPhanGiaiCamera,
-        tenCpu:
-          values.tenCpu === "N/A" || !values.tenCpu ? null : values.tenCpu,
-        congSuatNguon:
-          values.congSuatNguon === "N/A" ||
-          !values.congSuatNguon ||
-          isNaN(parseInt(values.congSuatNguon))
-            ? 0
-            : parseInt(values.congSuatNguon),
-        maBoard:
-          values.maBoard === "N/A" || !values.maBoard ? null : values.maBoard,
+        xuatXu: values.xuatXu || "N/A",
       };
-
-      console.log("Dữ liệu gửi đi:", updatedProduct);
 
       await api.put(
         `http://localhost:8080/api/products/${selectedProduct.maSanPham}`,
@@ -450,7 +430,10 @@ const Product = () => {
       setIsEditModalOpen(false);
       form.resetFields();
 
-      const params = { loaiSanPham };
+      const params = {};
+      if (loaiSanPham) {
+        params.loai_san_pham = loaiSanPham;
+      }
       const response = await api.get("http://localhost:8080/api/products", {
         params,
         headers: {
@@ -465,6 +448,7 @@ const Product = () => {
           soLuongCoTheNhap: item.soLuongCoTheNhap,
           gia: item.gia,
           loaiSanPham: item.loaiSanPham,
+          xuatXu: item.xuatXu || "N/A",
           tenCpu: item.tenCpu || "N/A",
           heDieuHanh: item.heDieuHanh || "N/A",
           doPhanGiaiCamera: item.doPhanGiaiCamera || "N/A",
@@ -480,7 +464,7 @@ const Product = () => {
     } catch (error) {
       console.error("Lỗi khi sửa sản phẩm:", error);
       if (error.response && error.response.status === 401) {
-        localStorage.removeItem("accessToken");
+        localStorage.removeItem("accessTokenSignature");
         messageApi.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!");
         window.location.href = "/login";
       } else if (error.response && error.response.status === 403) {
@@ -499,23 +483,36 @@ const Product = () => {
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (selectedProducts.length === 0) {
       messageApi.warning("Vui lòng chọn ít nhất 1 sản phẩm để xóa!");
       return;
     }
+    setIsDeleteModalOpen(true);
+  };
 
+  const handleDeleteConfirm = async () => {
     try {
       await Promise.all(
         selectedProducts.map((key) =>
-          api.delete(`http://localhost:8080/api/products/${key}`)
+          api.delete(`http://localhost:8080/api/products/${key}`, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            },
+          })
         )
       );
       messageApi.success("Xóa sản phẩm thành công!");
 
-      const params = { loaiSanPham };
+      const params = {};
+      if (loaiSanPham) {
+        params.loai_san_pham = loaiSanPham;
+      }
       const response = await api.get("http://localhost:8080/api/products", {
         params,
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
       });
       setProducts(
         response.data.map((item, index) => ({
@@ -525,18 +522,39 @@ const Product = () => {
           soLuongCoTheNhap: item.soLuongCoTheNhap,
           gia: item.gia,
           loaiSanPham: item.loaiSanPham,
+          xuatXu: item.xuatXu || "N/A",
           tenCpu: item.tenCpu || "N/A",
           heDieuHanh: item.heDieuHanh || "N/A",
           doPhanGiaiCamera: item.doPhanGiaiCamera || "N/A",
           ram: item.ram || "N/A",
           rom: item.rom || "N/A",
+          dungLuongPin: item.dungLuongPin || "N/A",
+          kichThuocMan: item.kichThuocMan || "N/A",
+          congSuatNguon: item.congSuatNguon || "N/A",
+          maBoard: item.maBoard || "N/A",
         }))
       );
       setSelectedProducts([]);
     } catch (error) {
       console.error("Lỗi khi xóa sản phẩm:", error);
-      messageApi.error("Xóa sản phẩm thất bại!");
+      if (error.response && error.response.status === 401) {
+        localStorage.removeItem("accessToken");
+        messageApi.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!");
+        window.location.href = "/login";
+      } else if (error.response && error.response.status === 403) {
+        messageApi.error(
+          "Bạn không có quyền xóa sản phẩm! Vui lòng kiểm tra quyền truy cập."
+        );
+      } else {
+        messageApi.error("Xóa sản phẩm thất bại!");
+      }
+    } finally {
+      setIsDeleteModalOpen(false);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteModalOpen(false);
   };
 
   const handleViewDetail = () => {
@@ -554,29 +572,58 @@ const Product = () => {
     setIsViewModalOpen(true);
   };
 
+<<<<<<< HEAD
+=======
+  // Cột cho modal chi tiết
+  const commonColumns = [
+    { title: "Mã sản phẩm", dataIndex: "maSanPham", key: "maSanPham" },
+    { title: "Tên sản phẩm", dataIndex: "tenSanPham", key: "tenSanPham" },
+    {
+      title: "Đơn giá",
+      dataIndex: "gia",
+      key: "gia",
+      render: (value) => `${value?.toLocaleString() || 0}đ`,
+    },
+    {
+      title: "Số lượng có thể nhập",
+      dataIndex: "soLuongCoTheNhap",
+      key: "soLuongCoTheNhap",
+    },
+    { title: "Loại sản phẩm", dataIndex: "loaiSanPham", key: "loaiSanPham" },
+    { title: "Xuất xứ", dataIndex: "xuatXu", key: "xuatXu" },
+  ];
+
+  const DIENTHOAIColumns = [
+    ...commonColumns,
+    { title: "Hệ điều hành", dataIndex: "heDieuHanh", key: "heDieuHanh" },
+    {
+      title: "Độ phân giải camera",
+      dataIndex: "doPhanGiaiCamera",
+      key: "doPhanGiaiCamera",
+    },
+  ];
+
+  const MAYTINHColumns = [
+    ...commonColumns,
+    { title: "CPU", dataIndex: "tenCpu", key: "tenCpu" },
+    {
+      title: "Công suất nguồn",
+      dataIndex: "congSuatNguon",
+      key: "congSuatNguon",
+    },
+    { title: "Mã board", dataIndex: "maBoard", key: "maBoard" },
+  ];
+
+>>>>>>> revert-to-giaodienLogin
   const handleExportExcel = () => {
-    const exportProducts = filteredProducts.map((item) => {
-      const baseProducts = {
-        "Mã sản phẩm": item.maSanPham,
-        "Tên sản phẩm": item.tenSanPham,
-        "Số lượng có thể nhập": item.soLuongCoTheNhap,
-        "Đơn giá": item.gia,
-        "Bộ nhớ": item.rom,
-      };
-
-      if (loaiSanPham === "MAY_TINH" || loaiSanPham === "TẤT_CẢ") {
-        baseProducts["RAM"] =
-          item.loaiSanPham === "Computer" ? item.ram : "N/A";
-      }
-      if (loaiSanPham === "DIEN_THOAI" || loaiSanPham === "TẤT_CẢ") {
-        baseProducts["Hệ điều hành"] =
-          item.loaiSanPham === "Phone" ? item.heDieuHanh : "N/A";
-      }
-
-      baseProducts["Loại sản phẩm"] = item.loaiSanPham;
-
-      return baseProducts;
-    });
+    const exportProducts = filteredProducts.map((item) => ({
+      "Mã sản phẩm": item.maSanPham,
+      "Tên sản phẩm": item.tenSanPham,
+      "Số lượng có thể nhập": item.soLuongCoTheNhap,
+      "Đơn giá": item.gia,
+      "Loại sản phẩm": item.loaiSanPham,
+      "Xuất xứ": item.xuatXu,
+    }));
 
     const worksheet = XLSX.utils.json_to_sheet(exportProducts);
     const workbook = XLSX.utils.book_new();
@@ -671,7 +718,7 @@ const Product = () => {
           );
         }
       } catch (error) {
-        messageApi.error("Lỗi khi đọc file Excel: " + error.messageApi);
+        messageApi.error("Lỗi khi đọc file Excel: " + error.message);
       }
     };
 
@@ -870,8 +917,27 @@ const Product = () => {
             onChange={(value) => setSelectedProductType(value)}
             value={selectedProductType}
           >
+<<<<<<< HEAD
             <Option value="DIEN_THOAI">Phone</Option>
             <Option value="MAY_TINH">Computer</Option>
+=======
+            <Option value="maSanPham">Mã sản phẩm</Option>
+            <Option value="tenSanPham">Tên sản phẩm</Option>
+            <Option value="soLuongCoTheNhap">Số lượng có thể nhập</Option>
+            <Option value="gia">Đơn giá</Option>
+            <Option value="xuatXu">Xuất xứ</Option>
+          </Select>
+          <Select
+            value={loaiSanPham || "TẤT_CẢ"}
+            onChange={(value) =>
+              setLoaiSanPham(value === "TẤT_CẢ" ? null : value)
+            }
+            className="w-40 h-[50px]"
+          >
+            <Option value="TẤT_CẢ">Tất cả</Option>
+            <Option value="MAYTINH">Máy tính</Option>
+            <Option value="DIENTHOAI">Điện thoại</Option>
+>>>>>>> revert-to-giaodienLogin
           </Select>
         </Modal>
 
@@ -1205,6 +1271,7 @@ const Product = () => {
           }
         }
 
+<<<<<<< HEAD
         /* Điều chỉnh modal */
         .custom-modal .ant-modal {
           width: 90% !important;
@@ -1239,6 +1306,162 @@ const Product = () => {
           }
         }
       `}</style>
+=======
+      {/* Modal chọn loại sản phẩm */}
+      <Modal
+        title="Chọn loại sản phẩm"
+        open={isTypeModalOpen}
+        onOk={handleTypeOk}
+        onCancel={handleTypeCancel}
+      >
+        <Select
+          style={{ width: "100%" }}
+          placeholder="Chọn loại sản phẩm"
+          onChange={(value) => setSelectedProductType(value)}
+          value={selectedProductType}
+        >
+          <Option value="DIENTHOAI">Điện thoại</Option>
+          <Option value="MAYTINH">Máy tính</Option>
+        </Select>
+      </Modal>
+
+      {/* Modal thêm sản phẩm */}
+      <Modal
+        title="Thêm sản phẩm mới"
+        open={isAddModalOpen}
+        onOk={handleAddOk}
+        onCancel={() => {
+          setIsAddModalOpen(false);
+          setSelectedProductType(null);
+          form.resetFields();
+        }}
+      >
+        <Form form={form} layout="vertical">
+          <Form.Item
+            name="maSanPham"
+            label="Mã sản phẩm"
+            rules={[{ required: true, message: "Vui lòng nhập mã sản phẩm!" }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="tenSanPham"
+            label="Tên sản phẩm"
+            rules={[{ required: true, message: "Vui lòng nhập tên sản phẩm!" }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="gia"
+            label="Đơn giá"
+            rules={[{ required: true, message: "Vui lòng nhập đơn giá!" }]}
+          >
+            <InputNumber min={0} style={{ width: "100%" }} />
+          </Form.Item>
+          <Form.Item
+            name="soLuongCoTheNhap"
+            label="Số lượng có thể nhập"
+            rules={[{ required: true, message: "Vui lòng nhập số lượng!" }]}
+          >
+            <InputNumber min={0} style={{ width: "100%" }} />
+          </Form.Item>
+          <Form.Item
+            name="loaiSanPham"
+            label="Loại sản phẩm"
+            initialValue={selectedProductType}
+          >
+            <Input disabled />
+          </Form.Item>
+          <Form.Item name="xuatXu" label="Xuất xứ">
+            <Input />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Modal sửa sản phẩm */}
+      <Modal
+        title="Sửa sản phẩm"
+        open={isEditModalOpen}
+        onOk={handleEditOk}
+        onCancel={() => setIsEditModalOpen(false)}
+      >
+        <Form form={form} layout="vertical">
+          <Form.Item
+            name="tenSanPham"
+            label="Tên sản phẩm"
+            rules={[{ required: true, message: "Vui lòng nhập tên sản phẩm!" }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="gia"
+            label="Đơn giá"
+            rules={[{ required: true, message: "Vui lòng nhập đơn giá!" }]}
+          >
+            <InputNumber min={0} style={{ width: "100%" }} />
+          </Form.Item>
+          <Form.Item
+            name="soLuongCoTheNhap"
+            label="Số lượng có thể nhập"
+            rules={[{ required: true, message: "Vui lòng nhập số lượng!" }]}
+          >
+            <InputNumber min={0} style={{ width: "100%" }} />
+          </Form.Item>
+          <Form.Item name="xuatXu" label="Xuất xứ">
+            <Input />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Modal xem chi tiết sản phẩm */}
+      <Modal
+        title="Chi tiết sản phẩm"
+        open={isViewModalOpen}
+        onOk={() => setIsViewModalOpen(false)}
+        onCancel={() => setIsViewModalOpen(false)}
+        footer={[
+          <Button
+            key="ok"
+            type="primary"
+            onClick={() => setIsViewModalOpen(false)}
+          >
+            OK
+          </Button>,
+        ]}
+        width={1200}
+      >
+        {selectedProduct ? (
+          <Table
+            dataSource={[selectedProduct]}
+            columns={
+              selectedProduct.loaiSanPham === "MAYTINH"
+                ? MAYTINHColumns
+                : DIENTHOAIColumns
+            }
+            pagination={false}
+            bordered
+          />
+        ) : (
+          <p>Không có dữ liệu để hiển thị</p>
+        )}
+      </Modal>
+
+      {/* Modal xác nhận xóa sản phẩm */}
+      <Modal
+        title="Xác nhận xóa sản phẩm"
+        open={isDeleteModalOpen}
+        onOk={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        okText="Xóa"
+        cancelText="Hủy"
+        okButtonProps={{ danger: true }}
+      >
+        <p>
+          Bạn có chắc chắn muốn xóa <strong>{selectedProducts.length}</strong>{" "}
+          sản phẩm đã chọn không?
+        </p>
+      </Modal>
+>>>>>>> revert-to-giaodienLogin
     </div>
   );
 };

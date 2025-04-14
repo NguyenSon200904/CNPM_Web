@@ -17,19 +17,23 @@ import java.util.List;
 public class NhaCungCap {
 
   @Id
+  @Column(name = "ma_nha_cung_cap")
   private String maNhaCungCap;
 
+  @Column(name = "ten_nha_cung_cap")
   private String tenNhaCungCap;
 
+  @Column(name = "dia_chi")
   private String diaChi;
 
   @Column(name = "so_dien_thoai")
   @JsonProperty("soDienThoai")
   private String sdt;
 
+  @Column(name = "trang_thai")
+  private Integer trangThai;
+
   @OneToMany(mappedBy = "nhaCungCap")
   @JsonIgnore
   private List<Receipt> receipts;
-
-  // Constructors, getters, setters
 }
