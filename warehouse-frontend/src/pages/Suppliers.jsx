@@ -22,6 +22,7 @@ const Supplier = () => {
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false); // State cho modal xác nhận xóa
   const [form] = Form.useForm();
   const [selectedSupplier, setSelectedSupplier] = useState(null);
 
@@ -157,12 +158,15 @@ const Supplier = () => {
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (selectedRowKeys.length === 0) {
       messageApi.warning("Vui lòng chọn ít nhất 1 nhà cung cấp để xóa!");
       return;
     }
+    setIsDeleteModalOpen(true); // Hiển thị modal xác nhận
+  };
 
+  const handleConfirmDelete = async () => {
     try {
       await Promise.all(
         selectedRowKeys.map((key) =>
@@ -185,6 +189,8 @@ const Supplier = () => {
     } catch (error) {
       console.error("Lỗi khi xóa nhà cung cấp:", error);
       messageApi.error("Xóa nhà cung cấp thất bại!");
+    } finally {
+      setIsDeleteModalOpen(false); // Đóng modal sau khi xóa
     }
   };
 
@@ -463,6 +469,18 @@ const Supplier = () => {
             <Input />
           </Form.Item>
         </Form>
+      </Modal>
+
+      <Modal
+        title="Xác nhận xóa"
+        open={isDeleteModalOpen}
+        onOk={handleConfirmDelete} // Xác nhận xóa
+        onCancel={() => setIsDeleteModalOpen(false)} // Hủy xóa
+        okText="Xóa"
+        cancelText="Hủy"
+        okButtonProps={{ danger: true }}
+      >
+        <p>Bạn có chắc chắn muốn xóa nhà cung cấp đã chọn không?</p>
       </Modal>
     </div>
   );

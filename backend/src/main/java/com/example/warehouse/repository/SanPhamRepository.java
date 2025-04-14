@@ -6,4 +6,8 @@ import java.util.List;
 
 public interface SanPhamRepository extends JpaRepository<SanPham, String> {
   List<SanPham> findByLoaiSanPham(String loaiSanPham);
+
+  List<SanPham> findByLoaiSanPhamAndTrangThai(String loaiSanPham, int trangThai);
+
+  List<SanPham> findByTrangThai(int trangThai);
 }
