@@ -8,27 +8,27 @@ import lombok.Data;
 @Data
 public class Computer {
     @Id
-    @Column(name = "maSanPham", length = 50)
+    @Column(name = "ma_san_pham", length = 50)
     private String maSanPham;
 
     @OneToOne
     @MapsId
-    @JoinColumn(name = "maSanPham")
+    @JoinColumn(name = "ma_san_pham")
     private Product product;
 
-    @Column(name = "congSuatNguon")
+    @Column(name = "cong_suat_nguon")
     private Integer congSuatNguon;
 
-    @Column(name = "dungLuongPin")
+    @Column(name = "dung_luong_pin", length = 255)
     private String dungLuongPin;
 
-    @Column(name = "kichThuocMan")
+    @Column(name = "kich_thuoc_man")
     private Double kichThuocMan;
 
-    @Column(name = "loaiMay", length = 255)
+    @Column(name = "loai_may", length = 255)
     private String loaiMay;
 
-    @Column(name = "maBoard", length = 255)
+    @Column(name = "ma_board", length = 255)
     private String maBoard;
 
     @Column(name = "ram", length = 255)
@@ -37,6 +37,6 @@ public class Computer {
     @Column(name = "rom", length = 255)
     private String rom;
 
-    @Column(name = "tenCPU", length = 255)
+    @Column(name = "tencpu", length = 255)
     private String tenCPU;
 }

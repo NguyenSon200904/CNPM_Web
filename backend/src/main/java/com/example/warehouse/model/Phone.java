@@ -8,24 +8,24 @@ import lombok.Data;
 @Data
 public class Phone {
     @Id
-    @Column(name = "maSanPham", length = 50)
+    @Column(name = "ma_san_pham", length = 50)
     private String maSanPham;
 
     @OneToOne
     @MapsId
-    @JoinColumn(name = "maSanPham")
+    @JoinColumn(name = "ma_san_pham")
     private Product product;
 
-    @Column(name = "doPhanGiaiCamera", length = 25)
+    @Column(name = "do_phan_giai_camera", length = 25)
     private String doPhanGiaiCamera;
 
-    @Column(name = "dungLuongPin")
+    @Column(name = "dung_luong_pin")
     private String dungLuongPin; // Đảm bảo kiểu Integer
 
-    @Column(name = "heDieuHanh", length = 25)
+    @Column(name = "he_dieu_hanh", length = 25)
     private String heDieuHanh;
 
-    @Column(name = "kichThuocMan")
+    @Column(name = "kich_thuoc_man")
     private Double kichThuocMan;
 
     @Column(name = "ram", length = 25)
@@ -34,6 +34,6 @@ public class Phone {
     @Column(name = "rom", length = 25)
     private String rom;
 
-    @Column(name = "tenDienThoai", length = 50)
+    @Column(name = "ten_dien_thoai", length = 50)
     private String tenDienThoai;
 }
