@@ -1,7 +1,6 @@
 package com.example.warehouse.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
 
 @Entity
 @Table(name = "maytinh")

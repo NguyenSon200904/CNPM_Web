@@ -366,7 +366,6 @@ const Supplier = () => {
   return (
     <div className="relative">
       {contextHolder}
-
       {/* Nút mở sidebar trên mobile */}
       {isMobile && (
         <Button
@@ -375,7 +374,6 @@ const Supplier = () => {
           className="fixed top-4 left-4 z-10 h-12 w-12 text-base bg-blue-500 text-white"
         />
       )}
-
       {/* Sidebar dưới dạng Drawer trên mobile */}
       <Drawer
         title="Menu"
@@ -397,7 +395,6 @@ const Supplier = () => {
           <Menu.Item key="doithongtin">ĐỔI THÔNG TIN</Menu.Item>
         </Menu>
       </Drawer>
-
       <div className="p-4 sm:p-6 md:p-8">
         <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-6 sm:mb-8 text-left">
           QUẢN LÝ NHÀ CUNG CẤP
@@ -584,7 +581,6 @@ const Supplier = () => {
           </Form>
         </Modal>
       </div>
-
       <style jsx>{`
         /* Điều chỉnh bảng */
         .custom-table .ant-table {
@@ -605,7 +601,7 @@ const Supplier = () => {
           }
         }
 
-<<<<<<< HEAD
+        <<<<<<< HEAD
         /* Ẩn sidebar trên mobile */
         @media (max-width: 768px) {
           .ant-layout-sider {
@@ -616,7 +612,7 @@ const Supplier = () => {
           }
         }
       `}</style>
-=======
+      =======
       <Modal
         title="Thêm nhà cung cấp mới"
         open={isAddModalOpen}
@@ -660,7 +656,6 @@ const Supplier = () => {
           </Form.Item>
         </Form>
       </Modal>
-
       <Modal
         title="Sửa nhà cung cấp"
         open={isEditModalOpen}
@@ -695,7 +690,6 @@ const Supplier = () => {
           </Form.Item>
         </Form>
       </Modal>
-
       <Modal
         title="Xác nhận xóa"
         open={isDeleteModalOpen}
@@ -707,7 +701,6 @@ const Supplier = () => {
       >
         <p>Bạn có chắc chắn muốn xóa nhà cung cấp đã chọn không?</p>
       </Modal>
->>>>>>> revert-to-giaodienLogin
     </div>
   );
 };
