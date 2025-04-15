@@ -3,6 +3,8 @@ package com.example.warehouse.util;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -16,7 +18,9 @@ import java.util.function.Function;
 @Component
 public class JwtUtil {
 
-    private String secret = "8J+5kPqWvXzY2mL9nR4tF7hC3sD6xA=="; // Khóa bí mật (giữ nguyên)
+    @Value("${jwt.secret}")
+    private String secret;
+
     private static final long RESET_TOKEN_VALIDITY = 15 * 60 * 1000; // 15 phút
 
     // Tạo SecretKey từ secret string
@@ -49,12 +53,14 @@ public class JwtUtil {
                 .getPayload();
     }
 
-    public boolean validateToken(String token) {
-        try {
-            return !extractExpiration(token).before(new Date());
-        } catch (Exception e) {
-            return false;
-        }
+    // Thêm phương thức isTokenExpired để kiểm tra token có hết hạn hay không
+    private boolean isTokenExpired(String token) {
+        return extractExpiration(token).before(new Date());
+    }
+
+    public boolean validateToken(String token, String username) {
+        final String extractedUsername = extractUsername(token);
+        return (extractedUsername.equals(username) && !isTokenExpired(token));
     }
 
     // Tạo token đăng nhập với vai trò

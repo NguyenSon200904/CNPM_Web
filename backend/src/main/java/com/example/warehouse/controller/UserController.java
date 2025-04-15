@@ -19,7 +19,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "http://localhost")
 public class UserController {
 
   private static final Logger logger = LoggerFactory.getLogger(UserController.class);

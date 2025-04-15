@@ -14,7 +14,7 @@ import java.util.Objects;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "http://localhost5173:")
 public class SupplierController {
 
     @Autowired

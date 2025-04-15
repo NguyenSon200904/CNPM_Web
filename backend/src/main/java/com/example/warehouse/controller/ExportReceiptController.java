@@ -23,7 +23,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "http://localhost")
 public class ExportReceiptController {
 
     private static final Logger logger = LoggerFactory.getLogger(ExportReceiptController.class);

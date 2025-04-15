@@ -117,7 +117,7 @@ public class AuthController {
         String resetToken = jwtUtil.generateResetToken(username);
 
         // Gửi email đến người dùng
-        String resetLink = "http://localhost:5173/reset-password?token=" + resetToken;
+        String resetLink = "http://localhost/reset-password?token=" + resetToken;
         SimpleMailMessage userMessage = new SimpleMailMessage();
         userMessage.setTo(account.getEmail());
         userMessage.setSubject("Yêu cầu đặt lại mật khẩu");

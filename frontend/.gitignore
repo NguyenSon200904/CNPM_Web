@@ -1,0 +1,61 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+flyway*.log
+
+# Node.js dependencies và build artifacts (Frontend)
+node_modules/
+dist/
+dist-ssr/
+build/
+.cache/
+*.local
+
+# Nếu dùng npm và muốn giữ package-lock.json, bỏ comment dòng dưới
+# package-lock.json
+# Nếu dùng yarn và muốn giữ yarn.lock, bỏ comment dòng dưới
+# yarn.lock
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Tạm thời và backup files
+*~
+*.bak
+
+# Java/Spring Boot build artifacts (Backend)
+backend/target/
+*.jar
+*.war
+*.ear
+
+# Docker artifacts
+*.docker
+docker-compose.yml
+!docker-compose.yml.example
+
+# Environment files
+.env
+application.properties
+application.yml
+
+# Database migrations (nếu có)
+flyway*.log
+liquibase*.log
+
+# Các file tạm khác
+*.tmp
+*.temp
